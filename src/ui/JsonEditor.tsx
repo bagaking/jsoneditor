@@ -3,7 +3,9 @@ import { EditorCore } from '../core/editor-core';
 import { EditorConfig, ValidationError } from '../core/types';
 import { Toolbar } from './components/Toolbar';
 import { StatusBar } from './components/StatusBar';
-import { validateWithSchema } from '../core/schema';
+import { SchemaInfoPanel } from './components/SchemaInfoPanel';
+import { JsonSchemaProperty } from '../extensions/path';
+import { SchemaValidator } from '../core/schema-validator';
 
 // 防抖函数
 const debounce = <T extends (...args: any[]) => any>(
@@ -45,6 +47,11 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
     const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
     const [jsonSize, setJsonSize] = useState({ lines: 1, bytes: 0 });
     const [isValid, setIsValid] = useState(true);
+    const [schemaInfo, setSchemaInfo] = useState<{
+        path: string;
+        schema: JsonSchemaProperty;
+        value?: string;
+    } | null>(null);
     
     // 使用 useRef 存储所有可变的配置和回调
     const stateRef = useRef({
@@ -83,23 +90,23 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
             ...stateRef.current,
             onChange,
             onError,
-            validateOnChange: config.validateOnChange
+            validateOnChange: config.validateOnType
         };
-    }, [onChange, onError, config.validateOnChange]);
+    }, [onChange, onError, config.validateOnType]);
 
-    // 验证函数 - 不依赖任何 props
+    // 验证函数
     const validateJson = useCallback((value: string) => {
         console.log('Validating JSON:', { valueLength: value.length });
         let newError: string | null = null;
         let newIsValid = true;
 
         try {
-            // 基本语法验证
-            JSON.parse(value);
+            const data = JSON.parse(value);
             
             // Schema 验证
             if (stateRef.current.schema) {
-                const errors = validateWithSchema(value, stateRef.current.schema);
+                const validator = new SchemaValidator();
+                const errors = validator.validate(data, stateRef.current.schema);
                 if (errors.length > 0) {
                     newError = errors[0].message;
                     newIsValid = false;
@@ -110,39 +117,69 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
             newIsValid = false;
         }
 
-        // 批量更新状态
         console.log('Validation result:', { newError, newIsValid });
         setError(newError);
         setIsValid(newIsValid);
         if (newError && stateRef.current.onError) {
             stateRef.current.onError(new Error(newError));
         }
-    }, []); // 无依赖
+    }, []);
 
-    // 使用防抖的验证函数 - 不依赖任何 props
+    // 使用防抖的验证函数
     const debouncedValidate = useMemo(
         () => debounce((value: string) => validateJson(value), 300),
         [validateJson]
     );
 
-    // 内容变化处理 - 不依赖任何 props
+    // 内容变化处理
     const handleChange = useCallback((value: string) => {
         console.log('Content changed:', { valueLength: value.length });
-        // 总是触发 onChange
         stateRef.current.onChange?.(value);
-        // 如果启用了验证，使用防抖验证
         if (stateRef.current.validateOnChange) {
             setIsValid(false);
             debouncedValidate(value);
         }
     }, [debouncedValidate]);
 
-    // 光标位置变化处理 - 不依赖任何 props
+    // 光标位置变化处理
     const handleCursorActivity = useCallback((info: { line: number; col: number }) => {
         setCursorInfo(info);
+        
+        // 获取当前位置的 schema 信息
+        if (editorRef.current && stateRef.current.schema) {
+            const pos = editorRef.current.getCursorPosition();
+            if (pos !== null) {
+                const path = editorRef.current.getSchemaPathAtPosition(pos);
+                if (path) {
+                    const schema = editorRef.current.getSchemaAtPath(path);
+                    if (schema) {
+                        // 获取当前值
+                        const value = editorRef.current.getValueAtPath(path);
+                        setSchemaInfo({
+                            path,
+                            schema,
+                            value
+                        });
+                        return;
+                    }
+                }
+            }
+        }
+        setSchemaInfo(null);
     }, []);
 
-    // 文档大小变化处理 - 不依赖任何 props
+    // 处理 schema 值变化
+    const handleSchemaValueChange = useCallback((value: string) => {
+        if (!editorRef.current || !schemaInfo) return;
+        
+        // 更新值
+        const success = editorRef.current.setValueAtPath(schemaInfo.path, value);
+        if (!success) {
+            console.error('Failed to set value at path:', schemaInfo.path);
+        }
+    }, [schemaInfo]);
+
+    // 文档大小变化处理
     const handleDocChanged = useCallback((info: { lines: number; bytes: number }) => {
         setJsonSize(info);
     }, []);
@@ -156,7 +193,6 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
         }
 
         try {
-            // 创建新的编辑器实例
             editorRef.current = new EditorCore(containerRef.current, {
                 value: stateRef.current.defaultValue,
                 theme: stateRef.current.theme,
@@ -167,7 +203,6 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
                 onDocChanged: handleDocChanged
             });
 
-            // 初始验证
             if (stateRef.current.validateOnChange && stateRef.current.defaultValue) {
                 console.log('Performing initial validation');
                 validateJson(stateRef.current.defaultValue);
@@ -186,7 +221,7 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
             editorRef.current?.destroy();
             editorRef.current = null;
         };
-    }, []); // 只在组件挂载时初始化一次
+    }, []);
 
     // 配置变化时更新编辑器
     useEffect(() => {
@@ -252,16 +287,20 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
                 isValid={isValid}
             />
             <div ref={containerRef} className="flex-1 overflow-auto min-h-[400px] text-gray-800 dark:text-gray-200" />
+            {schemaInfo && (
+                <SchemaInfoPanel
+                    path={schemaInfo.path}
+                    schema={schemaInfo.schema}
+                    value={schemaInfo.value}
+                    onValueChange={handleSchemaValueChange}
+                />
+            )}
             <StatusBar
                 cursorInfo={cursorInfo}
                 jsonSize={jsonSize}
                 isValid={isValid}
+                error={error}
             />
-            {error && (
-                <div className="p-2 bg-red-50 dark:bg-red-900/30 border-t border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
-                    ⚠️ {error}
-                </div>
-            )}
         </div>
     );
 }; 

@@ -77,6 +77,7 @@ export interface EditorConfig {
     readonly?: boolean;
     autoFormat?: boolean;
     validateOnChange?: boolean;
+    validateOnType?: boolean;
     theme?: 'light' | 'dark';
     extensions?: Extension[];
     decoration?: DecorationConfig;

@@ -9,7 +9,9 @@ import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
 import { createDecorationExtension } from '../extensions/decoration';
 import { EditorConfig } from './types';
 import { light } from '../themes/light';
-import { getCompletions } from './schema';
+import { getSchemaCompletions } from '../extensions/schema-extension';
+import { createSchemaEditorExtension } from '../extensions/schema-extension';
+import { JsonPath, JsonSchemaProperty } from '../extensions/path';
 
 // 基础样式增强
 const baseTheme = EditorView.theme({
@@ -152,33 +154,47 @@ export class EditorCore {
      */
     private createEditorState(content: string) {
         console.log('Creating editor state with content length:', content.length);
+        
+        const extensions = [
+            // 基础功能
+            lineNumbers(),
+            highlightActiveLineGutter(),
+            bracketMatching(),
+            keymap.of(defaultKeymap),
+            // JSON 支持
+            json(),
+            // 自动补全
+            autocompletion({
+                override: [(context: CompletionContext) => {
+                    if (this.schema) {
+                        return getSchemaCompletions(this.schema, context);
+                    }
+                    return null;
+                }],
+                defaultKeymap: true
+            }),
+            // 装饰扩展
+            createDecorationExtension(this.config.decoration || {}),
+            // 主题
+            this.config.theme === 'dark' ? oneDark : light,
+            // 基础样式
+            baseTheme
+        ];
+
+        // 添加 schema 验证扩展
+        if (this.schema) {
+            extensions.push(
+                createSchemaEditorExtension({
+                    schema: this.schema,
+                    validateOnType: true,
+                    validateDebounce: 300
+                })
+            );
+        }
+
         return EditorState.create({
             doc: content,
-            extensions: [
-                // 基础功能
-                lineNumbers(),
-                highlightActiveLineGutter(),
-                bracketMatching(),
-                keymap.of(defaultKeymap),
-                // JSON 支持
-                json(),
-                // 自动补全
-                autocompletion({
-                    override: [(context: CompletionContext) => {
-                        if (this.schema) {
-                            return getCompletions(this.schema, context);
-                        }
-                        return null;
-                    }],
-                    defaultKeymap: true
-                }),
-                // 装饰扩展
-                createDecorationExtension(this.config.decoration || {}),
-                // 主题
-                this.config.theme === 'dark' ? oneDark : light,
-                // 基础样式
-                baseTheme
-            ]
+            extensions
         });
     }
 
@@ -220,6 +236,99 @@ export class EditorCore {
         if (this.view) {
             this.view.destroy();
             this.view = null;
+        }
+    }
+
+    /**
+     * 获取当前光标位置
+     */
+    getCursorPosition(): number | null {
+        if (!this.view) return null;
+        return this.view.state.selection.main.head;
+    }
+
+    /**
+     * 获取指定位置的 schema 路径
+     */
+    getSchemaPathAtPosition(pos: number): string | null {
+        if (!this.view) return null;
+        return JsonPath.fromPosition(this.view, pos);
+    }
+
+    /**
+     * 获取指定路径的 schema 定义
+     */
+    getSchemaAtPath(path: string): JsonSchemaProperty | null {
+        if (!this.schema) return null;
+        return JsonPath.getSchemaAtPath(this.schema as JsonSchemaProperty, path);
+    }
+
+    /**
+     * 根据路径获取值
+     */
+    getValueAtPath(path: string): string | undefined {
+        try {
+            const content = this.getValue();
+            const data = JSON.parse(content);
+            const parts = JsonPath.parsePath(path);
+            
+            let current = data;
+            for (const part of parts) {
+                if (current === undefined || current === null) return undefined;
+                current = current[part];
+            }
+            
+            return typeof current === 'string' ? current : JSON.stringify(current);
+        } catch (e) {
+            console.error('Failed to get value at path:', e);
+            return undefined;
+        }
+    }
+
+    /**
+     * 根据路径设置值
+     */
+    setValueAtPath(path: string, value: string): boolean {
+        try {
+            const content = this.getValue();
+            const data = JSON.parse(content);
+            const parts = JsonPath.parsePath(path);
+            
+            // 找到父对象
+            let current = data;
+            for (let i = 0; i < parts.length - 1; i++) {
+                const part = parts[i];
+                if (!(part in current)) {
+                    current[part] = {};
+                }
+                current = current[part];
+            }
+            
+            // 设置值
+            const lastPart = parts[parts.length - 1];
+            if (lastPart) {
+                // 根据 schema 处理值的类型
+                const schema = this.getSchemaAtPath(path);
+                if (schema) {
+                    if (schema.type === 'number') {
+                        current[lastPart] = Number(value);
+                    } else if (schema.type === 'boolean') {
+                        current[lastPart] = value === 'true';
+                    } else {
+                        current[lastPart] = value;
+                    }
+                } else {
+                    current[lastPart] = value;
+                }
+                
+                // 更新编辑器内容
+                this.setValue(JSON.stringify(data, null, 2));
+                return true;
+            }
+            return false;
+        } catch (e) {
+            console.error('Failed to set value at path:', e);
+            return false;
         }
     }
 } 

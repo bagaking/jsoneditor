@@ -3,6 +3,19 @@ import { syntaxTree } from '@codemirror/language';
 import type { SyntaxNode } from '@lezer/common';
 
 /**
+ * JSON Schema 相关类型
+ */
+export interface JsonSchemaProperty {
+    type?: string;
+    description?: string;
+    enum?: any[];
+    properties?: Record<string, JsonSchemaProperty>;
+    items?: JsonSchemaProperty;
+    required?: string[];
+    [key: string]: any;
+}
+
+/**
  * JSON 路径工具类
  */
 export class JsonPath {
@@ -105,5 +118,99 @@ export class JsonPath {
      */
     static stringifyPath(parts: string[]): string {
         return '$' + parts.map(p => `["${p}"]`).join('');
+    }
+
+    /**
+     * 从 schema 中获取指定路径的定义
+     */
+    static getSchemaAtPath(schema: JsonSchemaProperty, path: string): JsonSchemaProperty | null {
+        const parts = this.parsePath(path);
+        let current: JsonSchemaProperty | null = schema;
+
+        for (const part of parts) {
+            if (!current) return null;
+
+            // 处理数组
+            if (Array.isArray(current.type) && current.type.includes('array')) {
+                current = current.items || null;
+                continue;
+            }
+
+            // 处理对象
+            if (current.properties && part in current.properties) {
+                current = current.properties[part];
+            } else {
+                return null;
+            }
+        }
+
+        return current;
+    }
+
+    /**
+     * 获取指定路径下的所有可用属性
+     */
+    static getPropertiesAtPath(schema: JsonSchemaProperty, path: string): Array<{ name: string; description?: string; required?: boolean }> {
+        const current = this.getSchemaAtPath(schema, path);
+        if (!current || !current.properties) return [];
+
+        const required = new Set(current.required || []);
+        return Object.entries(current.properties).map(([name, prop]) => ({
+            name,
+            description: prop.description,
+            required: required.has(name)
+        }));
+    }
+
+    /**
+     * 获取指定路径的可选值列表
+     */
+    static getEnumAtPath(schema: JsonSchemaProperty, path: string): any[] {
+        const current = this.getSchemaAtPath(schema, path);
+        return current?.enum || [];
+    }
+
+    /**
+     * 验证路径是否有效
+     */
+    static isValidPath(schema: JsonSchemaProperty, path: string): boolean {
+        return this.getSchemaAtPath(schema, path) !== null;
+    }
+
+    /**
+     * 获取路径的父路径
+     */
+    static getParentPath(path: string): string {
+        const parts = this.parsePath(path);
+        parts.pop();
+        return this.stringifyPath(parts);
+    }
+
+    /**
+     * 获取路径的最后一个部分
+     */
+    static getLastPart(path: string): string | null {
+        const parts = this.parsePath(path);
+        return parts.length > 0 ? parts[parts.length - 1] : null;
+    }
+
+    /**
+     * 判断是否是子路径
+     */
+    static isChildPath(parentPath: string, childPath: string): boolean {
+        if (parentPath === '$') return childPath !== '$';
+        return childPath.startsWith(parentPath + '["') && this.parsePath(childPath).length === this.parsePath(parentPath).length + 1;
+    }
+
+    /**
+     * 获取所有子路径
+     */
+    static getChildPaths(schema: JsonSchemaProperty, path: string): string[] {
+        const current = this.getSchemaAtPath(schema, path);
+        if (!current || !current.properties) return [];
+
+        return Object.keys(current.properties).map(key => 
+            path === '$' ? `$["${key}"]` : `${path}["${key}"]`
+        );
     }
 } 
