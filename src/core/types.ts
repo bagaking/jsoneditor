@@ -1,17 +1,67 @@
 import type { Extension } from '@codemirror/state';
 
+// 基础样式类型
+export type BaseStyle = 'underline' | 'bold' | 'italic';
+
+// 自定义组件类型
+export interface CustomComponent {
+    type: 'component';
+    render: (props: {
+        value: string;
+        onClick?: (value: string) => void;
+    }) => HTMLElement;
+}
+
+// 装饰样式类型
+export type DecorationStyle = BaseStyle | string | CustomComponent;
+
+/**
+ * URL 处理器配置
+ */
+export interface UrlHandler {
+    /**
+     * 自定义组件
+     * 如果不提供,则使用默认的链接按钮
+     */
+    component?: CustomComponent;
+    /**
+     * 点击回调
+     * 如果不提供,则默认在新标签页打开链接
+     */
+    onClick?: (url: string) => void;
+}
+
 /**
  * 装饰配置
  */
 export interface DecorationConfig {
+    /**
+     * 路径装饰配置
+     */
     paths?: {
         [path: string]: {
-            style?: 'underline' | 'background' | 'border';
-            color?: string;
-            onClick?: (value: any) => void;
+            /**
+             * 装饰样式
+             * - 'underline': 下划线样式
+             * - 'bold': 粗体样式
+             * - 'italic': 斜体样式
+             * - 'underline bold': 组合样式
+             * - CustomComponent: 自定义组件
+             */
+            style: DecorationStyle;
+            /**
+             * 点击回调
+             */
+            onClick?: (value: string) => void;
         };
     };
-    urlPaths?: string[];  // JSON paths that contain URL values
+
+    /**
+     * URL 处理器
+     * 用于自定义 URL 的展示和交互方式
+     * 如果不提供,则使用默认的链接按钮
+     */
+    urlHandler?: UrlHandler;
 }
 
 /**

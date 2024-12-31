@@ -1,169 +1,188 @@
-import { EditorState, Extension } from '@codemirror/state';
-import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
-import { defaultKeymap } from '@codemirror/commands';
+import { EditorState } from '@codemirror/state';
+import { EditorView, keymap } from '@codemirror/view';
 import { json } from '@codemirror/lang-json';
-import { linter, lintGutter, Diagnostic } from '@codemirror/lint';
+import { defaultKeymap } from '@codemirror/commands';
+import { lineNumbers, highlightActiveLineGutter } from '@codemirror/view';
+import { bracketMatching } from '@codemirror/language';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { createDecorationExtension } from '../extensions/decoration';
+import { DecorationConfig, ValidationError } from './types';
+import { light } from '../themes/light';
 
-import { EditorConfig } from './types';
-import { createSchemaExtension } from '../extensions/schema';
-import { createCompletionExtension } from '../extensions/completion';
-import { createPathExtension } from '../extensions/path';
+// 基础样式增强
+const baseTheme = EditorView.theme({
+    "&": {
+        height: '100%'
+    },
+    ".cm-scroller": {
+        overflow: "auto"
+    }
+});
 
-/**
- * 编辑器核心实现
- * 基于 CodeMirror 实现编辑器功能
- */
 export class EditorCore {
-    private config: EditorConfig;
-    private view: EditorView;
+    private view: EditorView | null = null;
+    private container: HTMLElement;
+    private config: DecorationConfig = {};
+    private schema: object | null = null;
+    private currentTheme: 'light' | 'dark' = 'light';
 
-    constructor(config: EditorConfig) {
-        this.config = config;
-
-        // 创建编辑器
-        this.view = new EditorView({
-            state: this.createEditorState(),
-            parent: config.container
-        });
+    constructor(container: HTMLElement, schema?: object) {
+        this.container = container;
+        this.schema = schema || null;
     }
 
     /**
-     * 创建编辑器状态
+     * 初始化编辑器
      */
-    private createEditorState(): EditorState {
-        const extensions: Extension[] = [
-            // 基础功能
-            keymap.of(defaultKeymap),
-            // JSON 语言支持
-            json(),
-            // 错误提示
-            lintGutter(),
-            // 主题
-            this.config.theme === 'dark' ? oneDark : [],
-            // 编辑器配置
-            EditorView.updateListener.of(this.handleUpdate.bind(this)),
-            EditorView.editable.of(!this.config.readonly),
-            EditorState.changeFilter.of(() => !this.config.readonly)
-        ];
+    init(initialValue: string = '') {
+        const state = EditorState.create({
+            doc: initialValue,
+            extensions: [
+                // 基础功能
+                lineNumbers(),
+                highlightActiveLineGutter(),
+                bracketMatching(),
+                keymap.of(defaultKeymap),
+                // JSON 支持
+                json(),
+                // 装饰扩展
+                createDecorationExtension(this.config),
+                // 主题
+                this.currentTheme === 'dark' ? oneDark : light,
+                // 基础样式
+                baseTheme
+            ]
+        });
 
-        // Schema 验证
-        if (this.config.schema) {
-            extensions.push(createSchemaExtension({
-                schema: this.config.schema,
-                validateOnType: this.config.validateOnChange
-            }));
-        }
-
-        // 自动补全
-        extensions.push(createCompletionExtension({
-            schema: this.config.schema
-        }));
-
-        // 路径提示
-        extensions.push(createPathExtension({
-            showInGutter: true,
-            showInTooltip: true,
-            highlightPath: true
-        }));
-
-        // 自定义扩展
-        if (this.config.extensions) {
-            extensions.push(...this.config.extensions);
-        }
-
-        return EditorState.create({
-            doc: this.config.content || '',
-            extensions
+        this.view = new EditorView({
+            state,
+            parent: this.container
         });
     }
 
     /**
      * 更新编辑器配置
      */
-    public updateConfig(config: Partial<EditorConfig>): void {
-        // 更新配置
-        this.config = { ...this.config, ...config };
-
-        // 创建新的编辑器状态
-        const state = this.createEditorState();
-
-        // 使用新状态重新配置编辑器
-        this.view.setState(state);
+    updateConfig(config: DecorationConfig) {
+        this.config = config;
+        if (this.view) {
+            const state = this.createEditorState(this.getValue());
+            this.view.setState(state);
+        }
     }
 
     /**
-     * 处理编辑器更新
+     * 切换主题
      */
-    private handleUpdate(update: ViewUpdate) {
-        if (update.docChanged) {
-            const content = update.state.doc.toString();
+    setTheme(theme: 'light' | 'dark') {
+        this.currentTheme = theme;
+        if (this.view) {
+            const state = this.createEditorState(this.getValue());
+            this.view.setState(state);
+        }
+    }
+
+    /**
+     * 创建编辑器状态
+     */
+    private createEditorState(content: string) {
+        return EditorState.create({
+            doc: content,
+            extensions: [
+                lineNumbers(),
+                highlightActiveLineGutter(),
+                bracketMatching(),
+                keymap.of(defaultKeymap),
+                json(),
+                createDecorationExtension(this.config),
+                this.currentTheme === 'dark' ? oneDark : light,
+                baseTheme
+            ]
+        });
+    }
+
+    /**
+     * 格式化 JSON
+     */
+    format() {
+        try {
+            const content = this.getValue();
+            const formatted = JSON.stringify(JSON.parse(content), null, 2);
+            this.setValue(formatted);
+            return true;
+        } catch (error) {
+            console.error('Format failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * 压缩 JSON
+     */
+    minify() {
+        try {
+            const content = this.getValue();
+            const minified = JSON.stringify(JSON.parse(content));
+            this.setValue(minified);
+            return true;
+        } catch (error) {
+            console.error('Minify failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * 验证 JSON
+     */
+    validate(): ValidationError[] {
+        try {
+            const content = this.getValue();
+            JSON.parse(content); // 基本语法验证
             
-            // 自动格式化
-            if (this.config.autoFormat) {
-                const formatted = this.format();
-                if (formatted !== content) {
-                    this.setContent(formatted);
-                }
+            if (this.schema) {
+                // TODO: 实现基于 schema 的验证
+                return [];
             }
+            
+            return [];
+        } catch (error) {
+            return [{
+                path: '',
+                message: error instanceof Error ? error.message : 'Invalid JSON',
+                keyword: 'syntax'
+            }];
         }
     }
 
     /**
      * 获取编辑器内容
      */
-    public getContent(): string {
-        return this.view.state.doc.toString();
+    getValue(): string {
+        return this.view?.state.doc.toString() || '';
     }
 
     /**
      * 设置编辑器内容
      */
-    public setContent(content: string): void {
-        this.view.dispatch({
-            changes: {
-                from: 0,
-                to: this.view.state.doc.length,
-                insert: content
-            }
-        });
-    }
-
-    /**
-     * 格式化内容
-     */
-    public format(): string {
-        try {
-            const content = this.getContent();
-            return JSON.stringify(JSON.parse(content), null, 2);
-        } catch {
-            return this.getContent();
+    setValue(value: string) {
+        if (this.view) {
+            this.view.dispatch({
+                changes: {
+                    from: 0,
+                    to: this.view.state.doc.length,
+                    insert: value
+                }
+            });
         }
-    }
-
-    /**
-     * 压缩内容
-     */
-    public minify(): string {
-        try {
-            const content = this.getContent();
-            return JSON.stringify(JSON.parse(content));
-        } catch {
-            return this.getContent();
-        }
-    }
-
-    /**
-     * 获取编辑器实例
-     */
-    public getView(): EditorView {
-        return this.view;
     }
 
     /**
      * 销毁编辑器
      */
-    public destroy(): void {
-        this.view.destroy();
+    destroy() {
+        if (this.view) {
+            this.view.destroy();
+            this.view = null;
+        }
     }
 } 
