@@ -322,7 +322,14 @@ export class EditorCore {
                 }
                 
                 // 更新编辑器内容
-                this.setValue(JSON.stringify(data, null, 2));
+                const newContent = JSON.stringify(data, null, 2);
+                this.setValue(newContent);
+
+                // 触发 onChange 以便进行验证
+                if (this.config.onChange) {
+                    this.config.onChange(newContent);
+                }
+                
                 return true;
             }
             return false;

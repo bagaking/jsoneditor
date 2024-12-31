@@ -134,11 +134,13 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
     // 内容变化处理
     const handleChange = useCallback((value: string) => {
         console.log('Content changed:', { valueLength: value.length });
+        
+        // 触发 onChange 回调
         stateRef.current.onChange?.(value);
-        if (stateRef.current.validateOnChange) {
-            setIsValid(false);
-            debouncedValidate(value);
-        }
+        
+        // 始终进行验证
+        setIsValid(false);
+        debouncedValidate(value);
     }, [debouncedValidate]);
 
     // 光标位置变化处理
@@ -176,8 +178,12 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
         const success = editorRef.current.setValueAtPath(schemaInfo.path, value);
         if (!success) {
             console.error('Failed to set value at path:', schemaInfo.path);
+            return;
         }
-    }, [schemaInfo]);
+
+        // 手动触发验证
+        validateJson(editorRef.current.getValue());
+    }, [schemaInfo, validateJson]);
 
     // 文档大小变化处理
     const handleDocChanged = useCallback((info: { lines: number; bytes: number }) => {
