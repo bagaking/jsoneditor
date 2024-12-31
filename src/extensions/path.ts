@@ -1,137 +1,109 @@
-import { Extension, StateField, StateEffect } from '@codemirror/state';
-import { EditorView, Decoration, DecorationSet, ViewPlugin, ViewUpdate } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
 import type { SyntaxNode } from '@lezer/common';
 
 /**
- * 路径提示配置
+ * JSON 路径工具类
  */
-export interface PathExtensionConfig {
-    showInGutter?: boolean;
-    showInTooltip?: boolean;
-    highlightPath?: boolean;
-}
+export class JsonPath {
+    /**
+     * 从节点获取完整的 JSON 路径
+     */
+    static fromNode(view: EditorView, node: SyntaxNode): string {
+        const parts: string[] = [];
+        let current = node;
 
-/**
- * 路径更新效果
- */
-const updatePath = StateEffect.define<string[]>();
-
-/**
- * 路径状态字段
- */
-const pathField = StateField.define<string[]>({
-    create() {
-        return [];
-    },
-    update(value, tr) {
-        for (const effect of tr.effects) {
-            if (effect.is(updatePath)) {
-                return effect.value;
-            }
-        }
-        return value;
-    }
-});
-
-/**
- * 创建路径提示扩展
- */
-export function createPathExtension(config: PathExtensionConfig = {}): Extension {
-    // 创建装饰
-    const pathMark = Decoration.mark({ class: 'cm-json-path' });
-    const pathGutter = Decoration.line({ class: 'cm-json-path-gutter' });
-
-    // 创建视图插件
-    const pathPlugin = ViewPlugin.fromClass(class {
-        decorations: DecorationSet;
-
-        constructor(view: EditorView) {
-            this.decorations = this.buildDecorations(view);
-        }
-
-        update(update: ViewUpdate) {
-            if (update.docChanged || update.viewportChanged) {
-                this.decorations = this.buildDecorations(update.view);
-            }
-        }
-
-        buildDecorations(view: EditorView) {
-            const builder = new Array<any>();
-            const path = view.state.field(pathField);
-
-            if (config.highlightPath && path.length > 0) {
-                // 遍历语法树查找匹配的节点
-                syntaxTree(view.state).iterate({
-                    enter(node) {
-                        if (node.name === 'PropertyName') {
-                            const text = view.state.doc.sliceString(node.from, node.to);
-                            const key = text.replace(/['"]/g, '');
-                            if (path.includes(key)) {
-                                builder.push(pathMark.range(node.from, node.to));
-                                if (config.showInGutter) {
-                                    const line = view.state.doc.lineAt(node.from);
-                                    builder.push(pathGutter.range(line.from));
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            return Decoration.set(builder);
-        }
-    }, {
-        decorations: v => v.decorations,
-        eventHandlers: {
-            mouseover(event: MouseEvent, view: EditorView) {
-                if (!config.showInTooltip) return;
-
-                const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-                if (pos === null) return;
-
-                const node = syntaxTree(view.state).resolveInner(pos);
-                if (node.name === 'PropertyName') {
-                    const path = getPropertyPath(view, node.from);
-                    if (path) {
-                        view.dispatch({
-                            effects: updatePath.of(path)
-                        });
-                    }
+        while (current && current.parent) {
+            if (current.name === "Property") {
+                const content = view.state.doc.sliceString(current.from, current.to);
+                const keyMatch = content.match(/"([^"]+)"\s*:/);
+                if (keyMatch) {
+                    parts.unshift(`["${keyMatch[1]}"]`);
                 }
             }
+            current = current.parent;
         }
-    });
 
-    return [
-        pathField,
-        pathPlugin,
-        EditorView.baseTheme({
-            '.cm-json-path': {
-                backgroundColor: '#e6f7ff',
-                borderRadius: '2px'
-            },
-            '.cm-json-path-gutter': {
-                color: '#1890ff'
-            }
-        })
-    ];
-}
-
-/**
- * 获取属性路径
- */
-function getPropertyPath(view: EditorView, pos: number): string[] | null {
-    const path: string[] = [];
-    let currentNode: SyntaxNode | null = syntaxTree(view.state).resolveInner(pos);
-
-    while (currentNode) {
-        if (currentNode.name === 'PropertyName') {
-            const text = view.state.doc.sliceString(currentNode.from, currentNode.to);
-            path.unshift(text.replace(/['"]/g, ''));
-        }
-        currentNode = currentNode.parent;
+        return '$' + parts.join('');
     }
 
-    return path.length > 0 ? path : null;
+    /**
+     * 从位置获取 JSON 路径
+     */
+    static fromPosition(view: EditorView, pos: number): string | null {
+        const node = syntaxTree(view.state).resolveInner(pos);
+        if (!node) return null;
+
+        // 如果在属性名上，直接返回路径
+        if (node.name === "PropertyName" || node.parent?.name === "Property") {
+            return this.fromNode(view, node.parent || node);
+        }
+
+        // 如果在值上，返回父属性的路径
+        const property = this.findParentProperty(node);
+        return property ? this.fromNode(view, property) : null;
+    }
+
+    /**
+     * 解析属性值
+     */
+    static extractPropertyValue(content: string): { key: string, value: string } | null {
+        const keyMatch = content.match(/"([^"]+)"\s*:/);
+        const valueMatch = content.match(/:\s*(.+)/);
+        if (!keyMatch || !valueMatch) return null;
+        return {
+            key: keyMatch[1],
+            value: valueMatch[1].trim()
+        };
+    }
+
+    /**
+     * 获取清理后的值
+     */
+    static getCleanValue(value: string, node: SyntaxNode, view: EditorView): string {
+        // 如果是字符串类型
+        if (value.startsWith('"')) {
+            return value.replace(/^"(.*)".*$/, '$1');
+        }
+        
+        // 如果是对象或数组类型
+        const valueNode = node.getChild('Object') || node.getChild('Array');
+        if (valueNode) {
+            return view.state.doc.sliceString(valueNode.from, valueNode.to);
+        }
+        
+        // 其他类型（数字、布尔等）
+        return value;
+    }
+
+    /**
+     * 查找父级属性节点
+     */
+    private static findParentProperty(node: SyntaxNode): SyntaxNode | null {
+        let current = node;
+        while (current && current.parent) {
+            if (current.name === "Property") {
+                return current;
+            }
+            current = current.parent;
+        }
+        return null;
+    }
+
+    /**
+     * 将路径字符串解析为路径数组
+     */
+    static parsePath(path: string): string[] {
+        if (!path.startsWith('$')) return [];
+        return path.slice(1).split(/[\[\]]/)
+            .filter(p => p && p !== '"' && p !== "'")
+            .map(p => p.replace(/['"]/g, ''));
+    }
+
+    /**
+     * 将路径数组转换为路径字符串
+     */
+    static stringifyPath(parts: string[]): string {
+        return '$' + parts.map(p => `["${p}"]`).join('');
+    }
 } 

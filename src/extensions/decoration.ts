@@ -3,6 +3,7 @@ import { EditorView, Decoration, DecorationSet, WidgetType, ViewPlugin, ViewUpda
 import { syntaxTree } from '@codemirror/language';
 import type { SyntaxNode } from '@lezer/common';
 import { DecorationConfig, DecorationStyle, CustomComponent } from '../core/types';
+import { JsonPath } from './path';
 
 // 组件定义
 class LinkWidget extends WidgetType {
@@ -70,50 +71,6 @@ const utils = {
         } catch {
             return false;
         }
-    },
-
-    extractPropertyValue(content: string): { key: string, value: string } | null {
-        const keyMatch = content.match(/"([^"]+)"\s*:/);
-        const valueMatch = content.match(/:\s*(.+)/);
-        if (!keyMatch || !valueMatch) return null;
-        return {
-            key: keyMatch[1],
-            value: valueMatch[1].trim()
-        };
-    },
-
-    getNodePath(view: EditorView, node: SyntaxNode): string {
-        const parts: string[] = [];
-        let current = node;
-
-        while (current && current.parent) {
-            if (current.name === "Property") {
-                const content = view.state.doc.sliceString(current.from, current.to);
-                const keyMatch = content.match(/"([^"]+)"\s*:/);
-                if (keyMatch) {
-                    parts.unshift(`["${keyMatch[1]}"]`);
-                }
-            }
-            current = current.parent;
-        }
-
-        return '$' + parts.join('');
-    },
-
-    getCleanValue(value: string, node: SyntaxNode, view: EditorView): string {
-        // 如果是字符串类型
-        if (value.startsWith('"')) {
-            return value.replace(/^"(.*)".*$/, '$1');
-        }
-        
-        // 如果是对象或数组类型
-        const valueNode = node.getChild('Object') || node.getChild('Array');
-        if (valueNode) {
-            return view.state.doc.sliceString(valueNode.from, valueNode.to);
-        }
-        
-        // 其他类型（数字、布尔等）
-        return value;
     }
 };
 
@@ -156,7 +113,6 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
     const decorationPlugin = ViewPlugin.fromClass(class {
         decorations: DecorationSet;
         factory: DecorationFactory;
-        pathCache: Map<number, string> = new Map();
 
         constructor(view: EditorView) {
             this.factory = new DecorationFactory(config);
@@ -165,7 +121,6 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
 
         update(update: ViewUpdate) {
             if (update.docChanged || update.viewportChanged) {
-                this.pathCache.clear();
                 this.decorations = this.buildDecorations(update.view);
             }
         }
@@ -186,7 +141,7 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
 
         private processProperty(view: EditorView, cursor: any, builder: any[]) {
             const content = view.state.doc.sliceString(cursor.from, cursor.to);
-            const extracted = utils.extractPropertyValue(content);
+            const extracted = JsonPath.extractPropertyValue(content);
             if (!extracted) return;
 
             const { key, value } = extracted;
@@ -194,10 +149,10 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
             const keyEnd = keyStart + key.length + 2;
 
             // 处理路径装饰
-            const path = utils.getNodePath(view, cursor.node);
+            const path = JsonPath.fromNode(view, cursor.node);
             if (config.paths && path in config.paths) {
                 const pathConfig = config.paths[path];
-                const cleanValue = utils.getCleanValue(value, cursor.node, view);
+                const cleanValue = JsonPath.getCleanValue(value, cursor.node, view);
                 const decoration = this.factory.createPathDecoration(
                     pathConfig.style,
                     cleanValue,
