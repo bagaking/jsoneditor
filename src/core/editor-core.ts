@@ -5,9 +5,11 @@ import { defaultKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter } from '@codemirror/view';
 import { bracketMatching } from '@codemirror/language';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
 import { createDecorationExtension } from '../extensions/decoration';
-import { DecorationConfig, ValidationError, EditorConfig } from './types';
+import { EditorConfig } from './types';
 import { light } from '../themes/light';
+import { getCompletions } from './schema';
 
 // 基础样式增强
 const baseTheme = EditorView.theme({
@@ -24,6 +26,7 @@ export class EditorCore {
     private container: HTMLElement;
     private config: EditorConfig;
     private schema: object | null = null;
+    private lastCursor: { line: number; col: number } | null = null;
 
     constructor(container: HTMLElement, config: EditorConfig = {}) {
         console.log('EditorCore constructor:', { container, config });
@@ -47,12 +50,61 @@ export class EditorCore {
                 state,
                 parent: this.container,
                 dispatch: (tr: Transaction) => {
-                    if (this.view) {
-                        this.view.update([tr]);
-                        if (tr.docChanged && this.config.onChange) {
-                            const value = this.getValue();
+                    if (!this.view) return;
+
+                    // 保存当前光标位置
+                    const oldState = this.view.state;
+                    const hadFocus = this.view.hasFocus;
+                    
+                    // 更新视图
+                    this.view.update([tr]);
+
+                    // 如果文档发生变化
+                    if (tr.docChanged) {
+                        const value = this.getValue();
+                        console.log('Document changed:', { valueLength: value.length });
+                        
+                        // 触发 onChange
+                        if (this.config.onChange) {
                             this.config.onChange(value);
                         }
+                    }
+
+                    // 如果光标位置改变
+                    if (tr.selection && this.config.onCursorActivity) {
+                        const pos = this.view.state.selection.main.head;
+                        const line = this.view.state.doc.lineAt(pos);
+                        const cursorInfo = {
+                            line: line.number,
+                            col: pos - line.from + 1
+                        };
+                        
+                        console.log('Cursor moved:', cursorInfo);
+                        
+                        // 只有当位置真的改变时才触发回调
+                        if (!this.lastCursor || 
+                            this.lastCursor.line !== cursorInfo.line || 
+                            this.lastCursor.col !== cursorInfo.col) {
+                            this.lastCursor = cursorInfo;
+                            this.config.onCursorActivity(cursorInfo);
+                        }
+                    }
+
+                    // 如果文档大小改变
+                    if (tr.docChanged && this.config.onDocChanged) {
+                        const doc = this.view.state.doc;
+                        const info = {
+                            lines: doc.lines,
+                            bytes: doc.toString().length
+                        };
+                        console.log('Document size changed:', info);
+                        this.config.onDocChanged(info);
+                    }
+
+                    // 如果之前有焦点，确保保持焦点
+                    if (hadFocus && !this.view.hasFocus) {
+                        console.log('Restoring focus');
+                        this.view.focus();
                     }
                 }
             });
@@ -69,10 +121,29 @@ export class EditorCore {
      */
     updateConfig(config: EditorConfig) {
         console.log('Updating editor config:', config);
+        
+        // 保存当前状态
+        const hadFocus = this.view?.hasFocus;
+        const cursorPos = this.view?.state.selection.main.head;
+        
+        // 更新配置
         this.config = { ...this.config, ...config };
+        this.schema = config.schema || null;
+        
+        // 重新创建编辑器状态
         if (this.view) {
             const state = this.createEditorState(this.getValue());
             this.view.setState(state);
+            
+            // 恢复焦点和光标位置
+            if (hadFocus) {
+                this.view.focus();
+            }
+            if (cursorPos !== undefined) {
+                this.view.dispatch({
+                    selection: { anchor: cursorPos }
+                });
+            }
         }
     }
 
@@ -91,98 +162,24 @@ export class EditorCore {
                 keymap.of(defaultKeymap),
                 // JSON 支持
                 json(),
+                // 自动补全
+                autocompletion({
+                    override: [(context: CompletionContext) => {
+                        if (this.schema) {
+                            return getCompletions(this.schema, context);
+                        }
+                        return null;
+                    }],
+                    defaultKeymap: true
+                }),
                 // 装饰扩展
                 createDecorationExtension(this.config.decoration || {}),
                 // 主题
                 this.config.theme === 'dark' ? oneDark : light,
                 // 基础样式
-                baseTheme,
-                // 光标活动监听
-                EditorView.updateListener.of(update => {
-                    if (update.selectionSet && this.config.onCursorActivity) {
-                        const pos = update.state.selection.main.head;
-                        const line = update.state.doc.lineAt(pos);
-                        this.config.onCursorActivity({
-                            line: line.number,
-                            col: pos - line.from + 1
-                        });
-                    }
-                    if (update.docChanged && this.config.onDocChanged) {
-                        const doc = update.state.doc;
-                        this.config.onDocChanged({
-                            lines: doc.lines,
-                            bytes: doc.toString().length
-                        });
-                    }
-                })
+                baseTheme
             ]
         });
-    }
-
-    /**
-     * 格式化 JSON
-     */
-    format() {
-        console.log('Formatting JSON');
-        try {
-            const content = this.getValue();
-            const formatted = JSON.stringify(JSON.parse(content), null, 2);
-            this.setValue(formatted);
-            return true;
-        } catch (error) {
-            console.error('Format failed:', error);
-            if (this.config.onError) {
-                this.config.onError(error instanceof Error ? error : new Error(String(error)));
-            }
-            return false;
-        }
-    }
-
-    /**
-     * 压缩 JSON
-     */
-    minify() {
-        console.log('Minifying JSON');
-        try {
-            const content = this.getValue();
-            const minified = JSON.stringify(JSON.parse(content));
-            this.setValue(minified);
-            return true;
-        } catch (error) {
-            console.error('Minify failed:', error);
-            if (this.config.onError) {
-                this.config.onError(error instanceof Error ? error : new Error(String(error)));
-            }
-            return false;
-        }
-    }
-
-    /**
-     * 验证 JSON
-     */
-    validate(): ValidationError[] {
-        console.log('Validating JSON');
-        try {
-            const content = this.getValue();
-            JSON.parse(content); // 基本语法验证
-            
-            if (this.schema) {
-                // TODO: 实现基于 schema 的验证
-                return [];
-            }
-            
-            return [];
-        } catch (error) {
-            console.error('Validation failed:', error);
-            if (this.config.onError) {
-                this.config.onError(error instanceof Error ? error : new Error(String(error)));
-            }
-            return [{
-                path: '',
-                message: error instanceof Error ? error.message : 'Invalid JSON',
-                keyword: 'syntax'
-            }];
-        }
     }
 
     /**
@@ -198,6 +195,8 @@ export class EditorCore {
     setValue(value: string) {
         console.log('Setting editor value, length:', value.length);
         if (this.view) {
+            const hadFocus = this.view.hasFocus;
+            
             this.view.dispatch({
                 changes: {
                     from: 0,
@@ -205,6 +204,11 @@ export class EditorCore {
                     insert: value
                 }
             });
+
+            // 恢复焦点
+            if (hadFocus) {
+                this.view.focus();
+            }
         }
     }
 

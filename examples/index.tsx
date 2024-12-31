@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { JsonEditor, CustomComponent } from '../src';
+import { schema } from './schema';
 
 // 创建自定义组件
 const BadgeComponent: CustomComponent = {
@@ -137,52 +138,66 @@ function App() {
                         <option value="dark">Dark Theme</option>
                     </select>
                 </div>
-                <JsonEditor
-                    className="h-[600px] shadow-sm"
-                    defaultValue={value}
-                    onChange={setValue}
-                    onError={setError}
-                    config={{
-                        theme,
-                        decoration: {
-                            paths: {
-                                '$["apiVersion"]': {
-                                    style: 'underline bold',
-                                    onClick: (value) => updateStatus(`API Version: ${value}`)
+                <div className="space-y-4">
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-700 dark:text-blue-300">
+                        <p>✨ 这个示例展示了 JSON Editor 的主要功能：</p>
+                        <ul className="list-disc list-inside mt-2 space-y-1">
+                            <li>JSON Schema 验证（尝试修改内容，会自动验证）</li>
+                            <li>自动补全（输入时会根据 schema 提供建议）</li>
+                            <li>路径高亮（点击不同的字段会显示状态）</li>
+                            <li>URL 检测（点击链接可以打开）</li>
+                            <li>主题切换（支持亮色/暗色主题）</li>
+                        </ul>
+                    </div>
+                    <JsonEditor
+                        className="h-[600px] shadow-sm"
+                        defaultValue={value}
+                        onChange={setValue}
+                        onError={setError}
+                        config={{
+                            theme,
+                            schema,
+                            validateOnChange: true,
+                            decoration: {
+                                paths: {
+                                    '$["apiVersion"]': {
+                                        style: 'underline bold',
+                                        onClick: (value) => updateStatus(`API Version: ${value}`)
+                                    },
+                                    '$["data"]["project"]["status"]': {
+                                        style: BadgeComponent,
+                                        onClick: (value) => updateStatus(`Project Status: ${value}`)
+                                    },
+                                    '$["data"]["project"]["config"]["features"]': {
+                                        style: 'underline italic',
+                                        onClick: (value) => updateStatus(`Features: ${value}`)
+                                    },
+                                    '$["data"]["project"]["config"]["documentation"]["url"]': {
+                                        style: 'underline',
+                                        onClick: (value) => window.open(value, '_blank')
+                                    }
                                 },
-                                '$["data"]["project"]["status"]': {
-                                    style: BadgeComponent,
-                                    onClick: (value) => updateStatus(`Project Status: ${value}`)
-                                },
-                                '$["data"]["project"]["config"]["features"]': {
-                                    style: 'underline italic',
-                                    onClick: (value) => updateStatus(`Features: ${value}`)
-                                },
-                                '$["data"]["project"]["config"]["documentation"]["url"]': {
-                                    style: 'underline',
-                                    onClick: (value) => window.open(value, '_blank')
-                                }
-                            },
-                            urlHandler: {
-                                component: UrlBadgeComponent,
-                                onClick: (url) => {
-                                    updateStatus(`Opening: ${url}`);
-                                    window.open(url, '_blank');
+                                urlHandler: {
+                                    component: UrlBadgeComponent,
+                                    onClick: (url) => {
+                                        updateStatus(`Opening: ${url}`);
+                                        window.open(url, '_blank');
+                                    }
                                 }
                             }
-                        }
-                    }}
-                />
-                {error && (
-                    <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-600 dark:text-red-400 text-sm">
-                        {error.message}
-                    </div>
-                )}
-                {status && (
-                    <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-md text-green-600 dark:text-green-400 text-sm">
-                        {status}
-                    </div>
-                )}
+                        }}
+                    />
+                    {error && (
+                        <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-600 dark:text-red-400 text-sm">
+                            {error.message}
+                        </div>
+                    )}
+                    {status && (
+                        <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-md text-green-600 dark:text-green-400 text-sm">
+                            Example Message: {status}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
