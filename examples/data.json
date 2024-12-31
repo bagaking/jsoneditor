@@ -1,0 +1,16 @@
+{
+    "name": "Laptop Pro X1",
+    "price": 1299.99,
+    "category": "electronics",
+    "inStock": true,
+    "tags": [
+        "laptop",
+        "computer",
+        "high-performance"
+    ],
+    "details": {
+        "description": "High-performance laptop for professionals",
+        "manufacturer": "TechCorp",
+        "model": "X1-2023"
+    }
+} 

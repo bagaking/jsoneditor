@@ -1,0 +1,159 @@
+@startuml JSONEditor Classes
+
+title JSON Editor Core Classes
+
+' 接口定义
+interface IField {
+    +path: string
+    +type: string
+    +value: any
+    +metadata: Map<string, any>
+    +validate(): boolean
+    +format(): string
+}
+
+interface IValidator {
+    +rules: ValidationRules
+    +validate(value: any): ValidationResult
+    +getErrorMessage(error: ValidationError): string
+}
+
+interface ITheme {
+    +name: string
+    +styles: ThemeStyles
+    +apply(element: HTMLElement): void
+    +reset(): void
+}
+
+interface IPlugin {
+    +id: string
+    +name: string
+    +version: string
+    +type: "ui" | "business" | "utility"
+    +initialize()
+    +destroy()
+}
+
+interface IFieldHandler {
+    +detect(field: IField): boolean
+    +validate(field: IField): boolean
+    +format(field: IField): string
+}
+
+interface IEventHandler {
+    +eventType: string
+    +priority: number
+    +handle(event: Event): void
+}
+
+' 核心类
+class JSONEditor {
+    -core: EditorCore
+    -fieldManager: FieldManager
+    -pluginSystem: PluginSystem
+    -eventBus: EventBus
+    -stateManager: StateManager
+    +initialize(config: EditorConfig)
+    +destroy()
+    +getContent(): string
+    +setContent(content: string)
+    +undo()
+    +redo()
+    +validate(): ValidationResult
+    +save(): Promise<void>
+}
+
+class EditorCore {
+    -view: CodeMirrorView
+    -state: EditorState
+    -history: EditHistory
+    +getContent(): string
+    +setContent(content: string)
+    +getSelection(): Selection
+    +setSelection(selection: Selection)
+    +undo()
+    +redo()
+    +batch(operations: Operation[]): void
+}
+
+class FieldManager {
+    -fields: Map<string, IField>
+    -handlers: Map<string, IFieldHandler>
+    -validators: Map<string, IValidator>
+    +registerHandler(type: string, handler: IFieldHandler)
+    +registerValidator(type: string, validator: IValidator)
+    +processField(field: IField)
+    +validateField(field: IField): boolean
+    +getFieldByPath(path: string): IField
+}
+
+class PluginSystem {
+    -plugins: Map<string, IPlugin>
+    -uiPlugins: Set<string>
+    -businessPlugins: Set<string>
+    -utilityPlugins: Set<string>
+    +register(plugin: IPlugin)
+    +unregister(pluginId: string)
+    +getPlugin(pluginId: string): IPlugin
+    +createExtension(plugin: IPlugin)
+    +loadPlugin(url: string): Promise<void>
+}
+
+class EventBus {
+    -handlers: Map<string, Set<IEventHandler>>
+    -priorityQueue: PriorityQueue<IEventHandler>
+    +on(event: string, handler: IEventHandler)
+    +off(event: string, handler: IEventHandler)
+    +emit(event: string, data: any)
+    +once(event: string, handler: IEventHandler)
+}
+
+class StateManager {
+    -editorState: EditorState
+    -fieldState: Map<string, FieldState>
+    -pluginState: Map<string, PluginState>
+    -history: StateHistory
+    +getState(type: string): any
+    +setState(type: string, state: any)
+    +snapshot(): StateSnapshot
+    +restore(snapshot: StateSnapshot)
+}
+
+' 实现类
+class ScriptFieldHandler {
+    -scriptEngine: ScriptEngine
+    +detect(field: IField): boolean
+    +validate(field: IField): boolean
+    +format(field: IField): string
+    +execute(script: string): any
+}
+
+class ThemePlugin {
+    +id: string
+    +name: string
+    +version: string
+    +type: "ui"
+    -themes: Map<string, ITheme>
+    +initialize()
+    +destroy()
+    +applyTheme(theme: ITheme)
+    +registerTheme(theme: ITheme)
+}
+
+' 关系定义
+JSONEditor *-- EditorCore
+JSONEditor *-- FieldManager
+JSONEditor *-- PluginSystem
+JSONEditor *-- EventBus
+JSONEditor *-- StateManager
+
+FieldManager o-- IField
+FieldManager o-- IFieldHandler
+FieldManager o-- IValidator
+PluginSystem o-- IPlugin
+EventBus o-- IEventHandler
+
+ScriptFieldHandler ..|> IFieldHandler
+ThemePlugin ..|> IPlugin
+
+@enduml 

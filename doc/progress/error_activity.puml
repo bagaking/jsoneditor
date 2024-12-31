@@ -1,0 +1,103 @@
+@startuml JSONEditor Error Handling
+
+title JSON Editor Error Handling Process
+
+start
+
+:用户输入;
+:创建状态快照;
+
+if (JSON 格式验证) then (valid)
+    if (Schema 验证) then (valid)
+        if (字段验证) then (valid)
+            if (插件验证) then (valid)
+                :更新编辑器内容;
+                :保存状态;
+                :显示成功提示;
+            else (invalid)
+                :收集插件错误信息;
+                :标记错误字段;
+                :显示插件错误提示;
+                if (支持自动修复) then (yes)
+                    :应用插件修复规则;
+                    if (修复成功) then (yes)
+                        :更新字段内容;
+                        :显示修复提示;
+                    else (no)
+                        :回滚到快照;
+                        :显示修复失败提示;
+                    endif
+                endif
+            endif
+        else (invalid)
+            :收集字段错误信息;
+            :标记错误字段;
+            :显示字段错误提示;
+            if (支持自动修复) then (yes)
+                :应用字段修复规则;
+                ' 例如：数据类型转换、格式规范化等
+                if (修复成功) then (yes)
+                    :更新字段内容;
+                    :显示修复提示;
+                else (no)
+                    :回滚到快照;
+                    :显示修复失败提示;
+                endif
+            endif
+        endif
+    else (invalid)
+        :收集 Schema 错误信息;
+        :标记错误位置;
+        :显示 Schema 错误提示;
+        if (支持自动修复) then (yes)
+            :应用 Schema 修复规则;
+            ' 例如：添加必填字段、移除多余字段等
+            if (修复成功) then (yes)
+                :更新文档结构;
+                :显示修复提示;
+            else (no)
+                :回滚到快照;
+                :显示修复失败提示;
+            endif
+        endif
+    endif
+else (invalid)
+    :收集语法错误信息;
+    :标记错误位置;
+    :显示语法错误提示;
+    if (支持自动修复) then (yes)
+        :应用语法修复规则;
+        ' 例如：修复引号、逗号、括号等
+        if (修复成功) then (yes)
+            :更新 JSON 文本;
+            :显示修复提示;
+        else (no)
+            :回滚到快照;
+            :显示修复失败提示;
+        endif
+    endif
+endif
+
+if (是否有错误) then (yes)
+    :记录错误日志;
+    :触发错误事件;
+    if (是否自动修复) then (yes)
+        :检查修复结果;
+        if (修复是否成功) then (yes)
+            :提交修复结果;
+            :更新编辑器状态;
+        else (no)
+            :回滚到快照;
+            :等待用户手动修复;
+        endif
+    else (no)
+        :等待用户修复;
+    endif
+else (no)
+    :更新编辑器状态;
+    :清理临时快照;
+endif
+
+stop
+
+@enduml 

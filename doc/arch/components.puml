@@ -1,0 +1,102 @@
+@startuml JSONEditor Components
+
+title JSON Editor Component Architecture
+
+' 定义组件样式
+skinparam component {
+    BackgroundColor<<core>> LightBlue
+    BackgroundColor<<plugin>> LightGreen
+    BackgroundColor<<ui>> LightYellow
+    BackgroundColor<<cache>> LightPink
+}
+
+' UI 层
+package "UI Layer" {
+    [Editor View] <<ui>>
+    [Field Renderer] <<ui>>
+    [Toolbar] <<ui>>
+    [Error Display] <<ui>>
+}
+
+' 核心层
+package "Core Layer" {
+    [Editor Core] <<core>>
+    [Field Manager] <<core>>
+    [State Manager] <<core>>
+    [Event Bus] <<core>>
+    [Operation Manager] <<core>>
+}
+
+' 插件层
+package "Plugin Layer" {
+    package "UI Plugins" {
+        [Theme Plugin] <<plugin>>
+        [Syntax Highlighter] <<plugin>>
+        [Custom Renderer] <<plugin>>
+    }
+    
+    package "Business Plugins" {
+        [Validation Plugin] <<plugin>>
+        [Script Plugin] <<plugin>>
+        [Transform Plugin] <<plugin>>
+    }
+    
+    package "Utility Plugins" {
+        [Import/Export] <<plugin>>
+        [History Plugin] <<plugin>>
+        [Search Plugin] <<plugin>>
+    }
+    
+    [Plugin System] <<plugin>>
+}
+
+' 数据层
+package "Data Layer" {
+    [JSON Parser]
+    [Schema Validator]
+    
+    package "Storage" {
+        [Storage Manager]
+        [Local Cache] <<cache>>
+        [Session Cache] <<cache>>
+    }
+}
+
+' 定义依赖关系
+[Editor View] --> [Editor Core]
+[Editor View] --> [Field Renderer]
+[Editor View] --> [Toolbar]
+[Editor View] --> [Error Display]
+
+[Field Renderer] --> [Field Manager]
+[Field Manager] --> [Plugin System]
+
+[Editor Core] --> [JSON Parser]
+[Editor Core] --> [Schema Validator]
+[Editor Core] --> [Storage Manager]
+[Editor Core] --> [Operation Manager]
+
+[Storage Manager] --> [Local Cache]
+[Storage Manager] --> [Session Cache]
+
+[Plugin System] --> [Theme Plugin]
+[Plugin System] --> [Syntax Highlighter]
+[Plugin System] --> [Custom Renderer]
+[Plugin System] --> [Validation Plugin]
+[Plugin System] --> [Script Plugin]
+[Plugin System] --> [Transform Plugin]
+[Plugin System] --> [Import/Export]
+[Plugin System] --> [History Plugin]
+[Plugin System] --> [Search Plugin]
+
+[Event Bus] <--> [Editor Core]
+[Event Bus] <--> [Field Manager]
+[Event Bus] <--> [Plugin System]
+[Event Bus] <--> [Operation Manager]
+
+[State Manager] <--> [Editor Core]
+[State Manager] <--> [Field Manager]
+[State Manager] <--> [Plugin System]
+[State Manager] <--> [Storage Manager]
+
+@enduml 

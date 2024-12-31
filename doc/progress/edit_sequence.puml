@@ -1,0 +1,148 @@
+@startuml JSONEditor Edit Sequence
+
+title JSON Editor Edit Process
+
+actor User
+participant "Editor View" as View
+participant "Editor Core" as Core
+participant "Operation Manager" as OM
+participant "Field Manager" as FM
+participant "Plugin System" as PS
+participant "Event Bus" as EB
+participant "State Manager" as SM
+participant "Storage Manager" as Storage
+
+' 初始化流程
+User -> View: 打开编辑器
+activate View
+View -> Core: initialize()
+activate Core
+Core -> FM: initialize()
+activate FM
+FM -> PS: loadPlugins()
+activate PS
+PS --> FM: plugins loaded
+deactivate PS
+FM --> Core: ready
+deactivate FM
+Core -> Storage: loadCache()
+activate Storage
+Storage --> Core: cache loaded
+deactivate Storage
+Core --> View: ready
+deactivate Core
+View --> User: 显示编辑器界面
+deactivate View
+
+' 编辑流程
+User -> View: 编辑字段
+activate View
+View -> Core: updateContent()
+activate Core
+Core -> OM: recordOperation()
+activate OM
+OM -> Core: operation recorded
+deactivate OM
+Core -> EB: emit("content.change")
+activate EB
+
+' 字段处理
+EB -> FM: handleFieldChange()
+activate FM
+FM -> PS: processField()
+activate PS
+PS -> PS: applyPlugins()
+PS --> FM: field processed
+deactivate PS
+FM --> EB: field updated
+deactivate FM
+
+' 状态更新
+EB -> SM: updateState()
+activate SM
+SM -> Storage: cacheState()
+activate Storage
+Storage --> SM: state cached
+deactivate Storage
+SM --> EB: state updated
+deactivate SM
+
+EB --> Core: change handled
+deactivate EB
+Core --> View: content updated
+deactivate Core
+View --> User: 显示更新结果
+deactivate View
+
+' 撤销流程
+User -> View: 撤销操作
+activate View
+View -> Core: undo()
+activate Core
+Core -> OM: getLastOperation()
+activate OM
+OM -> Core: operation retrieved
+deactivate OM
+Core -> EB: emit("operation.undo")
+activate EB
+EB -> SM: restoreState()
+activate SM
+SM --> EB: state restored
+deactivate SM
+EB --> Core: undo completed
+deactivate EB
+Core --> View: content reverted
+deactivate Core
+View --> User: 显示撤销结果
+deactivate View
+
+' 批量编辑流程
+User -> View: 批量编辑
+activate View
+View -> Core: batchEdit(operations)
+activate Core
+Core -> OM: startBatch()
+activate OM
+loop 每个操作
+    Core -> OM: recordOperation()
+    OM -> Core: operation recorded
+end
+Core -> OM: endBatch()
+OM -> Core: batch completed
+deactivate OM
+Core -> EB: emit("batch.complete")
+activate EB
+EB -> SM: updateState()
+activate SM
+SM --> EB: state updated
+deactivate SM
+EB --> Core: batch handled
+deactivate EB
+Core --> View: batch applied
+deactivate Core
+View --> User: 显示批量编辑结果
+deactivate View
+
+' 保存流程
+User -> View: 保存内容
+activate View
+View -> Core: save()
+activate Core
+Core -> EB: emit("content.save")
+activate EB
+EB -> SM: saveState()
+activate SM
+SM -> Storage: persistState()
+activate Storage
+Storage --> SM: state persisted
+deactivate Storage
+SM --> EB: state saved
+deactivate SM
+EB --> Core: save completed
+deactivate EB
+Core --> View: save success
+deactivate Core
+View --> User: 显示保存成功
+deactivate View
+
+@enduml 

@@ -1,0 +1,85 @@
+@startuml JSONEditor Document State
+
+title JSON Editor Document States
+
+[*] --> Loading : 打开文档
+
+state Loading {
+    [*] --> LoadingContent : 加载内容
+    LoadingContent --> LoadingPlugins : 内容加载完成
+    LoadingPlugins --> LoadingCache : 插件加载完成
+    LoadingCache --> [*] : 缓存加载完成
+}
+
+state Initialized {
+    [*] --> Empty : 新建文档
+    Empty --> Editing : 开始编辑
+    Editing --> Validating : 触发验证
+    Validating --> Invalid : 验证失败
+    Validating --> Valid : 验证通过
+    Invalid --> Editing : 继续编辑
+    Valid --> Editing : 继续编辑
+    Valid --> Saving : 保存文档
+    Saving --> Saved : 保存成功
+    Saving --> SaveError : 保存失败
+    SaveError --> Editing : 重试保存
+    Saved --> Editing : 继续编辑
+}
+
+state Editing {
+    [*] --> ContentChanged
+    ContentChanged --> FieldProcessing : 处理特殊字段
+    FieldProcessing --> PluginProcessing : 应用插件
+    PluginProcessing --> StateUpdating : 更新状态
+    StateUpdating --> [*]
+}
+
+state BatchEditing {
+    [*] --> BatchStarted : 开始批量操作
+    BatchStarted --> BatchProcessing : 处理操作队列
+    BatchProcessing --> BatchValidating : 验证批量结果
+    BatchValidating --> BatchSuccess : 验证通过
+    BatchValidating --> BatchError : 验证失败
+    BatchError --> BatchRollback : 回滚操作
+    BatchRollback --> Editing : 返回编辑状态
+    BatchSuccess --> BatchCommit : 提交更改
+    BatchCommit --> Editing : 返回编辑状态
+}
+
+state AsyncProcessing {
+    [*] --> AsyncStarted : 开始异步操作
+    AsyncStarted --> AsyncExecuting : 执行异步任务
+    AsyncExecuting --> AsyncWaiting : 等待结果
+    AsyncWaiting --> AsyncSuccess : 操作成功
+    AsyncWaiting --> AsyncError : 操作失败
+    AsyncError --> AsyncRetry : 重试操作
+    AsyncRetry --> AsyncExecuting : 重新执行
+    AsyncSuccess --> [*] : 完成异步操作
+}
+
+state Validating {
+    [*] --> SyntaxCheck : 检查语法
+    SyntaxCheck --> SchemaCheck : 语法正确
+    SchemaCheck --> FieldCheck : Schema 正确
+    FieldCheck --> PluginCheck : 字段正确
+    PluginCheck --> [*] : 全部通过
+    
+    SyntaxCheck --> ValidationError : 语法错误
+    SchemaCheck --> ValidationError : Schema 错误
+    FieldCheck --> ValidationError : 字段错误
+    PluginCheck --> ValidationError : 插件错误
+    ValidationError --> AutoFix : 尝试自动修复
+    AutoFix --> ValidationRetry : 重新验证
+    ValidationRetry --> SyntaxCheck : 重新检查
+}
+
+Loading --> Initialized : 加载完成
+Initialized --> [*] : 关闭编辑器
+
+Editing --> BatchEditing : 开始批量编辑
+Editing --> AsyncProcessing : 触发异步操作
+
+AsyncProcessing --> Editing : 异步操作完成
+BatchEditing --> Editing : 批量操作完成
+
+@enduml 

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Editor Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="toolbar">
+            <button id="btnFormat">Format</button>
+            <button id="btnMinify">Minify</button>
+            <button id="btnValidate">Validate</button>
+            <select id="themeSelect">
+                <option value="light">Light Theme</option>
+                <option value="dark">Dark Theme</option>
+            </select>
+        </div>
+        <div id="editor"></div>
+        <div class="status-bar">
+            <span id="status">Ready</span>
+        </div>
+    </div>
+    <script type="module" src="index.ts"></script>
+</body>
+</html> 

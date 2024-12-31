@@ -1,57 +1,39 @@
-import { defineConfig, PluginOption } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export default defineConfig(({ command, mode }) => ({
-  plugins: [react({
-    babel: {
-      plugins: [
-        ['@babel/plugin-proposal-decorators', { legacy: true }],
-        ['@babel/plugin-proposal-class-properties', { loose: true }],
-        ['import', { libraryName: 'antd', style: true }]
-      ]
-    }
-  })] as PluginOption[],
-  css: {
-    preprocessorOptions: {
-      less: {
-        javascriptEnabled: true,
-        modifyVars: {
-          'primary-color': '#1890ff',
-        },
-      },
-    },
-  },
-  build: command === 'build' ? {
+export default defineConfig({
+  build: {
     lib: {
-      entry: path.resolve(__dirname, 'src/index.ts'),
-      name: 'JsonEditor',
-      formats: ['es', 'umd'],
-      fileName: (format) => `index.${format}.js`,
+      entry: resolve(__dirname, 'src/index.ts'),
+      name: 'JSONEditor',
+      fileName: 'jsoneditor'
     },
     rollupOptions: {
-      external: ['react', 'react-dom', '@ant-design/icons', 'antd'],
+      external: [
+        '@codemirror/state',
+        '@codemirror/view',
+        '@codemirror/commands',
+        '@codemirror/language',
+        '@codemirror/lang-json',
+        '@codemirror/lint',
+        '@codemirror/theme-one-dark'
+      ],
       output: {
         globals: {
-          react: 'React',
-          'react-dom': 'ReactDOM',
-          '@ant-design/icons': 'AntdIcons',
-          'antd': 'antd'
-        },
-      },
-    },
-    sourcemap: true,
-    minify: 'terser',
-  } : undefined,
+          '@codemirror/state': 'CodeMirror.state',
+          '@codemirror/view': 'CodeMirror.view',
+          '@codemirror/commands': 'CodeMirror.commands',
+          '@codemirror/language': 'CodeMirror.language',
+          '@codemirror/lang-json': 'CodeMirror.langJSON',
+          '@codemirror/lint': 'CodeMirror.lint',
+          '@codemirror/theme-one-dark': 'CodeMirror.oneDark'
+        }
+      }
+    }
+  },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
-    },
-  },
-  root: command === 'serve' ? path.resolve(__dirname, 'demo') : undefined,
-  base: './',
-})); 
+      '@': resolve(__dirname, 'src')
+    }
+  }
+}); 
