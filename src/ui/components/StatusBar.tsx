@@ -18,19 +18,19 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     jsonSize
 }) => {
     return (
-        <div className="json-editor-statusbar">
-            <div className="json-editor-statusbar-left">
+        <div className="flex justify-between items-center px-3 py-2 text-xs bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2">
                 {error ? (
-                    <span className="json-editor-error" title={error}>
+                    <span className="text-red-500 dark:text-red-400" title={error}>
                         ⚠️ {error}
                     </span>
                 ) : (
-                    <span className="json-editor-status">
+                    <span className="text-green-500 dark:text-green-400">
                         Valid JSON
                     </span>
                 )}
             </div>
-            <div className="json-editor-statusbar-right">
+            <div className="flex items-center gap-4 text-gray-500 dark:text-gray-400">
                 <span title="Cursor position">
                     Ln {cursorInfo.line}, Col {cursorInfo.col}
                 </span>

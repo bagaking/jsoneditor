@@ -70,8 +70,9 @@ export interface DecorationConfig {
  * 编辑器配置
  */
 export interface EditorConfig {
-    container: HTMLElement;
-    content?: string;
+    // 基础配置
+    container?: HTMLElement;
+    value?: string;
     schema?: object;
     readonly?: boolean;
     autoFormat?: boolean;
@@ -79,6 +80,12 @@ export interface EditorConfig {
     theme?: 'light' | 'dark';
     extensions?: Extension[];
     decoration?: DecorationConfig;
+
+    // 回调函数
+    onChange?: (value: string) => void;
+    onError?: (error: Error) => void;
+    onCursorActivity?: (info: { line: number; col: number }) => void;
+    onDocChanged?: (info: { lines: number; bytes: number }) => void;
 }
 
 /**
