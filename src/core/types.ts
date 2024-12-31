@@ -31,6 +31,22 @@ export interface UrlHandler {
     onClick?: (url: string) => void;
 }
 
+export type DecorationPathHook = {
+    /**
+     * 装饰样式
+     * - 'underline': 下划线样式
+     * - 'bold': 粗体样式
+     * - 'italic': 斜体样式
+     * - 'underline bold': 组合样式
+     * - CustomComponent: 自定义组件
+     */
+    style: DecorationStyle;
+    /**
+     * 点击回调
+     */
+    onClick?: (value: string) => void;
+}
+
 /**
  * 装饰配置
  */
@@ -39,21 +55,7 @@ export interface DecorationConfig {
      * 路径装饰配置
      */
     paths?: {
-        [path: string]: {
-            /**
-             * 装饰样式
-             * - 'underline': 下划线样式
-             * - 'bold': 粗体样式
-             * - 'italic': 斜体样式
-             * - 'underline bold': 组合样式
-             * - CustomComponent: 自定义组件
-             */
-            style: DecorationStyle;
-            /**
-             * 点击回调
-             */
-            onClick?: (value: string) => void;
-        };
+        [path: string]: DecorationPathHook;
     };
 
     /**
