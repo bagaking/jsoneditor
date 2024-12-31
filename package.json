@@ -7,7 +7,11 @@
   "scripts": {
     "dev": "vite examples",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepublishOnly": "pnpm build",
+    "publish:patch": "npm version patch && npm publish --access public",
+    "publish:minor": "npm version minor && npm publish --access public",
+    "publish:major": "npm version major && npm publish --access public"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.4",
@@ -33,5 +37,8 @@
     "typescript": "^5.2.2",
     "vite": "^5.0.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }
