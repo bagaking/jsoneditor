@@ -365,49 +365,51 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
     }, [validateJson]);
 
     return (
-        <div className={`flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 ${className || ''}`} style={editorStyle}>
-            {toolbarConfig?.position !== 'none' && (
-                <Toolbar
-                    config={{
-                        position: 'top',
-                        features: {
-                            format: true,
-                            minify: true,
-                            validate: true,
-                            copy: true,
-                            expand: true
-                        },
-                        ...toolbarConfig
-                    }}
-                    editor={editorRef.current}
-                    state={{
-                        isValid,
-                        isExpanded: expanded
-                    }}
-                    handlers={{
-                        onFormat: handleFormat,
-                        onMinify: handleMinify,
-                        onValidate: handleValidate,
-                        onCopy: handleCopy,
-                        onToggleExpand: handleToggleExpand
-                    }}
+        <div className={`${themeConfig.theme === 'dark' ? 'dark' : ''}`}>
+            <div className={`flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 ${className || ''}`} style={editorStyle}>
+                {toolbarConfig?.position !== 'none' && (
+                    <Toolbar
+                        config={{
+                            position: 'top',
+                            features: {
+                                format: true,
+                                minify: true,
+                                validate: true,
+                                copy: true,
+                                expand: true
+                            },
+                            ...toolbarConfig
+                        }}
+                        editor={editorRef.current}
+                        state={{
+                            isValid,
+                            isExpanded: expanded
+                        }}
+                        handlers={{
+                            onFormat: handleFormat,
+                            onMinify: handleMinify,
+                            onValidate: handleValidate,
+                            onCopy: handleCopy,
+                            onToggleExpand: handleToggleExpand
+                        }}
+                    />
+                )}
+                <div ref={containerRef} className="flex-1 overflow-auto min-h-0 bg-transparent" />
+                {schemaInfo && (
+                    <SchemaInfoPanel
+                        path={schemaInfo.path}
+                        schema={schemaInfo.schema}
+                        value={schemaInfo.value}
+                        onValueChange={handleSchemaValueChange}
+                    />
+                )}
+                <StatusBar
+                    cursorInfo={cursorInfo}
+                    jsonSize={jsonSize}
+                    isValid={isValid}
+                    error={error}
                 />
-            )}
-            <div ref={containerRef} className="flex-1 overflow-auto min-h-0 bg-transparent" />
-            {schemaInfo && (
-                <SchemaInfoPanel
-                    path={schemaInfo.path}
-                    schema={schemaInfo.schema}
-                    value={schemaInfo.value}
-                    onValueChange={handleSchemaValueChange}
-                />
-            )}
-            <StatusBar
-                cursorInfo={cursorInfo}
-                jsonSize={jsonSize}
-                isValid={isValid}
-                error={error}
-            />
+            </div>
         </div>
     );
 }; 

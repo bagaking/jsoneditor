@@ -1,13 +1,25 @@
 export { JsonEditor } from './ui/JsonEditor';
-export type { JsonEditorProps } from './ui/types';
 export { EditorCore } from './core/editor-core';
-export type { EditorConfig } from './core/types';
 
-// 导出类型定义
+// 导出所有公共类型
 export type {
+    // 编辑器核心类型
+    EditorConfig,
     DecorationConfig,
     DecorationStyle,
     CustomComponent,
     DecorationPathHook,
-} from './core/types'; 
+    CodeSettings,
+    SchemaConfig,
+    ThemeConfig,
+    ValidationConfig,
+} from './core/types';
+
+export type {
+    // UI 组件类型
+    JsonEditorProps,
+    ToolbarConfig,
+    ToolbarProps,
+    ExpandOption,
+} from './ui/types'; 
 

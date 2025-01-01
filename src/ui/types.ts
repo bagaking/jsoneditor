@@ -1,7 +1,11 @@
 import { DecorationConfig, CodeSettings, SchemaConfig, ThemeConfig, ValidationConfig } from '../core/types';
 import { EditorCore } from '../core/editor-core';
+import { JsonSchemaProperty } from '../extensions/path';
 import React from 'react';
 import { Extension } from '@codemirror/state';
+
+// 主题类型
+export type Theme = 'light' | 'dark';
 
 // 工具栏配置
 export interface ToolbarConfig {
@@ -91,4 +95,26 @@ export interface ToolbarProps {
     onCopy?: () => void;
     onToggleExpand?: () => void;
   };
+}
+
+// Schema 信息面板属性
+export interface SchemaInfo {
+  path: string;
+  schema: JsonSchemaProperty;
+  value?: string;
+  onValueChange?: (value: string) => void;
+}
+
+// 状态栏属性
+export interface StatusBarProps {
+  error?: string | null;
+  cursorInfo: {
+    line: number;
+    col: number;
+  };
+  jsonSize: {
+    lines: number;
+    bytes: number;
+  };
+  isValid?: boolean;
 } 
