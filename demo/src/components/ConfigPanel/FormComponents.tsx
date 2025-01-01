@@ -44,8 +44,6 @@ const baseCheckboxClass = `
   transition-colors
 `.replace(/\s+/g, ' ').trim();
 
-const baseGroupClass = "flex items-center group bg-white dark:bg-gray-700/30 rounded-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors";
-
 // 配置卡片组件
 export const ConfigCard: React.FC<{
   title: string;

@@ -1,12 +1,10 @@
-import React, { useRef, useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import { EditorConfigState } from '../../config';
 import {
-  ConfigCard,
   NumberInput,
   TextInput,
   Select,
   Checkbox,
-  CheckboxGrid
 } from './FormComponents';
 
 export interface ConfigPanelProps {
@@ -14,56 +12,8 @@ export interface ConfigPanelProps {
   onChange: (config: EditorConfigState) => void;
 }
 
-// 添加滚动按钮组件
-const ScrollButton: React.FC<{
-  direction: 'left' | 'right';
-  onClick: () => void;
-}> = ({ direction, onClick }) => (
-  <button
-    onClick={onClick}
-    className="absolute top-1/2 -translate-y-1/2 z-10 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-    style={{ [direction]: '1rem' }}
-  >
-    {direction === 'left' ? '←' : '→'}
-  </button>
-);
-
 export const ConfigPanel: React.FC<ConfigPanelProps> = ({ config, onChange }) => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [showLeftScroll, setShowLeftScroll] = useState(false);
-  const [showRightScroll, setShowRightScroll] = useState(true);
-
-  // 处理滚动按钮点击
-  const handleScroll = (direction: 'left' | 'right') => {
-    if (!scrollContainerRef.current) return;
-    const container = scrollContainerRef.current;
-    const scrollAmount = container.clientWidth * 0.8;
-    container.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth'
-    });
-  };
-
-  // 监听滚动位置更新按钮显示状态
-  const handleScrollUpdate = useCallback(() => {
-    if (!scrollContainerRef.current) return;
-    const container = scrollContainerRef.current;
-    setShowLeftScroll(container.scrollLeft > 0);
-    setShowRightScroll(
-      container.scrollLeft < container.scrollWidth - container.clientWidth
-    );
-  }, []);
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScrollUpdate);
-      // 初始检查
-      handleScrollUpdate();
-      return () => container.removeEventListener('scroll', handleScrollUpdate);
-    }
-  }, [handleScrollUpdate]);
-
+  
   const handleChange = <K extends keyof EditorConfigState>(
     section: K,
     key: keyof EditorConfigState[K],

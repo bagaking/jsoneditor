@@ -2,7 +2,7 @@ import { EditorState, Transaction, Extension } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { json } from '@codemirror/lang-json';
 import { defaultKeymap } from '@codemirror/commands';
-import { lineNumbers, highlightActiveLineGutter } from '@codemirror/view';
+import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
 import { bracketMatching } from '@codemirror/language';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
@@ -211,7 +211,7 @@ export class EditorCore {
             extensions.push(lineNumbers());
         }
         if (codeSettings?.highlightActiveLine !== false) {
-            extensions.push(highlightActiveLineGutter());
+            extensions.push(highlightActiveLine());
         }
         if (codeSettings?.bracketMatching !== false) {
             extensions.push(bracketMatching());
@@ -245,25 +245,48 @@ export class EditorCore {
         // 基础样式
         extensions.push(baseTheme);
 
-        // 字体大小
+        // 字体大小和样式设置
+        const fontSize = codeSettings?.fontSize || 14;
         extensions.push(EditorView.theme({
             "&": {
-                fontSize: `${codeSettings?.fontSize || 14}px`
+                fontSize: `${fontSize}px`,
+                fontFamily: 'monospace'
+            },
+            ".cm-content": {
+                fontSize: `${fontSize}px !important`,
+                fontFamily: 'monospace',
+                lineHeight: '1.6'
+            },
+            ".cm-line": {
+                fontSize: `${fontSize}px !important`,
+                fontFamily: 'monospace'
+            },
+            ".cm-gutters": {
+                fontSize: `${Math.max(fontSize - 2, 10)}px !important`,
+                fontFamily: 'monospace'
+            },
+            ".cm-activeLineGutter": {
+                backgroundColor: 'var(--active-line-gutter-background-color)'
+            },
+            ".cm-activeLine": {
+                backgroundColor: 'var(--active-line-background-color)'
+            },
+            // 确保所有编辑器内容使用正确的字体大小
+            ".cm-scroller": {
+                fontFamily: 'monospace'
+            },
+            // 确保补全提示也使用正确的字体大小
+            ".cm-tooltip": {
+                fontSize: `${fontSize}px !important`,
+                fontFamily: 'monospace'
+            },
+            ".cm-tooltip-autocomplete": {
+                fontSize: `${fontSize}px !important`,
+                fontFamily: 'monospace'
             }
         }));
 
-        // 添加 schema 验证扩展
-        if (this.schema) {
-            extensions.push(
-                createSchemaEditorExtension({
-                    schema: this.schema,
-                    validateOnType: this.config.schemaConfig?.validateOnType,
-                    validateDebounce: this.config.schemaConfig?.validateDebounce
-                })
-            );
-        }
-
-        // 添加自定义扩展
+        // 用户自定义扩展
         if (this.config.extensions) {
             extensions.push(...this.config.extensions);
         }
