@@ -114,7 +114,17 @@ export type DecorationPathHook = {
      */
     style: DecorationStyle;
     /**
+     * 装饰目标
+     * - 'key': 只装饰键
+     * - 'value': 只装饰值
+     * - 'both': 同时装饰键和值
+     * @default 'key'
+     */
+    target?: 'key' | 'value' | 'both';
+    /**
      * 点击回调
+     * 注意: 设置此选项会在目标区域添加点击事件，
+     * 但不会阻止文本选择等其他交互
      */
     onClick?: (value: string) => void;
 }

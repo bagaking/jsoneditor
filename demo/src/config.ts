@@ -13,6 +13,9 @@ export interface EditorConfigState {
     validateDebounce: number;
     validateOnType: boolean;
   };
+  themeConfig: {
+    theme: 'light' | 'dark';
+  };
   toolbarConfig: ToolbarConfig;
   expandOption: ExpandOption;
 }
@@ -29,6 +32,9 @@ export const defaultConfig: EditorConfigState = {
     validateDebounce: 300,
     validateOnType: true,
   },
+  themeConfig: {
+    theme: 'light',
+  },
   toolbarConfig: {
     position: 'top',
     features: {
@@ -43,7 +49,6 @@ export const defaultConfig: EditorConfigState = {
     defaultExpanded: true,
     expanded: {
       minHeight: '300px',
-      maxHeight: '600px',
     },
     collapsed: {
       height: '100px',
@@ -137,12 +142,14 @@ export const decorationConfig: DecorationConfig = {
     // 版本号使用特殊样式
     '$["version"]': {
       style: "italic bg-blue-100/30 dark:bg-blue-900/30 rounded px-1",
+      target: 'value',
       onClick: (value: string) => console.log('Version:', value)
     },
     
     // 状态使用不同颜色
     '$["status"]': {
-      style: "text-green-600 dark:text-green-400 font-medium",
+      style: "underline",
+      target: 'value',
       onClick: (value: string) => console.log('Status:', value)
     },
     
@@ -162,7 +169,8 @@ export const decorationConfig: DecorationConfig = {
     
     // 标签使用特殊样式
     '$["tags"][*]': {
-      style: "italic bold"
+      style: "bg-blue-100/50 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded text-sm",
+      target: 'both'
     },
     
     // URL 使用链接样式

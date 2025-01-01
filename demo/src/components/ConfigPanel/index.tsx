@@ -1,0 +1,229 @@
+import React, { useRef, useCallback, useEffect, useState } from 'react';
+import { EditorConfigState } from '../../config';
+import {
+  ConfigCard,
+  NumberInput,
+  TextInput,
+  Select,
+  Checkbox,
+  CheckboxGrid
+} from './FormComponents';
+
+export interface ConfigPanelProps {
+  config: EditorConfigState;
+  onChange: (config: EditorConfigState) => void;
+}
+
+// 添加滚动按钮组件
+const ScrollButton: React.FC<{
+  direction: 'left' | 'right';
+  onClick: () => void;
+}> = ({ direction, onClick }) => (
+  <button
+    onClick={onClick}
+    className="absolute top-1/2 -translate-y-1/2 z-10 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+    style={{ [direction]: '1rem' }}
+  >
+    {direction === 'left' ? '←' : '→'}
+  </button>
+);
+
+export const ConfigPanel: React.FC<ConfigPanelProps> = ({ config, onChange }) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftScroll, setShowLeftScroll] = useState(false);
+  const [showRightScroll, setShowRightScroll] = useState(true);
+
+  // 处理滚动按钮点击
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (!scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+    const scrollAmount = container.clientWidth * 0.8;
+    container.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
+  };
+
+  // 监听滚动位置更新按钮显示状态
+  const handleScrollUpdate = useCallback(() => {
+    if (!scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+    setShowLeftScroll(container.scrollLeft > 0);
+    setShowRightScroll(
+      container.scrollLeft < container.scrollWidth - container.clientWidth
+    );
+  }, []);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScrollUpdate);
+      // 初始检查
+      handleScrollUpdate();
+      return () => container.removeEventListener('scroll', handleScrollUpdate);
+    }
+  }, [handleScrollUpdate]);
+
+  const handleChange = <K extends keyof EditorConfigState>(
+    section: K,
+    key: keyof EditorConfigState[K],
+    value: any
+  ) => {
+    onChange({
+      ...config,
+      [section]: {
+        ...config[section],
+        [key]: value
+      }
+    });
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+      {/* 标题栏 */}
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">编辑器配置</h3>
+        <button
+          onClick={() => handleChange('themeConfig', 'theme', config.themeConfig.theme === 'light' ? 'dark' : 'light')}
+          className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          {config.themeConfig.theme === 'light' ? '🌙' : '☀️'}
+        </button>
+      </div>
+
+      {/* 配置面板主体 */}
+      <div className="p-4">
+        <div className="flex flex-wrap gap-4">
+          {/* 代码设置 */}
+          <div className="flex-1 min-w-[240px]">
+            <h4 className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200">代码设置</h4>
+            <div className="space-y-3">
+              <NumberInput
+                label="字体大小"
+                value={config.codeSettings.fontSize}
+                onChange={value => handleChange('codeSettings', 'fontSize', value)}
+              />
+              <div className="grid grid-cols-2 gap-1.5">
+                <Checkbox
+                  label="显示行号"
+                  checked={config.codeSettings.lineNumbers}
+                  onChange={checked => handleChange('codeSettings', 'lineNumbers', checked)}
+                />
+                <Checkbox
+                  label="括号匹配"
+                  checked={config.codeSettings.bracketMatching}
+                  onChange={checked => handleChange('codeSettings', 'bracketMatching', checked)}
+                />
+                <Checkbox
+                  label="自动完成"
+                  checked={config.codeSettings.autoCompletion}
+                  onChange={checked => handleChange('codeSettings', 'autoCompletion', checked)}
+                />
+                <Checkbox
+                  label="高亮当前行"
+                  checked={config.codeSettings.highlightActiveLine}
+                  onChange={checked => handleChange('codeSettings', 'highlightActiveLine', checked)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Schema 设置 */}
+          <div className="flex-1 min-w-[240px]">
+            <h4 className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200">Schema 设置</h4>
+            <div className="space-y-3">
+              <NumberInput
+                label="验证防抖时间 (ms)"
+                value={config.schemaConfig.validateDebounce}
+                onChange={value => handleChange('schemaConfig', 'validateDebounce', value)}
+              />
+              <Checkbox
+                label="输入时验证"
+                checked={config.schemaConfig.validateOnType}
+                onChange={checked => handleChange('schemaConfig', 'validateOnType', checked)}
+              />
+            </div>
+          </div>
+
+          {/* 工具栏设置 */}
+          <div className="flex-1 min-w-[240px]">
+            <h4 className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200">工具栏设置</h4>
+            <div className="space-y-3">
+              <Select
+                label="位置"
+                value={config.toolbarConfig.position || 'top'}
+                options={[
+                  { value: 'top', label: '顶部' },
+                  { value: 'bottom', label: '底部' },
+                  { value: 'none', label: '隐藏' }
+                ]}
+                onChange={value => handleChange('toolbarConfig', 'position', value)}
+              />
+              <div className="grid grid-cols-2 gap-1.5">
+                {Object.entries(config.toolbarConfig.features || {}).map(([key, value]) => (
+                  <Checkbox
+                    key={key}
+                    label={key.charAt(0).toUpperCase() + key.slice(1)}
+                    checked={value}
+                    onChange={checked => handleChange('toolbarConfig', 'features', {
+                      ...config.toolbarConfig.features,
+                      [key]: checked
+                    })}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 展开设置 */}
+          <div className="flex-1 min-w-[240px]">
+            <h4 className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200">展开设置</h4>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <TextInput
+                  label="最小高度"
+                  value={config.expandOption.expanded.minHeight || ''}
+                  onChange={value => handleChange('expandOption', 'expanded', {
+                    ...config.expandOption.expanded,
+                    minHeight: value
+                  })}
+                />
+                <TextInput
+                  label="最大高度"
+                  value={config.expandOption.expanded.maxHeight || ''}
+                  onChange={value => handleChange('expandOption', 'expanded', {
+                    ...config.expandOption.expanded,
+                    maxHeight: value
+                  })}
+                />
+              </div>
+              <NumberInput
+                label="动画时长 (ms)"
+                value={config.expandOption.animation?.duration || 0}
+                onChange={value => handleChange('expandOption', 'animation', {
+                  ...config.expandOption.animation,
+                  duration: value
+                })}
+              />
+              <div className="grid grid-cols-2 gap-1.5">
+                <Checkbox
+                  label="启用动画"
+                  checked={config.expandOption.animation?.enabled || false}
+                  onChange={checked => handleChange('expandOption', 'animation', {
+                    ...config.expandOption.animation,
+                    enabled: checked
+                  })}
+                />
+                <Checkbox
+                  label="默认展开"
+                  checked={config.expandOption.defaultExpanded || false}
+                  onChange={checked => handleChange('expandOption', 'defaultExpanded', checked)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}; 

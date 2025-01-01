@@ -368,7 +368,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
     }, [validateJson]);
 
     return (
-        <div className={`${themeConfig.theme === 'dark' ? 'dark' : ''}`}>
+        <div className={`${themeConfig.theme === 'dark' ? 'dark' : ''} bg-transparent`}>
             <div className={`flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 ${className || ''}`} style={editorStyle}>
                 {toolbarConfig?.position !== 'none' && (
                     <Toolbar
