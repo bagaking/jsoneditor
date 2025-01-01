@@ -40,6 +40,7 @@ const themeCompartment = new Compartment();
 const completionCompartment = new Compartment();
 const decorationCompartment = new Compartment();
 const styleCompartment = new Compartment();
+const readOnlyCompartment = new Compartment();
 
 /**
  * 编辑器核心类
@@ -147,6 +148,9 @@ export class EditorCore {
         extensions.push(scrollConfig);
         extensions.push(json());
 
+        // 只读模式
+        extensions.push(readOnlyCompartment.of(this.config.readonly ? EditorState.readOnly.of(true) : []));
+
         // 用户自定义扩展
         if (this.config.extensions) {
             extensions.push(...this.config.extensions);
@@ -210,7 +214,11 @@ export class EditorCore {
                             ? [decorationCompartment.reconfigure(
                                 createDecorationExtension(this.config.decorationConfig)
                               )]
-                            : [])
+                            : []),
+                        // 更新只读状态
+                        readOnlyCompartment.reconfigure(
+                            this.config.readonly ? EditorState.readOnly.of(true) : []
+                        )
                     ]
                 });
 

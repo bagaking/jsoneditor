@@ -7,6 +7,7 @@ import { JsonSchemaProperty } from '../core/types';
 import { SchemaValidator } from '../core/schema-validator';
 import { JsonEditorProps } from './types';
 import { jsonParser } from '../jsonkit/parser';
+import { copyToClipboard } from '../utils/clipboard';
 
 // 防抖函数
 const debounce = <T extends (...args: any[]) => any>(
@@ -299,12 +300,12 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
     }, [expanded, expandOption]);
 
     // 处理复制
-    const handleCopy = useCallback(() => {
+    const handleCopy = useCallback(async () => {
         const content = editorRef.current?.getValue();
-        if (content) {
-            navigator.clipboard.writeText(content);
+        const success = await copyToClipboard(content || '', stateRef.current.onCopy);
+        if (!success) {
+            console.error('Failed to copy');
         }
-        stateRef.current.onCopy?.(content || '');
     }, []);
 
  
@@ -363,7 +364,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
         if (!editorRef.current) return;
 
         const currentConfig = {
-            readonly: stateRef.current.readOnly,
+            readonly: readOnly,
             codeSettings,
             schemaConfig: {
                 schema: stateRef.current.schema

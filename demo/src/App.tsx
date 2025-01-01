@@ -8,6 +8,7 @@ function App() {
   const [config, setConfig] = useState(defaultConfig);
   const editorRef = useRef<EditorCore>(null);
   const [value, setValue] = useState(JSON.stringify(exampleJson, null, 2));
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 py-8 h-screen">
@@ -17,12 +18,24 @@ function App() {
           {/* 配置面板 */}
           <div className="lg:w-[480px] p-4">
             <ConfigPanel config={config} onChange={setConfig} />
+            <div className="mt-4 flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">
+                只读模式
+              </label>
+              <input
+                type="checkbox"
+                checked={isReadOnly}
+                onChange={(e) => setIsReadOnly(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
           {/* 编辑器区域 */}
           <JsonEditor
                 ref={editorRef}
                 defaultValue={value}
+                readOnly={isReadOnly}
                 schemaConfig={{
                   schema: exampleSchema,
                   validateOnType: config.schemaConfig.validateOnType,

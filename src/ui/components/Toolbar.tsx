@@ -3,21 +3,21 @@ import { ToolbarProps } from '../types';
 
 const buttonClassNames = {
     default: `
-        px-3 py-1.5
+        px-2 py-1
         text-gray-600 dark:text-gray-300
-        text-sm font-medium
-        rounded-md
+        text-xs font-medium
+        rounded
         transition-all duration-200
         hover:bg-gray-100/80 dark:hover:bg-gray-800/60
         active:bg-gray-200/90 dark:active:bg-gray-700/70
-        focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700
+        focus:outline-none focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700
     `,
     validate: (isValid: boolean | undefined) => `
-        px-3 py-1.5
-        text-sm font-medium
-        rounded-md
+        px-2 py-1
+        text-xs font-medium
+        rounded
         transition-all duration-200
-        focus:outline-none focus:ring-2
+        focus:outline-none focus:ring-1
         ${isValid 
             ? 'text-green-600 dark:text-green-400 hover:bg-green-50/80 dark:hover:bg-green-900/30 focus:ring-green-200 dark:focus:ring-green-800'
             : 'text-red-600 dark:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-900/30 focus:ring-red-200 dark:focus:ring-red-800'
@@ -84,8 +84,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             `}
             style={config.style}
         >
-            <div className="p-2 flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-1.5">
+            <div className="px-2 flex flex-wrap items-center gap-1.5">
+                <div className="flex items-center gap-1">
                     {getButtons()
                         .filter((btn: React.ReactNode) => React.isValidElement(btn) && EDITOR_ACTIONS.includes(btn.key as string))
                         .map(btn => (
@@ -96,7 +96,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     }
                 </div>
                 <div className="flex-grow" />
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                     {getButtons()
                         .filter(btn => React.isValidElement(btn) && !EDITOR_ACTIONS.includes(btn.key as string))
                         .map(btn => (
