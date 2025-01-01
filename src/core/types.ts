@@ -3,6 +3,78 @@ import type { Extension } from '@codemirror/state';
 // 基础样式类型
 export type BaseStyle = 'underline' | 'bold' | 'italic';
 
+/**
+ * 代码编辑器设置
+ */
+export interface CodeSettings {
+  /**
+   * 字体大小
+   */
+  fontSize?: number;
+  /**
+   * 是否显示行号
+   */
+  lineNumbers?: boolean;
+  /**
+   * 是否启用括号匹配
+   */
+  bracketMatching?: boolean;
+  /**
+   * 是否启用自动完成
+   */
+  autoCompletion?: boolean;
+  /**
+   * 是否启用活动行高亮
+   */
+  highlightActiveLine?: boolean;
+}
+
+/**
+ * Schema 配置
+ */
+export interface SchemaConfig {
+  /**
+   * JSON Schema 对象
+   */
+  schema?: object;
+  /**
+   * 是否在输入时验证
+   */
+  validateOnType?: boolean;
+  /**
+   * 验证防抖时间(ms)
+   */
+  validateDebounce?: number;
+}
+
+/**
+ * 主题配置
+ */
+export interface ThemeConfig {
+  /**
+   * 主题类型
+   */
+  theme?: 'light' | 'dark';
+  /**
+   * 自定义主题扩展
+   */
+  themeExtensions?: Extension[];
+}
+
+/**
+ * 验证配置
+ */
+export interface ValidationConfig {
+  /**
+   * 是否在更改时验证
+   */
+  validateOnChange?: boolean;
+  /**
+   * 是否自动格式化
+   */
+  autoFormat?: boolean;
+}
+
 // 自定义组件类型
 export interface CustomComponent {
     type: 'component';
@@ -73,14 +145,15 @@ export interface EditorConfig {
     // 基础配置
     container?: HTMLElement;
     value?: string;
-    schema?: object;
     readonly?: boolean;
-    autoFormat?: boolean;
-    validateOnChange?: boolean;
-    validateOnType?: boolean;
-    theme?: 'light' | 'dark';
+
+    // 功能配置
+    codeSettings?: CodeSettings;
+    schemaConfig?: SchemaConfig;
+    themeConfig?: ThemeConfig;
+    decorationConfig?: DecorationConfig;
+    validationConfig?: ValidationConfig;
     extensions?: Extension[];
-    decoration?: DecorationConfig;
 
     // 回调函数
     onChange?: (value: string) => void;
@@ -99,36 +172,4 @@ export interface ValidationError {
     params?: Record<string, any>;
 }
 
-/**
- * 主题配置
- */
-export interface ThemeConfig {
-    name: string;
-    styles: {
-        background: string;
-        color: string;
-        fontSize: string;
-        fontFamily: string;
-        lineHeight: string;
-        padding: string;
-    };
-    syntax: {
-        string: string;
-        number: string;
-        boolean: string;
-        null: string;
-        key: string;
-        error: string;
-    };
-}
-
-/**
- * 插件接口
- */
-export interface Plugin {
-    name: string;
-    version: string;
-    extensions?: Extension[];
-    activate: (editor: any) => void;
-    deactivate: () => void;
-} 
+ 

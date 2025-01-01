@@ -2,6 +2,20 @@
 
 一个功能强大的 **JSON 编辑器组件**，支持 *JSON Schema 验证*、*路径高亮*、*主题切换*、*自定义操作*等功能。
 
+## 在线演示
+
+- [CodeSandbox Demo](https://codesandbox.io/s/bagaking-jsoneditor-demo)
+- [StackBlitz Demo](https://stackblitz.com/edit/bagaking-jsoneditor-demo)
+
+或者克隆仓库本地运行：
+
+```bash
+git clone https://github.com/bagaking/jsoneditor.git
+cd jsoneditor
+pnpm install
+pnpm dev
+```
+
 ## 特性
 
 - 🎨 **主题支持**
@@ -47,12 +61,23 @@ import { useState } from 'react';
 
 function App() {
   const [value, setValue] = useState('{"name": "bagaking"}');
+  const [error, setError] = useState<Error | null>(null);
 
   return (
     <JsonEditor
-      value={value}
-      onChange={setValue}
-      theme="light"
+      defaultValue={value}
+      onValueChange={setValue}
+      onError={setError}
+      // 编辑器配置
+      codeSettings={{
+        fontSize: 14,
+        lineNumbers: true,
+        bracketMatching: true
+      }}
+      // 主题配置
+      themeConfig={{
+        theme: 'light'
+      }}
     />
   );
 }
@@ -119,9 +144,14 @@ function App() {
         updateTime: '2024-01-01T00:00:00Z',
         homepage: 'https://github.com/bagaking/jsoneditor'
       }, null, 2)}
-      config={{
+      schemaConfig={{
         schema,
-        validateOnType: true
+        validateOnType: true,
+        validateDebounce: 300
+      }}
+      validationConfig={{
+        validateOnChange: true,
+        autoFormat: false
       }}
     />
   );
@@ -136,23 +166,22 @@ import { JsonEditor } from '@bagaking/jsoneditor';
 function App() {
   return (
     <JsonEditor
-      value={value}
-      config={{
-        decoration: {
-          paths: {
-            '$["name"]': {
-              style: 'underline',
-              onClick: (value) => console.log('Name clicked:', value)
-            },
-            '$["version"]': {
-              style: {
-                type: 'component',
-                render: ({ value, onClick }) => (
-                  <button onClick={() => onClick?.(value)}>
-                    v{value}
-                  </button>
-                )
-              }
+      defaultValue={value}
+      onValueChange={setValue}
+      decorationConfig={{
+        paths: {
+          '$["name"]': {
+            style: 'underline',
+            onClick: (value) => console.log('Name clicked:', value)
+          },
+          '$["version"]': {
+            style: {
+              type: 'component',
+              render: ({ value, onClick }) => (
+                <button onClick={() => onClick?.(value)}>
+                  v{value}
+                </button>
+              )
             }
           }
         }
@@ -185,8 +214,8 @@ function App() {
       <button onClick={handleFormat}>格式化</button>
       <JsonEditor
         ref={editorRef}
-        value={value}
-        onChange={setValue}
+        defaultValue={value}
+        onValueChange={setValue}
       />
     </>
   );
@@ -202,21 +231,47 @@ function App() {
 | className | string | - | 自定义类名 |
 | style | React.CSSProperties | - | 自定义样式 |
 | defaultValue | string | - | 初始值 |
-| onChange | (value: string) => void | - | 值变化回调 |
+| onValueChange | (value: string) => void | - | 值变化回调 |
 | onError | (error: Error) => void | - | 错误回调 |
-| config | EditorConfig | {} | 编辑器配置 |
+| codeSettings | CodeSettings | {} | 编辑器设置 |
+| schemaConfig | SchemaConfig | - | Schema 配置 |
+| themeConfig | ThemeConfig | - | 主题配置 |
+| decorationConfig | DecorationConfig | - | 装饰器配置 |
+| validationConfig | ValidationConfig | - | 验证配置 |
+| toolbarConfig | ToolbarConfig | - | 工具栏配置 |
+| expandOption | ExpandOption | - | 展开/收缩配置 |
 
-### EditorConfig
+### CodeSettings
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| schema | JsonSchemaProperty | - | [JSON Schema](https://json-schema.org/) 定义 |
-| theme | 'light' \| 'dark' | 'light' | 主题 |
-| validateOnType | boolean | false | 是否在输入时验证 |
-| decoration | DecorationConfig | - | 装饰器配置 |
-| onValidate | (errors: Diagnostic[]) => void | - | 验证回调 |
-| onCursorActivity | (info: { line: number; col: number }) => void | - | 光标位置变化回调 |
-| onDocChanged | (info: { lines: number; bytes: number }) => void | - | 文档变化回调 |
+| fontSize | number | 14 | 字体大小 |
+| lineNumbers | boolean | true | 是否显示行号 |
+| bracketMatching | boolean | true | 是否启用括号匹配 |
+| autoCompletion | boolean | true | 是否启用自动完成 |
+| highlightActiveLine | boolean | true | 是否高亮当前行 |
+
+### SchemaConfig
+
+| 属性 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| schema | object | - | JSON Schema 定义 |
+| validateOnType | boolean | true | 是否在输入时验证 |
+| validateDebounce | number | 300 | 验证防抖时间(ms) |
+
+### ThemeConfig
+
+| 属性 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| theme | 'light' \| 'dark' | 'light' | 主题类型 |
+| themeExtensions | Extension[] | - | 自定义主题扩展 |
+
+### ValidationConfig
+
+| 属性 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| validateOnChange | boolean | true | 是否在更改时验证 |
+| autoFormat | boolean | false | 是否自动格式化 |
 
 ### DecorationConfig
 

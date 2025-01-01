@@ -1,4 +1,4 @@
-import { EditorState, Transaction } from '@codemirror/state';
+import { EditorState, Transaction, Extension } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { json } from '@codemirror/lang-json';
 import { defaultKeymap } from '@codemirror/commands';
@@ -7,7 +7,7 @@ import { bracketMatching } from '@codemirror/language';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
 import { createDecorationExtension } from '../extensions/decoration';
-import { EditorConfig } from './types';
+import { EditorConfig, CodeSettings, SchemaConfig, ThemeConfig, ValidationConfig } from './types';
 import { light } from '../themes/light';
 import { getSchemaCompletions } from '../extensions/schema-extension';
 import { createSchemaEditorExtension } from '../extensions/schema-extension';
@@ -23,6 +23,29 @@ const baseTheme = EditorView.theme({
     }
 });
 
+// 默认配置
+const defaultCodeSettings: CodeSettings = {
+    fontSize: 14,
+    lineNumbers: true,
+    bracketMatching: true,
+    autoCompletion: true,
+    highlightActiveLine: true
+};
+
+const defaultSchemaConfig: SchemaConfig = {
+    validateOnType: true,
+    validateDebounce: 300
+};
+
+const defaultThemeConfig: ThemeConfig = {
+    theme: 'light'
+};
+
+const defaultValidationConfig: ValidationConfig = {
+    validateOnChange: true,
+    autoFormat: false
+};
+
 export class EditorCore {
     private view: EditorView | null = null;
     private container: HTMLElement;
@@ -33,11 +56,36 @@ export class EditorCore {
     constructor(container: HTMLElement, config: EditorConfig = {}) {
         console.log('EditorCore constructor:', { container, config });
         this.container = container;
-        this.config = config;
-        this.schema = config.schema || null;
+        this.config = this.normalizeConfig(config);
+        this.schema = this.config.schemaConfig?.schema || null;
 
         // 立即初始化编辑器
         this.init(config.value || '');
+    }
+
+    /**
+     * 规范化配置
+     */
+    private normalizeConfig(config: EditorConfig): EditorConfig {
+        return {
+            ...config,
+            codeSettings: {
+                ...defaultCodeSettings,
+                ...config.codeSettings
+            },
+            schemaConfig: {
+                ...defaultSchemaConfig,
+                ...config.schemaConfig
+            },
+            themeConfig: {
+                ...defaultThemeConfig,
+                ...config.themeConfig
+            },
+            validationConfig: {
+                ...defaultValidationConfig,
+                ...config.validationConfig
+            }
+        };
     }
 
     /**
@@ -129,8 +177,8 @@ export class EditorCore {
         const cursorPos = this.view?.state.selection.main.head;
         
         // 更新配置
-        this.config = { ...this.config, ...config };
-        this.schema = config.schema || null;
+        this.config = this.normalizeConfig({ ...this.config, ...config });
+        this.schema = this.config.schemaConfig?.schema || null;
         
         // 重新创建编辑器状态
         if (this.view) {
@@ -154,17 +202,28 @@ export class EditorCore {
      */
     private createEditorState(content: string) {
         console.log('Creating editor state with content length:', content.length);
+        const { codeSettings, themeConfig } = this.config;
         
-        const extensions = [
-            // 基础功能
-            lineNumbers(),
-            highlightActiveLineGutter(),
-            bracketMatching(),
-            keymap.of(defaultKeymap),
-            // JSON 支持
-            json(),
-            // 自动补全
-            autocompletion({
+        const extensions: Extension[] = [];
+
+        // 基础功能
+        if (codeSettings?.lineNumbers !== false) {
+            extensions.push(lineNumbers());
+        }
+        if (codeSettings?.highlightActiveLine !== false) {
+            extensions.push(highlightActiveLineGutter());
+        }
+        if (codeSettings?.bracketMatching !== false) {
+            extensions.push(bracketMatching());
+        }
+        extensions.push(keymap.of(defaultKeymap));
+
+        // JSON 支持
+        extensions.push(json());
+
+        // 自动补全
+        if (codeSettings?.autoCompletion !== false) {
+            extensions.push(autocompletion({
                 override: [(context: CompletionContext) => {
                     if (this.schema) {
                         return getSchemaCompletions(this.schema, context);
@@ -172,24 +231,41 @@ export class EditorCore {
                     return null;
                 }],
                 defaultKeymap: true
-            }),
-            // 装饰扩展
-            createDecorationExtension(this.config.decoration || {}),
-            // 主题
-            this.config.theme === 'dark' ? oneDark : light,
-            // 基础样式
-            baseTheme
-        ];
+            }));
+        }
+
+        // 装饰扩展
+        if (this.config.decorationConfig) {
+            extensions.push(createDecorationExtension(this.config.decorationConfig));
+        }
+
+        // 主题
+        extensions.push(themeConfig?.theme === 'dark' ? oneDark : light);
+
+        // 基础样式
+        extensions.push(baseTheme);
+
+        // 字体大小
+        extensions.push(EditorView.theme({
+            "&": {
+                fontSize: `${codeSettings?.fontSize || 14}px`
+            }
+        }));
 
         // 添加 schema 验证扩展
         if (this.schema) {
             extensions.push(
                 createSchemaEditorExtension({
                     schema: this.schema,
-                    validateOnType: true,
-                    validateDebounce: 300
+                    validateOnType: this.config.schemaConfig?.validateOnType,
+                    validateDebounce: this.config.schemaConfig?.validateDebounce
                 })
             );
+        }
+
+        // 添加自定义扩展
+        if (this.config.extensions) {
+            extensions.push(...this.config.extensions);
         }
 
         return EditorState.create({

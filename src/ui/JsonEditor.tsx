@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { EditorCore } from '../core/editor-core';
-import { EditorConfig, ValidationError } from '../core/types';
 import { Toolbar } from './components/Toolbar';
 import { StatusBar } from './components/StatusBar';
 import { SchemaInfoPanel } from './components/SchemaInfoPanel';
 import { JsonSchemaProperty } from '../extensions/path';
 import { SchemaValidator } from '../core/schema-validator';
+import { JsonEditorProps } from './types';
 
 // 防抖函数
 const debounce = <T extends (...args: any[]) => any>(
@@ -23,30 +23,36 @@ const debounce = <T extends (...args: any[]) => any>(
     };
 };
 
-export interface JsonEditorProps {
-    className?: string;
-    style?: React.CSSProperties;
-    defaultValue?: string;
-    onChange?: (value: string) => void;
-    onError?: (error: Error) => void;
-    config?: EditorConfig;
-}
-
 export const JsonEditor: React.FC<JsonEditorProps> = ({
+    // 基础属性
     className,
     style,
     defaultValue = '',
-    onChange,
+    readOnly = false,
+
+    // 回调函数
+    onValueChange,
     onError,
-    config = {}
+
+    // 编辑器配置
+    codeSettings = {},
+    schemaConfig = {},
+    themeConfig = {},
+    decorationConfig,
+    validationConfig = {},
+    extensions = [],
+
+    // UI 配置
+    toolbarConfig,
+    expandOption
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const editorRef = useRef<EditorCore | null>(null);
-    const configRef = useRef(config);
     const [error, setError] = useState<string | null>(null);
     const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
     const [jsonSize, setJsonSize] = useState({ lines: 1, bytes: 0 });
     const [isValid, setIsValid] = useState(true);
+    const [expanded, setExpanded] = useState(expandOption?.defaultExpanded ?? true);
     const [schemaInfo, setSchemaInfo] = useState<{
         path: string;
         schema: JsonSchemaProperty;
@@ -55,44 +61,81 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
     
     // 使用 useRef 存储所有可变的配置和回调
     const stateRef = useRef({
-        onChange,
+        onValueChange,
         onError,
-        validateOnChange: config.validateOnChange,
-        schema: config.schema,
-        theme: config.theme,
-        decoration: config.decoration,
-        defaultValue
+        validateOnChange: validationConfig?.validateOnChange,
+        schema: schemaConfig?.schema,
+        theme: themeConfig?.theme,
+        decoration: decorationConfig,
+        defaultValue,
+        readOnly,
+        fontSize: codeSettings?.fontSize
     });
+    
+    // 计算编辑器样式
+    const editorStyle = useMemo(() => {
+        const baseStyle = {
+            fontSize: `${codeSettings?.fontSize || 14}px`,
+            ...style
+        };
+
+        if (!expandOption) return baseStyle;
+
+        const { expanded: expandedConfig, collapsed: collapsedConfig, animation } = expandOption;
+
+        const heightStyle = expanded
+            ? {
+                height: expandedConfig.autoHeight ? 'auto' : undefined,
+                minHeight: expandedConfig.minHeight,
+                maxHeight: expandedConfig.maxHeight
+              }
+            : {
+                height: collapsedConfig.height ||
+                  (collapsedConfig.lines ? `${collapsedConfig.lines * 20}px` : 'auto')
+              };
+
+        return {
+            ...baseStyle,
+            ...heightStyle,
+            transition: animation?.enabled
+                ? `height ${animation.duration || 300}ms ${animation.timing || 'ease-in-out'}`
+                : 'none'
+        };
+    }, [expanded, expandOption, codeSettings?.fontSize, style]);
     
     // 只在必要的配置变化时更新引用
     useEffect(() => {
         const needsUpdate = 
-            stateRef.current.schema !== config.schema ||
-            stateRef.current.theme !== config.theme ||
-            stateRef.current.decoration !== config.decoration ||
-            stateRef.current.defaultValue !== defaultValue;
+            stateRef.current.schema !== schemaConfig?.schema ||
+            stateRef.current.theme !== themeConfig?.theme ||
+            stateRef.current.decoration !== decorationConfig ||
+            stateRef.current.defaultValue !== defaultValue ||
+            stateRef.current.readOnly !== readOnly ||
+            stateRef.current.fontSize !== codeSettings?.fontSize;
             
         if (needsUpdate) {
             console.log('Updating config refs');
             stateRef.current = {
                 ...stateRef.current,
-                schema: config.schema,
-                theme: config.theme,
-                decoration: config.decoration,
-                defaultValue
+                schema: schemaConfig?.schema,
+                theme: themeConfig?.theme,
+                decoration: decorationConfig,
+                defaultValue,
+                readOnly,
+                fontSize: codeSettings?.fontSize
             };
         }
-    }, [config.schema, config.theme, config.decoration, defaultValue]);
+    }, [schemaConfig?.schema, themeConfig?.theme, decorationConfig, defaultValue, readOnly, codeSettings?.fontSize]);
 
     // 更新回调引用
     useEffect(() => {
         stateRef.current = {
             ...stateRef.current,
-            onChange,
+            onValueChange,
             onError,
-            validateOnChange: config.validateOnType
+            validateOnChange: validationConfig?.validateOnChange
         };
-    }, [onChange, onError, config.validateOnType]);
+    }, [onValueChange, onError, validationConfig?.validateOnChange]);
 
     // 验证函数
     const validateJson = useCallback((value: string) => {
@@ -136,7 +179,7 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
         console.log('Content changed:', { valueLength: value.length });
         
         // 触发 onChange 回调
-        stateRef.current.onChange?.(value);
+        stateRef.current.onValueChange?.(value);
         
         // 始终进行验证
         setIsValid(false);
@@ -190,6 +233,21 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
         setJsonSize(info);
     }, []);
 
+    // 处理展开/收缩
+    const handleToggleExpand = useCallback(() => {
+        const newExpanded = !expanded;
+        setExpanded(newExpanded);
+        expandOption?.onExpandChange?.(newExpanded);
+    }, [expanded, expandOption]);
+
+    // 处理复制
+    const handleCopy = useCallback(() => {
+        const content = editorRef.current?.getValue();
+        if (content) {
+            navigator.clipboard.writeText(content);
+        }
+    }, []);
+
     // 初始化编辑器
     useEffect(() => {
         console.log('Initializing editor...');
@@ -201,12 +259,23 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
         try {
             editorRef.current = new EditorCore(containerRef.current, {
                 value: stateRef.current.defaultValue,
-                theme: stateRef.current.theme,
-                schema: stateRef.current.schema,
-                decoration: stateRef.current.decoration,
+                readonly: stateRef.current.readOnly,
                 onChange: handleChange,
                 onCursorActivity: handleCursorActivity,
-                onDocChanged: handleDocChanged
+                onDocChanged: handleDocChanged,
+                codeSettings,
+                schemaConfig: {
+                    schema: stateRef.current.schema
+                },
+                themeConfig: {
+                    theme: stateRef.current.theme
+                },
+                decorationConfig: stateRef.current.decoration,
+                validationConfig: {
+                    ...validationConfig,
+                    validateOnChange: stateRef.current.validateOnChange
+                },
+                extensions
             });
 
             if (stateRef.current.validateOnChange && stateRef.current.defaultValue) {
@@ -234,14 +303,25 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
         if (!editorRef.current) return;
 
         const currentConfig = {
-            theme: stateRef.current.theme,
-            schema: stateRef.current.schema,
-            decoration: stateRef.current.decoration
+            readonly: stateRef.current.readOnly,
+            codeSettings,
+            schemaConfig: {
+                schema: stateRef.current.schema
+            },
+            themeConfig: {
+                theme: stateRef.current.theme
+            },
+            decorationConfig: stateRef.current.decoration,
+            validationConfig: {
+                ...validationConfig,
+                validateOnChange: stateRef.current.validateOnChange
+            },
+            extensions
         };
 
         console.log('Updating editor config');
         editorRef.current.updateConfig(currentConfig);
-    }, [config.theme, config.schema, config.decoration]);
+    }, [themeConfig?.theme, schemaConfig?.schema, decorationConfig, readOnly, codeSettings, validationConfig, extensions]);
 
     // 格式化处理
     const handleFormat = useCallback(() => {
@@ -285,14 +365,35 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
     }, [validateJson]);
 
     return (
-        <div className={`flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 ${className || ''}`} style={style}>
-            <Toolbar
-                onFormat={handleFormat}
-                onMinify={handleMinify}
-                onValidate={handleValidate}
-                isValid={isValid}
-            />
-            <div ref={containerRef} className="flex-1 overflow-auto min-h-[400px] text-gray-800 dark:text-gray-200" />
+        <div className={`flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 ${className || ''}`} style={editorStyle}>
+            {toolbarConfig?.position !== 'none' && (
+                <Toolbar
+                    config={{
+                        position: 'top',
+                        features: {
+                            format: true,
+                            minify: true,
+                            validate: true,
+                            copy: true,
+                            expand: true
+                        },
+                        ...toolbarConfig
+                    }}
+                    editor={editorRef.current}
+                    state={{
+                        isValid,
+                        isExpanded: expanded
+                    }}
+                    handlers={{
+                        onFormat: handleFormat,
+                        onMinify: handleMinify,
+                        onValidate: handleValidate,
+                        onCopy: handleCopy,
+                        onToggleExpand: handleToggleExpand
+                    }}
+                />
+            )}
+            <div ref={containerRef} className="flex-1 overflow-auto min-h-0 bg-transparent" />
             {schemaInfo && (
                 <SchemaInfoPanel
                     path={schemaInfo.path}

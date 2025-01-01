@@ -60,8 +60,22 @@ const utils = {
         if (typeof style === 'object' && style.type === 'component') {
             return 'cm-custom-decoration';
         }
-        const styles = typeof style === 'string' ? style.split(' ') : [style];
-        return styles.map(s => typeof s === 'string' ? `cm-json-${s.trim()}` : 'cm-json-custom').join(' ');
+        
+        if (typeof style === 'string') {
+            // 处理预定义样式组合
+            const baseStyles = style.split(' ');
+            const presetStyles = baseStyles
+                .filter(s => ['underline', 'bold', 'italic'].includes(s))
+                .map(s => `cm-json-${s.trim()}`);
+                
+            // 处理自定义样式
+            const customStyles = baseStyles
+                .filter(s => !['underline', 'bold', 'italic'].includes(s));
+            
+            return [...presetStyles, ...customStyles].join(' ');
+        }
+        
+        return '';
     },
 
     isValidUrl(str: string): boolean {
@@ -85,8 +99,11 @@ class DecorationFactory {
                 side: 1
             });
         }
+
+        // 处理自定义样式
+        const className = utils.createStyleClassName(style);
         return Decoration.mark({
-            class: utils.createStyleClassName(style)
+            class: `${className} ${onClick ? 'cursor-pointer' : ''}`
         });
     }
 
@@ -147,6 +164,8 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
             const { key, value } = extracted;
             const keyStart = cursor.from + content.indexOf('"' + key + '"');
             const keyEnd = keyStart + key.length + 2;
+            const valueStart = content.indexOf(':', keyEnd) + 1;
+            const valueEnd = cursor.to;
 
             // 处理路径装饰
             const path = JsonPath.fromNode(view, cursor.node);
@@ -160,10 +179,22 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                 );
 
                 if (typeof pathConfig.style === 'object' && pathConfig.style.type === 'component') {
+                    // 组件装饰器放在值的末尾
                     builder.push(decoration.range(cursor.to));
-                } else {
-                    builder.push(decoration.range(keyStart, keyEnd));
-                    this.addClickHandler(view, keyStart, keyEnd, cleanValue, pathConfig.onClick);
+                } else if (typeof pathConfig.style === 'string') {
+                    const styles = pathConfig.style.split(' ');
+                    const hasPresetStyle = styles.some(s => ['underline', 'bold', 'italic'].includes(s));
+                    const hasCustomStyle = styles.some(s => !['underline', 'bold', 'italic'].includes(s));
+
+                    if (hasCustomStyle) {
+                        // 自定义样式装饰整个属性（包括键和值）
+                        builder.push(decoration.range(keyStart, valueEnd));
+                        this.addClickHandler(view, keyStart, valueEnd, cleanValue, pathConfig.onClick);
+                    } else if (hasPresetStyle) {
+                        // 预定义样式只装饰键
+                        builder.push(decoration.range(keyStart, keyEnd));
+                        this.addClickHandler(view, keyStart, keyEnd, cleanValue, pathConfig.onClick);
+                    }
                 }
             }
 
@@ -196,18 +227,17 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
         decorationPlugin,
         EditorView.baseTheme({
             '.cm-json-underline': {
-                borderBottom: '1px dashed #40a9ff !important',
+                borderBottom: '1px dashed #0366d6 !important',
                 cursor: 'pointer !important'
             },
             '.cm-json-bold': {
-                fontWeight: 'bold !important'
+                fontWeight: '600 !important'
             },
             '.cm-json-italic': {
                 fontStyle: 'italic !important'
             },
             '&dark .cm-json-underline': {
-                borderBottom: '1px dashed #69c0ff !important',
-                cursor: 'pointer !important'
+                borderBottom: '1px dashed #58a6ff !important'
             },
             '.cm-link-button': {
                 border: 'none',

@@ -1,5 +1,5 @@
 export { JsonEditor } from './ui/JsonEditor';
-export type { JsonEditorProps } from './ui/JsonEditor';
+export type { JsonEditorProps } from './ui/types';
 export { EditorCore } from './core/editor-core';
 export type { EditorConfig } from './core/types';
 
@@ -10,3 +10,4 @@ export type {
     CustomComponent,
     DecorationPathHook,
 } from './core/types'; 
+
