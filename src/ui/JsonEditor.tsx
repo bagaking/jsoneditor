@@ -5,7 +5,8 @@ import { StatusBar } from './components/StatusBar';
 import { SchemaInfoPanel } from './components/SchemaInfoPanel';
 import { JsonSchemaProperty } from '../core/types';
 import { SchemaValidator } from '../core/schema-validator';
-import { JsonEditorProps } from './types';
+import { ExpandOption, JsonEditorProps } from './types';
+import { EditorView } from '@codemirror/view';
 
 // 防抖函数
 const debounce = <T extends (...args: any[]) => any>(
@@ -33,6 +34,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
     // 回调函数
     onValueChange,
     onError,
+    onCopy,
 
     // 编辑器配置
     codeSettings = {},
@@ -63,6 +65,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
     const stateRef = useRef({
         onValueChange,
         onError,
+        onCopy,
         validateOnChange: validationConfig?.validateOnChange,
         schema: schemaConfig?.schema,
         theme: themeConfig?.theme,
@@ -74,6 +77,15 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
 
     // 暴露编辑器实例给父组件
     useImperativeHandle(ref, () => editorRef.current!, []);
+
+
+        // 计算收起状态的高度
+        const getCollapsedHeight = useCallback(() => {
+            const fontSize = codeSettings?.fontSize || 14;
+            const lineHeight = fontSize * 1.6; // 1.6 是行高系数
+            const lines = expandOption?.collapsedLines ?? 5; // 默认显示5行
+            return `${lines * lineHeight}px`;
+        }, [codeSettings?.fontSize, expandOption?.collapsedLines]);
     
     // 计算编辑器样式
     const editorStyle = useMemo(() => {
@@ -84,28 +96,61 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
 
         if (!expandOption) return baseStyle;
 
-        const { expanded: expandedConfig, collapsed: collapsedConfig, animation } = expandOption;
-
+        const { animation } = expandOption;
+        
         const heightStyle = expanded
             ? {
-                height: expandedConfig.autoHeight ? 'auto' : undefined,
-                minHeight: expandedConfig.minHeight,
-                maxHeight: expandedConfig.maxHeight
+                position: 'relative' as const,
+                height: 'auto'
               }
             : {
-                height: collapsedConfig.height ||
-                  (collapsedConfig.lines ? `${collapsedConfig.lines * 20}px` : 'auto')
+                maxHeight: getCollapsedHeight(),
+                position: 'relative' as const,
+                overflowY: 'auto' as const
               };
+
+        const transitionStyle = animation?.enabled
+            ? {
+                transition: [
+                    `max-height ${animation.duration || 300}ms ${animation.timing || 'ease-in-out'}`,
+                    `opacity ${animation.duration || 300}ms ${animation.timing || 'ease-in-out'}`
+                ].join(', ')
+              }
+            : {};
 
         return {
             ...baseStyle,
             ...heightStyle,
-            transition: animation?.enabled
-                ? `height ${animation.duration || 300}ms ${animation.timing || 'ease-in-out'}`
-                : 'none'
+            ...transitionStyle
         };
-    }, [expanded, expandOption, codeSettings?.fontSize, style]);
-    
+    }, [expanded, expandOption, codeSettings?.fontSize, style, getCollapsedHeight]);
+
+    // 编辑器容器样式
+    const containerStyle = useMemo(() => {
+        if (!expandOption || expanded) return {
+            position: 'relative' as const
+        };
+        
+        const { animation } = expandOption;
+        return {
+            maxHeight: getCollapsedHeight(),
+            position: 'relative' as const,
+            overflowY: 'auto' as const,
+            transition: animation?.enabled
+                ? [
+                    `max-height ${animation.duration || 300}ms ${animation.timing || 'ease-in-out'}`,
+                    `opacity ${animation.duration || 300}ms ${animation.timing || 'ease-in-out'}`
+                  ].join(', ')
+                : undefined
+        };
+    }, [expanded, expandOption, getCollapsedHeight]);
+
+    // 计算剩余行数
+    const remainingLines = useMemo(() => {
+        if (expanded || !jsonSize || !expandOption?.collapsedLines) return 0;
+        return Math.max(0, jsonSize.lines - (expandOption.collapsedLines || 5));
+    }, [expanded, jsonSize, expandOption?.collapsedLines]);
+
     // 只在必要的配置变化时更新引用
     useEffect(() => {
         const needsUpdate = 
@@ -249,7 +294,35 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
         if (content) {
             navigator.clipboard.writeText(content);
         }
+        stateRef.current.onCopy?.(content || '');
     }, []);
+
+    // 计算可见行范围
+    const visibleRange = useMemo(() => {
+        if (expanded || !jsonSize || !expandOption?.collapsedLines) {
+            return { from: 1, to: jsonSize?.lines || 1 };
+        }
+        return {
+            from: 1,
+            to: Math.min(expandOption.collapsedLines, jsonSize.lines)
+        };
+    }, [expanded, jsonSize, expandOption?.collapsedLines]);
+
+    // 滚动控制
+    const handleScrollUp = useCallback(() => {
+        if (!editorRef.current) return;
+        const currentLine = Math.max(1, visibleRange.from - Math.floor((visibleRange.to - visibleRange.from) / 2));
+        editorRef.current.scrollToLine(currentLine);
+    }, [visibleRange]);
+
+    const handleScrollDown = useCallback(() => {
+        if (!editorRef.current) return;
+        const currentLine = Math.min(
+            jsonSize.lines,
+            visibleRange.to + Math.floor((visibleRange.to - visibleRange.from) / 2)
+        );
+        editorRef.current.scrollToLine(currentLine);
+    }, [visibleRange, jsonSize.lines]);
 
     // 初始化编辑器
     useEffect(() => {
@@ -369,7 +442,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
 
     return (
         <div className={`${themeConfig.theme === 'dark' ? 'dark' : ''} bg-transparent`}>
-            <div className={`flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 ${className || ''}`} style={editorStyle}>
+            <div className={`flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 ${className || ''}`}>
                 {toolbarConfig?.position !== 'none' && (
                     <Toolbar
                         config={{
@@ -397,7 +470,17 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
                         }}
                     />
                 )}
-                <div ref={containerRef} className="flex-1 overflow-auto min-h-0 bg-transparent" />
+                <div 
+                    ref={containerRef} 
+                    className="bg-transparent relative" 
+                    style={{
+                        ...editorStyle,
+                        ...containerStyle,
+                        overflow: expanded ? undefined : 'auto'
+                    }}
+                >
+                   
+                </div>
                 {schemaInfo && (
                     <SchemaInfoPanel
                         path={schemaInfo.path}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ToolbarProps } from '../types';
 
 const buttonClassNames = {
@@ -16,97 +16,61 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     state,
     handlers
 }) => {
-    const { features = {}, customButtons = [], buttonOrder = [] } = config;
-    const { isValid, isExpanded } = state;
-    const {
-        onFormat,
-        onMinify,
-        onValidate,
-        onCopy,
-        onToggleExpand
-    } = handlers;
-
-    // 默认按钮配置
-    const defaultButtons: Record<string, React.ReactNode> = {
-        format: features.format && (
-            <button
-                key="format"
-                onClick={onFormat}
-                className={buttonClassNames.default}
-                title="Format JSON"
-            >
-                Format
-            </button>
-        ),
-        minify: features.minify && (
-            <button
-                key="minify"
-                onClick={onMinify}
-                className={buttonClassNames.default}
-                title="Minify JSON"
-            >
-                Minify
-            </button>
-        ),
-        validate: features.validate && (
-            <button
-                key="validate"
-                onClick={onValidate}
-                className={buttonClassNames.validate(isValid)}
-                title="Validate JSON"
-            >
-                Validate
-            </button>
-        ),
-        copy: features.copy && (
-            <button
-                key="copy"
-                onClick={onCopy}
-                className={buttonClassNames.default}
-                title="Copy JSON"
-            >
-                Copy
-            </button>
-        ),
-        expand: features.expand && (
-            <button
-                key="expand"
-                onClick={onToggleExpand}
-                className={buttonClassNames.default}
-                title={isExpanded ? "Collapse" : "Expand"}
-            >
-                {isExpanded ? "Collapse" : "Expand"}
-            </button>
-        )
-    };
-
-    // 获取要显示的按钮
-    const getButtons = () => {
-        const buttons = { ...defaultButtons };
+    const [isExpanded, setIsExpanded] = useState(false);
+    
+    const EDITOR_ACTIONS: string[] = ['validate', 'expand'] as const;
+    
+    const getButtons = (): React.ReactNode[] => {
+        const buttons = [];
         
-        // 添加自定义按钮
-        if (editor) {  // 只在 editor 存在时添加自定义按钮
-            customButtons.forEach(btn => {
-                buttons[btn.key] = btn.render(editor);
-            });
-        }
-        
-        // 按指定顺序排序，如果没有指定顺序，使用默认顺序
-        const order = buttonOrder.length > 0 
-            ? buttonOrder 
-            : ['format', 'minify', 'validate', 'copy', 'expand', ...customButtons.map(b => b.key)];
-            
-        return order
-            .map(key => buttons[key])
-            .filter(Boolean);
-    };
+        if (config.features?.validate) buttons.push(<button key="validate" onClick={handlers.onValidate} className={buttonClassNames.validate(state.isValid)}>验证</button>);
+        if (config.features?.expand) buttons.push(<button key="expand" onClick={handlers.onToggleExpand} className={buttonClassNames.default}>展开</button>);
 
+        if (config.features?.format) buttons.push(<button key="format" onClick={handlers.onFormat} className={buttonClassNames.default}>格式化</button>);
+        if (config.features?.minify) buttons.push(<button key="minify" onClick={handlers.onMinify} className={buttonClassNames.default}>压缩</button>);
+        if (config.features?.copy) buttons.push(<button key="copy" onClick={handlers.onCopy} className={buttonClassNames.default}>复制</button>);
+        
+        return [...buttons, ...(config.customButtons?.map(btn => editor && btn.render(editor)) || [])];
+    };
+    
     return (
         <div 
-            className={`flex items-center gap-2 p-3 bg-white dark:bg-gray-900/95 border-b border-gray-200 dark:border-gray-700 ${config.className || ''}`}
+            className={`
+                fixed bottom-0 sm:sticky sm:top-0 sm:bottom-auto
+                w-full z-20
+                bg-white/95 dark:bg-gray-900/95 
+                backdrop-blur-sm
+                border-t sm:border-t-0 sm:border-b 
+                border-gray-200 dark:border-gray-700/50
+                transition-all duration-300 ease-in-out
+                ${config.className || ''}
+            `}
             style={config.style}
         >
-            {getButtons()}
+            {/* 桌面端工具栏 */}
+            <div className="sm:flex items-center justify-between p-2">
+                <div className="flex items-center gap-1.5">
+                    {getButtons()
+                        .filter((btn: React.ReactNode) => React.isValidElement(btn) && EDITOR_ACTIONS.includes(btn.key as string))
+                        .map(btn => (
+                            <div key={React.isValidElement(btn) ? btn.key : undefined}>
+                                {btn}
+                            </div>
+                        ))
+                    }
+                </div>
+                <div className="flex items-center gap-1.5">
+                    {getButtons()
+                        .filter(btn => React.isValidElement(btn) && !EDITOR_ACTIONS.includes(btn.key as string))
+                        .map(btn => (
+                            <div key={React.isValidElement(btn) ? btn.key : undefined}>
+                                {btn}
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+
         </div>
     );
 }; 

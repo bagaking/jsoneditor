@@ -2,7 +2,6 @@ import React from 'react';
 import { EditorConfigState } from '../../config';
 import {
   NumberInput,
-  TextInput,
   Select,
   Checkbox,
 } from './FormComponents';
@@ -129,27 +128,14 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({ config, onChange }) =>
           <div className="flex-1 min-w-[240px]">
             <h4 className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200">展开设置</h4>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <TextInput
-                  label="最小高度"
-                  value={config.expandOption.expanded.minHeight || ''}
-                  onChange={value => handleChange('expandOption', 'expanded', {
-                    ...config.expandOption.expanded,
-                    minHeight: value
-                  })}
-                />
-                <TextInput
-                  label="最大高度"
-                  value={config.expandOption.expanded.maxHeight || ''}
-                  onChange={value => handleChange('expandOption', 'expanded', {
-                    ...config.expandOption.expanded,
-                    maxHeight: value
-                  })}
-                />
-              </div>
+              <NumberInput
+                label="收起时显示行数"
+                value={config.expandOption.collapsedLines || 5}
+                onChange={value => handleChange('expandOption', 'collapsedLines', value)}
+              />
               <NumberInput
                 label="动画时长 (ms)"
-                value={config.expandOption.animation?.duration || 0}
+                value={config.expandOption.animation?.duration || 300}
                 onChange={value => handleChange('expandOption', 'animation', {
                   ...config.expandOption.animation,
                   duration: value

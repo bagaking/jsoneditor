@@ -47,18 +47,12 @@ export const defaultConfig: EditorConfigState = {
   },
   expandOption: {
     defaultExpanded: true,
-    expanded: {
-      minHeight: '300px',
-    },
-    collapsed: {
-      height: '100px',
-      showMore: true,
-      moreText: '展开更多',
-    },
+    collapsedLines: 12,
     animation: {
       enabled: true,
       duration: 300,
-    },
+      timing: 'ease-in-out'
+    }
   },
 };
 

@@ -31,27 +31,23 @@ export interface ToolbarConfig {
 
 // 展开/收缩配置
 export interface ExpandOption {
+  /** 默认是否展开 */
   defaultExpanded?: boolean;
   
-  expanded: {
-    minHeight?: string;
-    maxHeight?: string;
-    autoHeight?: boolean;
-  };
+  /** 收起时显示的行数 */
+  collapsedLines?: number;
   
-  collapsed: {
-    height?: string;
-    lines?: number;
-    showMore?: boolean;
-    moreText?: string;
-  };
-  
+  /** 动画配置 */
   animation?: {
+    /** 是否启用动画 */
     enabled?: boolean;
+    /** 动画持续时间(ms) */
     duration?: number;
+    /** 动画缓动函数 */
     timing?: string;
   };
   
+  /** 展开状态变化回调 */
   onExpandChange?: (expanded: boolean) => void;
 }
 
@@ -66,6 +62,7 @@ export interface JsonEditorProps {
   // 回调函数
   onValueChange?: (value: string) => void;
   onError?: (error: Error) => void;
+  onCopy?: (content: string) => void;
 
   // 编辑器配置
   codeSettings?: CodeSettings;

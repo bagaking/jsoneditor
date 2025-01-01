@@ -1,4 +1,4 @@
-import { EditorState, Transaction, Extension } from '@codemirror/state';
+import { EditorState, Transaction, Extension, StateEffect } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { json } from '@codemirror/lang-json';
 import { defaultKeymap } from '@codemirror/commands';
@@ -16,12 +16,24 @@ import { JsonPath } from '../extensions/path';
 // 基础样式增强
 const baseTheme = EditorView.theme({
     "&": {
+        position: 'relative',
         height: '100%'
     },
     ".cm-scroller": {
-        overflow: "auto"
+        overflow: "auto",
+        height: '100%'
+    },
+    ".cm-content": {
+        whiteSpace: 'pre',
+        minHeight: '100%'
     }
 });
+
+// 滚动配置
+const scrollConfig = EditorView.scrollMargins.of(() => ({
+    top: 0,
+    bottom: 0
+}));
 
 // 默认配置
 const defaultCodeSettings: CodeSettings = {
@@ -52,6 +64,7 @@ export class EditorCore {
     private config: EditorConfig;
     private schema: object | null = null;
     private lastCursor: { line: number; col: number } | null = null;
+    private extensions: Extension[] = [];
 
     constructor(container: HTMLElement, config: EditorConfig = {}) {
         console.log('EditorCore constructor:', { container, config });
@@ -217,6 +230,9 @@ export class EditorCore {
             extensions.push(bracketMatching());
         }
         extensions.push(keymap.of(defaultKeymap));
+
+        // 滚动配置
+        extensions.push(scrollConfig);
 
         // JSON 支持
         extensions.push(json());
@@ -436,5 +452,43 @@ export class EditorCore {
             console.error('Failed to set value at path:', e);
             return false;
         }
+    }
+
+    // 获取指定行的结束位置
+    getLineEndPosition(line: number): number {
+        if (!this.view) throw new Error('Editor not initialized');
+        const lineInfo = this.view.state.doc.line(line);
+        return lineInfo.to;
+    }
+
+    // 添加扩展
+    addExtension(extension: Extension) {
+        if (!this.view) throw new Error('Editor not initialized');
+        this.extensions.push(extension);
+        this.view.dispatch({
+            effects: StateEffect.appendConfig.of([extension])
+        });
+    }
+
+    // 移除扩展
+    removeExtension(extension: Extension) {
+        if (!this.view) throw new Error('Editor not initialized');
+        const index = this.extensions.indexOf(extension);
+        if (index > -1) {
+            this.extensions.splice(index, 1);
+            // 重新创建状态以移除扩展
+            this.view.setState(this.createEditorState(this.getValue()));
+        }
+    }
+
+    // 滚动到指定行
+    scrollToLine(line: number) {
+        if (!this.view) throw new Error('Editor not initialized');
+        const lineInfo = this.view.state.doc.line(Math.max(1, Math.min(line, this.view.state.doc.lines)));
+        this.view.dispatch({
+            effects: EditorView.scrollIntoView(lineInfo.from, {
+                y: "nearest"
+            })
+        });
     }
 } 
