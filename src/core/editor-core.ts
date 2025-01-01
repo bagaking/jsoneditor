@@ -1,7 +1,7 @@
 import { EditorState, Transaction, Extension, StateEffect } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { json } from '@codemirror/lang-json';
-import { defaultKeymap } from '@codemirror/commands';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
 import { bracketMatching } from '@codemirror/language';
 import { oneDark } from '@codemirror/theme-one-dark';
@@ -220,6 +220,7 @@ export class EditorCore {
         const extensions: Extension[] = [];
 
         // 基础功能
+        extensions.push(history());
         if (codeSettings?.lineNumbers !== false) {
             extensions.push(lineNumbers());
         }
@@ -229,7 +230,7 @@ export class EditorCore {
         if (codeSettings?.bracketMatching !== false) {
             extensions.push(bracketMatching());
         }
-        extensions.push(keymap.of(defaultKeymap));
+        extensions.push(keymap.of([...defaultKeymap, ...historyKeymap]));
 
         // 滚动配置
         extensions.push(scrollConfig);
