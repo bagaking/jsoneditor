@@ -132,7 +132,7 @@ export function createEditorPlugin(config: EditorConfig) {
                 // 处理光标移动
                 if (update.selectionSet && config.onCursorActivity) {
                     const cursorInfo = update.state.field(cursorStateField);
-                    console.log('Cursor moved:', cursorInfo);
+                    // console.log('Cursor moved:', cursorInfo);
                     this.debouncedCursorActivity(cursorInfo);
                 }
 

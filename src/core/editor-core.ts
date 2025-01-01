@@ -166,7 +166,7 @@ export class EditorCore {
      * 更新编辑器配置
      */
     updateConfig(config: EditorConfig) {
-        console.log('Updating editor config:', config);
+        // console.log('Updating editor config:', config);
         
         try {
             // 保存当前状态
