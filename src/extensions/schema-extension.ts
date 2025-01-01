@@ -3,9 +3,9 @@ import { linter, Diagnostic } from '@codemirror/lint';
 import { EditorView } from '@codemirror/view';
 import { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
-import { JsonPath, JsonSchemaProperty } from './path';
+import { JsonPath } from './path';
 import { SchemaValidator } from '../core/schema-validator';
-
+import { JsonSchemaProperty } from '../core/types';
 /**
  * Schema 编辑器扩展配置
  */

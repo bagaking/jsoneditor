@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { JsonSchemaProperty } from '../../extensions/path';
+import { JsonSchemaProperty } from '../../core/types';
 
 export interface SchemaInfo {
     path: string;

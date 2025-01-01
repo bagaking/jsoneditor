@@ -7,11 +7,11 @@ import { bracketMatching } from '@codemirror/language';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
 import { createDecorationExtension } from '../extensions/decoration';
-import { EditorConfig, CodeSettings, SchemaConfig, ThemeConfig, ValidationConfig } from './types';
+import { EditorConfig, CodeSettings, SchemaConfig, ThemeConfig, ValidationConfig, JsonSchemaProperty } from './types';
 import { light } from '../themes/light';
 import { getSchemaCompletions } from '../extensions/schema-extension';
 import { createSchemaEditorExtension } from '../extensions/schema-extension';
-import { JsonPath, JsonSchemaProperty } from '../extensions/path';
+import { JsonPath } from '../extensions/path';
 
 // 基础样式增强
 const baseTheme = EditorView.theme({

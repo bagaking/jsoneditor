@@ -87,15 +87,7 @@ function App() {
 
 ### Schema 验证
 
-本组件使用 [JSON Schema](https://json-schema.org/) 进行数据验证和自动补全。支持 [Draft 2020-12](https://json-schema.org/draft/2020-12/json-schema-core.html) 规范，并通过 [ajv](https://ajv.js.org/) 实现。
-
-除了标准的 JSON Schema 功能外，还支持以下扩展格式：
-- `date-time`: ISO 8601 日期时间格式
-- `color`: CSS 颜色值 (如 #RRGGBB)
-- `email`: 电子邮件地址
-- `uri`: URI 格式
-- `uuid`: UUID 格式
-- `regex`: 正则表达式
+本组件使用 [JSON Schema](https://json-schema.org/) 进行数据验证和自动补全。支持 [Draft 2020-12](https://json-schema.org/draft/2020-12/json-schema-core.html) 规范。
 
 示例：
 
@@ -170,18 +162,27 @@ function App() {
       onValueChange={setValue}
       decorationConfig={{
         paths: {
-          '$["name"]': {
-            style: 'underline',
-            onClick: (value) => console.log('Name clicked:', value)
-          },
+          // 版本号使用特殊样式
           '$["version"]': {
+            style: "italic bg-blue-100/30 rounded px-1",
+            onClick: (value) => console.log('Version:', value)
+          },
+          // 状态使用不同颜色
+          '$["status"]': {
+            style: "text-green-600 font-medium",
+            onClick: (value) => console.log('Status:', value)
+          },
+          // 时间使用自定义组件
+          '$["createdAt"]': {
             style: {
               type: 'component',
-              render: ({ value, onClick }) => (
-                <button onClick={() => onClick?.(value)}>
-                  v{value}
-                </button>
-              )
+              render: ({ value }) => {
+                const date = new Date(value);
+                const el = document.createElement('span');
+                el.className = 'text-gray-600';
+                el.textContent = `📅 ${date.toLocaleDateString()}`;
+                return el;
+              }
             }
           }
         }
@@ -194,7 +195,7 @@ function App() {
 ### 使用 Ref
 
 ```tsx
-import { JsonEditor } from '@bagaking/jsoneditor';
+import { JsonEditor, EditorCore } from '@bagaking/jsoneditor';
 import { useRef } from 'react';
 
 function App() {
@@ -231,6 +232,7 @@ function App() {
 | className | string | - | 自定义类名 |
 | style | React.CSSProperties | - | 自定义样式 |
 | defaultValue | string | - | 初始值 |
+| readOnly | boolean | false | 是否只读 |
 | onValueChange | (value: string) => void | - | 值变化回调 |
 | onError | (error: Error) => void | - | 错误回调 |
 | codeSettings | CodeSettings | {} | 编辑器设置 |
@@ -284,8 +286,25 @@ function App() {
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
-| style | string \| { type: 'component'; render: (props: { value: string; onClick?: (value: string) => void }) => HTMLElement } | 装饰样式 |
+| style | string \| CustomComponent | 装饰样式 |
 | onClick | (value: string) => void | 点击回调 |
+
+### ToolbarConfig
+
+| 属性 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| position | 'top' \| 'bottom' \| 'none' | 'top' | 工具栏位置 |
+| features | { format?: boolean; minify?: boolean; validate?: boolean; copy?: boolean; expand?: boolean } | - | 功能开关 |
+| customButtons | Array<{ key: string; render: (editor: EditorCore) => React.ReactNode }> | - | 自定义按钮 |
+
+### ExpandOption
+
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| defaultExpanded | boolean | 默认是否展开 |
+| expanded | { minHeight?: string; maxHeight?: string; autoHeight?: boolean } | 展开状态配置 |
+| collapsed | { height?: string; lines?: number } | 收起状态配置 |
+| animation | { enabled?: boolean; duration?: number; timing?: string } | 动画配置 |
 
 ## 许可证
 

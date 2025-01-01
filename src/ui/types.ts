@@ -1,6 +1,6 @@
-import { DecorationConfig, CodeSettings, SchemaConfig, ThemeConfig, ValidationConfig } from '../core/types';
+import { DecorationConfig, CodeSettings, SchemaConfig, ThemeConfig, ValidationConfig, JsonSchemaProperty } from '../core/types';
 import { EditorCore } from '../core/editor-core';
-import { JsonSchemaProperty } from '../extensions/path';
+
 import React from 'react';
 import { Extension } from '@codemirror/state';
 

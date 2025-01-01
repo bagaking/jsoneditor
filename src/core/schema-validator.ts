@@ -11,6 +11,16 @@ const ajv = new Ajv({
 addFormats(ajv);
 
 /**
+ * todo: 除了标准的 JSON Schema 功能外，还支持以下扩展格式：
+ * - `date-time`: ISO 8601 日期时间格式
+ * - `color`: CSS 颜色值 (如 #RRGGBB)
+ * - `email`: 电子邮件地址
+ * - `uri`: URI 格式
+ * - `uuid`: UUID 格式
+ * - `regex`: 正则表达式
+ */
+
+/**
  * JSON Schema 验证器
  */
 export class SchemaValidator {

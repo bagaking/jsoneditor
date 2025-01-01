@@ -13,6 +13,7 @@ export type {
     SchemaConfig,
     ThemeConfig,
     ValidationConfig,
+    JsonSchemaProperty,
 } from './core/types';
 
 export type {

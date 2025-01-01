@@ -1,9 +1,9 @@
-import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { EditorCore } from '../core/editor-core';
 import { Toolbar } from './components/Toolbar';
 import { StatusBar } from './components/StatusBar';
 import { SchemaInfoPanel } from './components/SchemaInfoPanel';
-import { JsonSchemaProperty } from '../extensions/path';
+import { JsonSchemaProperty } from '../core/types';
 import { SchemaValidator } from '../core/schema-validator';
 import { JsonEditorProps } from './types';
 
@@ -23,7 +23,7 @@ const debounce = <T extends (...args: any[]) => any>(
     };
 };
 
-export const JsonEditor: React.FC<JsonEditorProps> = ({
+export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
     // 基础属性
     className,
     style,
@@ -45,7 +45,7 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
     // UI 配置
     toolbarConfig,
     expandOption
-}) => {
+}, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const editorRef = useRef<EditorCore | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -71,6 +71,9 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
         readOnly,
         fontSize: codeSettings?.fontSize
     });
+
+    // 暴露编辑器实例给父组件
+    useImperativeHandle(ref, () => editorRef.current!, []);
     
     // 计算编辑器样式
     const editorStyle = useMemo(() => {
@@ -412,4 +415,4 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
             </div>
         </div>
     );
-}; 
+}); 

@@ -1,19 +1,7 @@
 import { EditorView } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
 import type { SyntaxNode } from '@lezer/common';
-
-/**
- * JSON Schema 相关类型
- */
-export interface JsonSchemaProperty {
-    type?: string;
-    description?: string;
-    enum?: any[];
-    properties?: Record<string, JsonSchemaProperty>;
-    items?: JsonSchemaProperty;
-    required?: string[];
-    [key: string]: any;
-}
+import { JsonSchemaProperty } from '../core/types';
 
 /**
  * JSON 路径工具类
