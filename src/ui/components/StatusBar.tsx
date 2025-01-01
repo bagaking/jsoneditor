@@ -19,6 +19,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     jsonSize,
     isValid
 }) => {
+    
     return (
         <div className="flex justify-between items-center px-3 py-2 text-xs bg-white dark:bg-gray-900/95 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2">

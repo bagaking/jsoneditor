@@ -7,6 +7,7 @@ import { JsonSchemaProperty } from '../core/types';
 import { SchemaValidator } from '../core/schema-validator';
 import { ExpandOption, JsonEditorProps } from './types';
 import { EditorView } from '@codemirror/view';
+import { getMaxMinifyLevel, minifyJson } from '../utils/json';
 
 // 防抖函数
 const debounce = <T extends (...args: any[]) => any>(
@@ -60,6 +61,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
         schema: JsonSchemaProperty;
         value?: string;
     } | null>(null);
+    const [minifyLevel, setMinifyLevel] = useState(-1);
     
     // 使用 useRef 存储所有可变的配置和回调
     const stateRef = useRef({
@@ -185,6 +187,15 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
         };
     }, [onValueChange, onError, validationConfig?.validateOnChange]);
 
+    // 初始化时计算文档大小
+    useEffect(() => {
+        if (defaultValue) {
+            const lines = defaultValue.split('\n').length;
+            const bytes = new Blob([defaultValue]).size;
+            setJsonSize({ lines, bytes });
+        }
+    }, [defaultValue]);
+
     // 验证函数
     const validateJson = useCallback((value: string) => {
         console.log('Validating JSON:', { valueLength: value.length });
@@ -225,6 +236,11 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
     // 内容变化处理
     const handleChange = useCallback((value: string) => {
         console.log('Content changed:', { valueLength: value.length });
+        
+        // 更新文档大小信息
+        const lines = value.split('\n').length;
+        const bytes = new Blob([value]).size;
+        setJsonSize({ lines, bytes });
         
         // 触发 onChange 回调
         stateRef.current.onValueChange?.(value);
@@ -420,9 +436,23 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
     const handleMinify = useCallback(() => {
         console.log('Minifying JSON');
         if (!editorRef.current) return;
+        
         const content = editorRef.current.getValue();
         try {
-            const minified = JSON.stringify(JSON.parse(content));
+            // 获取最大压缩层级
+            const maxLevel = getMaxMinifyLevel(content);
+            
+            // 计算新的压缩层级
+            const newLevel = minifyLevel >= maxLevel ? 0 : minifyLevel + 1;
+            setMinifyLevel(newLevel);
+            
+            // 使用多级压缩
+            const minified = minifyJson(content, {
+                level: newLevel,
+                keepIndent: true,
+                indentSize: 2
+            });
+            
             editorRef.current.setValue(minified);
             setError(null);
             setIsValid(true);
@@ -431,7 +461,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
             setIsValid(false);
             stateRef.current.onError?.(err instanceof Error ? err : new Error(String(err)));
         }
-    }, []);
+    }, [minifyLevel]);
 
     // 手动验证处理
     const handleValidate = useCallback(() => {
@@ -439,6 +469,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
         if (!editorRef.current) return;
         validateJson(editorRef.current.getValue());
     }, [validateJson]);
+
 
     return (
         <div className={`${themeConfig.theme === 'dark' ? 'dark' : ''} bg-transparent`}>
