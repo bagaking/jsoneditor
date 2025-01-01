@@ -1,6 +1,6 @@
 {
   "name": "@bagaking/jsoneditor",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "A powerful JSON editor with schema validation",
   "type": "module",
   "main": "./dist/index.cjs",
