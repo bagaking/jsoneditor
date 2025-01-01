@@ -299,12 +299,12 @@ function App() {
 
 ### ExpandOption
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| defaultExpanded | boolean | 默认是否展开 |
-| expanded | { minHeight?: string; maxHeight?: string; autoHeight?: boolean } | 展开状态配置 |
-| collapsed | { height?: string; lines?: number } | 收起状态配置 |
-| animation | { enabled?: boolean; duration?: number; timing?: string } | 动画配置 |
+| 属性 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| defaultExpanded | boolean | false | 默认是否展开 |
+| collapsedLines | number | - | 收起状态显示的行数 |
+| animation | { enabled?: boolean; duration?: number; timing?: string } | - | 动画配置 |
+| onExpandChange | (expanded: boolean) => void | - | 展开状态变化回调 |
 
 ## 许可证
 
