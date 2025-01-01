@@ -6,7 +6,8 @@ export const defaultCodeSettings: CodeSettings = {
     lineNumbers: true,
     bracketMatching: true,
     autoCompletion: true,
-    highlightActiveLine: true
+    highlightActiveLine: true,
+    focusRetentionStrategy: 'manual'
 };
 
 // 默认 Schema 配置

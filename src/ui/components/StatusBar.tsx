@@ -21,7 +21,15 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 }) => {
     
     return (
-        <div className="flex justify-between items-center px-3 py-2 text-xs bg-white dark:bg-gray-900/95 border-t border-gray-200 dark:border-gray-700">
+        <div className="
+            sticky bottom-0
+            flex justify-between items-center 
+            px-3 py-2 text-xs 
+            bg-white/90 dark:bg-gray-900/90
+            backdrop-blur-sm
+            border-t border-gray-200 dark:border-gray-700
+            z-10
+        ">
             <div className="flex items-center gap-2">
                 {error ? (
                     <span className="text-red-600 dark:text-red-400 font-semibold flex items-center gap-1" title={error}>

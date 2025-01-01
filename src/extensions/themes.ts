@@ -153,7 +153,8 @@ const darkTheme = EditorView.theme({
     },
     ".cm-action-button:hover": {
         color: "#C0C0DF",
-    }
+    },
+
 }, { dark: true });
 
 // 亮色主题
@@ -231,7 +232,7 @@ const lightTheme = EditorView.theme({
     },
     ".cm-action-button:hover": {
         color: "#8080FF",
-    }
+    },
 
 }, { dark: false });
 

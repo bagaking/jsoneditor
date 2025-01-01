@@ -20,7 +20,7 @@ class LinkWidget extends WidgetType {
         button.innerHTML = this.svgContent;
         button.title = 'Open URL';
         button.onclick = (e) => {
-            e.preventDefault();
+            // 只阻止冒泡，不阻止默认行为
             e.stopPropagation();
             if (this.onClick) {
                 this.onClick(this.url);
@@ -76,7 +76,7 @@ class ActionButton extends WidgetType {
         button.innerHTML = this.svgContent;
         button.title = 'Click to trigger action';
         button.onclick = (e) => {
-            e.preventDefault();
+            // 只阻止冒泡，不阻止默认行为
             e.stopPropagation();
             this.onClick(this.value);
         };

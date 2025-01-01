@@ -27,6 +27,25 @@ export interface CodeSettings {
    * 是否启用活动行高亮
    */
   highlightActiveLine?: boolean;
+
+  /**
+   * 编辑器焦点保持策略
+   * 
+   * @description
+   * 控制编辑器在失去焦点时如何处理焦点恢复：
+   * 
+   * - 'soft': 温和模式，仅在焦点完全丢失时恢复
+   *   适用于编辑器需要和其他交互元素（如日期选择器、下拉框等）共存的场景
+   * 
+   * - 'strict': 严格模式，主动恢复焦点到编辑器
+   *   适用于编辑器是主要交互区域，需要保持持续焦点的场景
+   * 
+   * - 'manual': 手动模式，完全不自动恢复焦点
+   *   适用于编辑器焦点需要完全手动控制的场景
+   * 
+   * @default 'soft'
+   */
+  focusRetentionStrategy?: 'soft' | 'strict' | 'manual';
 }
 
 /**

@@ -248,7 +248,10 @@ export const exampleSchema: JsonSchemaProperty = {
           type: "number",
           minimum: 0,
           maximum: 5
-        }
+        },
+        set: {
+          type: "boolean",
+        },
       }
     },
     config: {
