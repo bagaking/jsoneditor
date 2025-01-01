@@ -1,4 +1,3 @@
-import { ErrorObject } from 'ajv';
 import { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { JsonSchemaProperty } from '../path/types';
 

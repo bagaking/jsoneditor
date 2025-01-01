@@ -1,12 +1,11 @@
-import React, { useRef, useEffect, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { EditorCore } from '../core/editor-core';
 import { Toolbar } from './components/Toolbar';
 import { StatusBar } from './components/StatusBar';
 import { SchemaInfoPanel } from './components/SchemaInfoPanel';
 import { JsonSchemaProperty } from '../core/types';
 import { SchemaValidator } from '../core/schema-validator';
-import { ExpandOption, JsonEditorProps } from './types';
-import { EditorView } from '@codemirror/view';
+import { JsonEditorProps } from './types';
 import { jsonParser } from '../jsonkit/parser';
 
 // 防抖函数
@@ -146,12 +145,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
                 : undefined
         };
     }, [expanded, expandOption, getCollapsedHeight]);
-
-    // 计算剩余行数
-    const remainingLines = useMemo(() => {
-        if (expanded || !jsonSize || !expandOption?.collapsedLines) return 0;
-        return Math.max(0, jsonSize.lines - (expandOption.collapsedLines || 5));
-    }, [expanded, jsonSize, expandOption?.collapsedLines]);
+ 
 
     // 只在必要的配置变化时更新引用
     useEffect(() => {
@@ -313,33 +307,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
         stateRef.current.onCopy?.(content || '');
     }, []);
 
-    // 计算可见行范围
-    const visibleRange = useMemo(() => {
-        if (expanded || !jsonSize || !expandOption?.collapsedLines) {
-            return { from: 1, to: jsonSize?.lines || 1 };
-        }
-        return {
-            from: 1,
-            to: Math.min(expandOption.collapsedLines, jsonSize.lines)
-        };
-    }, [expanded, jsonSize, expandOption?.collapsedLines]);
-
-    // 滚动控制
-    const handleScrollUp = useCallback(() => {
-        if (!editorRef.current) return;
-        const currentLine = Math.max(1, visibleRange.from - Math.floor((visibleRange.to - visibleRange.from) / 2));
-        editorRef.current.scrollToLine(currentLine);
-    }, [visibleRange]);
-
-    const handleScrollDown = useCallback(() => {
-        if (!editorRef.current) return;
-        const currentLine = Math.min(
-            jsonSize.lines,
-            visibleRange.to + Math.floor((visibleRange.to - visibleRange.from) / 2)
-        );
-        editorRef.current.scrollToLine(currentLine);
-    }, [visibleRange, jsonSize.lines]);
-
+ 
     // 初始化编辑器
     useEffect(() => {
         console.log('Initializing editor...');

@@ -3,16 +3,21 @@
   "version": "0.1.4",
   "description": "A powerful JSON editor with schema validation",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./style.css": "./dist/style.css"
   },
+  "sideEffects": [
+    "*.css"
+  ],
   "files": [
     "dist",
     "README.md"

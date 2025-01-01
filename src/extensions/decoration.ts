@@ -1,5 +1,5 @@
 import { Extension } from '@codemirror/state';
-import { EditorView, Decoration, DecorationSet, WidgetType, ViewPlugin, ViewUpdate, PluginValue } from '@codemirror/view';
+import { EditorView, Decoration, DecorationSet, WidgetType, ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
 import { DecorationConfig, DecorationStyle, CustomComponent } from '../core/types';
 import { JsonPath } from '../jsonkit';
@@ -214,7 +214,7 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
             }
 
             private cleanupClickHandlers(view: EditorView) {
-                this.clickHandlers.forEach((handler, key) => {
+                this.clickHandlers.forEach((handler) => {
                     view.dom.removeEventListener('click', handler);
                 });
                 this.clickHandlers.clear();

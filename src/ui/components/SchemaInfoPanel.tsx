@@ -41,10 +41,9 @@ export const SchemaInfoPanel: React.FC<SchemaInfo> = ({
     
     // 从父级 schema 中判断是否必填
     const isRequired = React.useMemo(() => {
-        const parentPath = path.split('.').slice(0, -1).join('.');
         const parentSchema = schema.parent as JsonSchemaProperty;
         return parentSchema?.required?.includes(propertyName) || false;
-    }, [path, schema]);
+    }, [path, schema, propertyName]);
 
     const baseInputClass = `
         px-2 py-0.5 

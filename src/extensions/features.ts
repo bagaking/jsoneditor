@@ -1,13 +1,13 @@
 import { Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { history, historyKeymap } from '@codemirror/commands';
-import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
+import { lineNumbers, highlightActiveLine } from '@codemirror/view';
 import { bracketMatching } from '@codemirror/language';
 import { keymap } from '@codemirror/view';
 import { defaultKeymap } from '@codemirror/commands';
 import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
 import { CodeSettings } from '../core/types';
-import { getSchemaCompletions } from './schema';
+import { schemaCompletion } from '../jsonkit/schema/completion';
 
 /**
  * 创建基础功能扩展
@@ -87,7 +87,7 @@ export function createCompletionExtension(codeSettings: CodeSettings | undefined
     return [autocompletion({
         override: [(context: CompletionContext) => {
             if (schema) {
-                return getSchemaCompletions(schema, context);
+                return schemaCompletion.getCompletions(schema, context);
             }
             return null;
         }],
