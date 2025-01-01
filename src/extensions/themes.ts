@@ -139,7 +139,7 @@ const darkTheme = EditorView.theme({
     ".cm-json-underline": {
         textDecoration: "none",
         borderBottom: "1px dashed #61afef",
-        paddingBottom: "2px"
+        paddingBottom: "1px"
     },
     ".cm-json-bold": {
         fontWeight: "700"
@@ -221,7 +221,7 @@ const lightTheme = EditorView.theme({
     ".cm-json-underline": {
         textDecoration: "none",
         borderBottom: "1px dashed #0366d6",
-        paddingBottom: "2px"
+        paddingBottom: "1px"
     },
     ".cm-json-bold": {
         fontWeight: "700"

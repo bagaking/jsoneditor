@@ -8,17 +8,17 @@ import { rocketActionIcon, linkActionIcon } from '../utils/svg';
 // 组件定义
 class LinkWidget extends WidgetType {
     private svgContent: string;
-    private static counter = 0;
     private id: string;
 
     constructor(
+        private editorId: string,
         private url: string, 
         private onClick?: (url: string) => void,
         private openInNewTab: boolean = true
     ) {
         super();
         this.svgContent = linkActionIcon;
-        this.id = `link-widget-${LinkWidget.counter++}`;
+        this.id = `${this.editorId}-link-${Math.random().toString(36).slice(2, 8)}`;
     }
 
     toDOM() {
@@ -26,13 +26,13 @@ class LinkWidget extends WidgetType {
         wrapper.className = 'cm-url-widget';
         wrapper.dataset.url = this.url;
         wrapper.dataset.widgetId = this.id;
+        wrapper.dataset.editorId = this.editorId;
         
         const button = document.createElement('button');
         button.className = 'cm-action-button';
         button.innerHTML = this.svgContent;
         button.title = 'Open URL';
         
-        // 不再直接绑定 onclick
         wrapper.appendChild(button);
         return wrapper;
     }
@@ -41,10 +41,10 @@ class LinkWidget extends WidgetType {
         return this.url === other.url && this.id === other.id;
     }
 
-    // 新增：获取处理函数
     getHandler() {
         return {
             id: this.id,
+            editorId: this.editorId,
             onClick: this.onClick,
             openInNewTab: this.openInNewTab,
             url: this.url
@@ -140,7 +140,10 @@ const utils = {
 
 // 装饰器工厂
 class DecorationFactory {
-    constructor(private readonly config: DecorationConfig) {}
+    constructor(
+        private readonly config: DecorationConfig,
+        private readonly editorId: string
+    ) {}
 
     getConfig(): DecorationConfig {
         return this.config;
@@ -194,6 +197,7 @@ class DecorationFactory {
         }
         return Decoration.widget({
             widget: new LinkWidget(
+                this.editorId,
                 url, 
                 this.config.urlHandler?.onClick,
                 this.config.urlHandler?.openInNewTab ?? true
@@ -211,9 +215,11 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
             factory: DecorationFactory;
             clickHandlers: Map<string, (e: MouseEvent) => void>;
             linkHandlers: Map<string, ReturnType<LinkWidget['getHandler']>>;
+            editorId: string;
 
             constructor(view: EditorView) {
-                this.factory = new DecorationFactory(config);
+                this.editorId = `editor-${Math.random().toString(36).slice(2, 8)}`;
+                this.factory = new DecorationFactory(config, this.editorId);
                 this.clickHandlers = new Map();
                 this.linkHandlers = new Map();
                 this.decorations = this.buildDecorations(view);
@@ -223,6 +229,9 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                     const target = e.target as HTMLElement;
                     const widget = target.closest('.cm-url-widget') as HTMLElement;
                     if (!widget) return;
+
+                    // 检查是否属于当前编辑器实例
+                    if (widget.dataset.editorId !== this.editorId) return;
 
                     e.preventDefault();
                     e.stopPropagation();
@@ -234,8 +243,17 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                     if (!handler) return;
 
                     if (handler.onClick) {
-                        // 使用 setTimeout 来确保在正确的上下文中执行
-                        setTimeout(() => handler.onClick?.(handler.url), 0);
+                        // 使用 requestAnimationFrame 来确保在下一帧执行,
+                        // 这样可以让 React 有机会更新上下文
+                        requestAnimationFrame(() => {
+                            if (handler.onClick) {
+                                try {
+                                    handler.onClick(handler.url);
+                                } catch (error) {
+                                    console.error('Error in URL click handler:', error);
+                                }
+                            }
+                        });
                     } else if (handler.openInNewTab) {
                         const link = document.createElement('a');
                         link.href = handler.url;
