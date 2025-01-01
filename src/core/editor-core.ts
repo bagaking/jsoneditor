@@ -1,5 +1,5 @@
-import { EditorState, Transaction, Extension, StateEffect } from '@codemirror/state';
-import { EditorView, keymap } from '@codemirror/view';
+import { EditorState, Transaction, Extension, StateEffect, StateField, Compartment } from '@codemirror/state';
+import { EditorView, keymap, ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { json } from '@codemirror/lang-json';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
@@ -58,12 +58,153 @@ const defaultValidationConfig: ValidationConfig = {
     autoFormat: false
 };
 
+// 创建状态字段
+const cursorStateField = StateField.define<{ line: number; col: number }>({
+    create: () => ({ line: 1, col: 1 }),
+    update(value, tr) {
+        if (!tr.selection) return value;
+        const pos = tr.selection.main.head;
+        const line = tr.state.doc.lineAt(pos);
+        return {
+            line: line.number,
+            col: pos - line.from + 1
+        };
+    }
+});
+
+const docSizeStateField = StateField.define<{ lines: number; bytes: number }>({
+    create: () => ({ lines: 1, bytes: 0 }),
+    update(value, tr) {
+        if (!tr.docChanged) return value;
+        
+        // 只在文档内容真正变化时更新
+        const newDoc = tr.state.doc;
+        const newValue = {
+            lines: newDoc.lines,
+            bytes: newDoc.toString().length
+        };
+        
+        // 如果值没有变化,返回旧值以避免不必要的更新
+        if (newValue.lines === value.lines && newValue.bytes === value.bytes) {
+            return value;
+        }
+        
+        return newValue;
+    }
+});
+
+// 创建配置 compartment
+const configCompartment = new Compartment();
+
+// 防抖函数
+const debounce = <T extends (...args: any[]) => any>(
+    func: T,
+    wait: number
+): (...args: Parameters<T>) => void => {
+    let timeout: NodeJS.Timeout | null = null;
+    return (...args: Parameters<T>) => {
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+        timeout = setTimeout(() => {
+            func(...args);
+        }, wait);
+    };
+};
+
+// 创建视图插件
+const createEditorPlugin = (config: EditorConfig) => {
+    return ViewPlugin.fromClass(class {
+        private hadFocus: boolean = false;
+        private debouncedDocChange: (value: string) => void;
+        private debouncedCursorActivity: (info: { line: number; col: number }) => void;
+        private rafId: number | null = null;
+
+        constructor(private view: EditorView) {
+            console.log('Editor plugin initialized');
+            
+            // 创建防抖的回调函数
+            this.debouncedDocChange = debounce((value: string) => {
+                try {
+                    config.onChange?.(value);
+                } catch (error) {
+                    console.error('Error in onChange callback:', error);
+                }
+            }, 100);
+
+            this.debouncedCursorActivity = debounce((info: { line: number; col: number }) => {
+                try {
+                    config.onCursorActivity?.(info);
+                } catch (error) {
+                    console.error('Error in onCursorActivity callback:', error);
+                }
+            }, 50);
+        }
+
+        update(update: ViewUpdate) {
+            try {
+                // 使用 requestAnimationFrame 处理视图更新
+                if (this.rafId) {
+                    cancelAnimationFrame(this.rafId);
+                }
+
+                this.rafId = requestAnimationFrame(() => {
+                    this.handleUpdate(update);
+                });
+            } catch (error) {
+                console.error('Error in plugin update:', error);
+            }
+        }
+
+        private handleUpdate(update: ViewUpdate) {
+            // 处理文档变化
+            if (update.docChanged) {
+                const value = update.state.doc.toString();
+                console.log('Document changed:', { valueLength: value.length });
+                this.debouncedDocChange(value);
+            }
+
+            // 处理光标移动
+            if (update.selectionSet && config.onCursorActivity) {
+                const cursorInfo = update.state.field(cursorStateField);
+                console.log('Cursor moved:', cursorInfo);
+                this.debouncedCursorActivity(cursorInfo);
+            }
+
+            // 处理文档大小变化
+            if (update.docChanged && config.onDocChanged) {
+                const docSize = update.state.field(docSizeStateField);
+                console.log('Document size changed:', docSize);
+                try {
+                    config.onDocChanged(docSize);
+                } catch (error) {
+                    console.error('Error in onDocChanged callback:', error);
+                }
+            }
+
+            // 处理焦点
+            const hasFocus = this.view.hasFocus;
+            if (this.hadFocus && !hasFocus) {
+                console.log('Focus lost, restoring...');
+                this.view.focus();
+            }
+            this.hadFocus = hasFocus;
+        }
+
+        destroy() {
+            console.log('Editor plugin destroyed');
+            if (this.rafId) {
+                cancelAnimationFrame(this.rafId);
+            }
+        }
+    });
+};
+
 export class EditorCore {
     private view: EditorView | null = null;
     private container: HTMLElement;
     private config: EditorConfig;
     private schema: object | null = null;
-    private lastCursor: { line: number; col: number } | null = null;
     private extensions: Extension[] = [];
 
     constructor(container: HTMLElement, config: EditorConfig = {}) {
@@ -112,63 +253,10 @@ export class EditorCore {
             this.view = new EditorView({
                 state,
                 parent: this.container,
-                dispatch: (tr: Transaction) => {
+                // important: 绝对不要在 dispatch 中处理事务, 从 CodeMirror 文档来看, 它已经不再使用事件系统,而是使用 transactions 来表示状态更新。
+                dispatch: (tr: Transaction) => { 
                     if (!this.view) return;
-
-                    // 保存当前光标位置
-                    const oldState = this.view.state;
-                    const hadFocus = this.view.hasFocus;
-                    
-                    // 更新视图
                     this.view.update([tr]);
-
-                    // 如果文档发生变化
-                    if (tr.docChanged) {
-                        const value = this.getValue();
-                        console.log('Document changed:', { valueLength: value.length });
-                        
-                        // 触发 onChange
-                        if (this.config.onChange) {
-                            this.config.onChange(value);
-                        }
-                    }
-
-                    // 如果光标位置改变
-                    if (tr.selection && this.config.onCursorActivity) {
-                        const pos = this.view.state.selection.main.head;
-                        const line = this.view.state.doc.lineAt(pos);
-                        const cursorInfo = {
-                            line: line.number,
-                            col: pos - line.from + 1
-                        };
-                        
-                        console.log('Cursor moved:', cursorInfo);
-                        
-                        // 只有当位置真的改变时才触发回调
-                        if (!this.lastCursor || 
-                            this.lastCursor.line !== cursorInfo.line || 
-                            this.lastCursor.col !== cursorInfo.col) {
-                            this.lastCursor = cursorInfo;
-                            this.config.onCursorActivity(cursorInfo);
-                        }
-                    }
-
-                    // 如果文档大小改变
-                    if (tr.docChanged && this.config.onDocChanged) {
-                        const doc = this.view.state.doc;
-                        const info = {
-                            lines: doc.lines,
-                            bytes: doc.toString().length
-                        };
-                        console.log('Document size changed:', info);
-                        this.config.onDocChanged(info);
-                    }
-
-                    // 如果之前有焦点，确保保持焦点
-                    if (hadFocus && !this.view.hasFocus) {
-                        console.log('Restoring focus');
-                        this.view.focus();
-                    }
                 }
             });
 
@@ -185,28 +273,35 @@ export class EditorCore {
     updateConfig(config: EditorConfig) {
         console.log('Updating editor config:', config);
         
-        // 保存当前状态
-        const hadFocus = this.view?.hasFocus;
-        const cursorPos = this.view?.state.selection.main.head;
-        
-        // 更新配置
-        this.config = this.normalizeConfig({ ...this.config, ...config });
-        this.schema = this.config.schemaConfig?.schema || null;
-        
-        // 重新创建编辑器状态
-        if (this.view) {
-            const state = this.createEditorState(this.getValue());
-            this.view.setState(state);
+        try {
+            // 保存当前状态
+            const hadFocus = this.view?.hasFocus;
+            const cursorPos = this.view?.state.selection.main.head;
             
-            // 恢复焦点和光标位置
-            if (hadFocus) {
-                this.view.focus();
-            }
-            if (cursorPos !== undefined) {
+            // 更新配置
+            this.config = this.normalizeConfig({ ...this.config, ...config });
+            this.schema = this.config.schemaConfig?.schema || null;
+            
+            // 重新创建编辑器状态
+            if (this.view) {
+                // 更新插件配置
                 this.view.dispatch({
-                    selection: { anchor: cursorPos }
+                    effects: configCompartment.reconfigure(createEditorPlugin(this.config))
                 });
+
+                // 恢复焦点和光标位置
+                if (hadFocus) {
+                    this.view.focus();
+                }
+                if (cursorPos !== undefined) {
+                    this.view.dispatch({
+                        selection: { anchor: cursorPos }
+                    });
+                }
             }
+        } catch (error) {
+            console.error('Failed to update config:', error);
+            throw error;
         }
     }
 
@@ -231,6 +326,13 @@ export class EditorCore {
             extensions.push(bracketMatching());
         }
         extensions.push(keymap.of([...defaultKeymap, ...historyKeymap]));
+
+        // 状态字段
+        extensions.push(cursorStateField);
+        extensions.push(docSizeStateField);
+
+        // 使用 compartment 包装插件
+        extensions.push(configCompartment.of(createEditorPlugin(this.config)));
 
         // 滚动配置
         extensions.push(scrollConfig);
