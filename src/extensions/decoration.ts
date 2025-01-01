@@ -8,31 +8,47 @@ import { rocketActionIcon, linkActionIcon } from '../utils/svg';
 // 组件定义
 class LinkWidget extends WidgetType {
     private svgContent: string;
+    private static counter = 0;
+    private id: string;
 
-    constructor(private url: string, private onClick?: (url: string) => void) {
+    constructor(
+        private url: string, 
+        private onClick?: (url: string) => void,
+        private openInNewTab: boolean = true
+    ) {
         super();
         this.svgContent = linkActionIcon;
+        this.id = `link-widget-${LinkWidget.counter++}`;
     }
 
     toDOM() {
+        const wrapper = document.createElement('span');
+        wrapper.className = 'cm-url-widget';
+        wrapper.dataset.url = this.url;
+        wrapper.dataset.widgetId = this.id;
+        
         const button = document.createElement('button');
         button.className = 'cm-action-button';
         button.innerHTML = this.svgContent;
         button.title = 'Open URL';
-        button.onclick = (e) => {
-            // 只阻止冒泡，不阻止默认行为
-            e.stopPropagation();
-            if (this.onClick) {
-                this.onClick(this.url);
-            } else {
-                window.open(this.url, '_blank');
-            }
-        };
-        return button;
+        
+        // 不再直接绑定 onclick
+        wrapper.appendChild(button);
+        return wrapper;
     }
 
     eq(other: LinkWidget) {
-        return this.url === other.url;
+        return this.url === other.url && this.id === other.id;
+    }
+
+    // 新增：获取处理函数
+    getHandler() {
+        return {
+            id: this.id,
+            onClick: this.onClick,
+            openInNewTab: this.openInNewTab,
+            url: this.url
+        };
     }
 }
 
@@ -124,7 +140,11 @@ const utils = {
 
 // 装饰器工厂
 class DecorationFactory {
-    constructor(private config: DecorationConfig) {}
+    constructor(private readonly config: DecorationConfig) {}
+
+    getConfig(): DecorationConfig {
+        return this.config;
+    }
 
     createPathDecoration(style: DecorationStyle, value: string, onClick?: (value: string) => void, icon?: string) {
         const decorations: Decoration[] = [];
@@ -173,7 +193,11 @@ class DecorationFactory {
             });
         }
         return Decoration.widget({
-            widget: new LinkWidget(url, this.config.urlHandler?.onClick),
+            widget: new LinkWidget(
+                url, 
+                this.config.urlHandler?.onClick,
+                this.config.urlHandler?.openInNewTab ?? true
+            ),
             side: 1
         });
     }
@@ -186,22 +210,54 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
             decorations: DecorationSet;
             factory: DecorationFactory;
             clickHandlers: Map<string, (e: MouseEvent) => void>;
+            linkHandlers: Map<string, ReturnType<LinkWidget['getHandler']>>;
 
             constructor(view: EditorView) {
                 this.factory = new DecorationFactory(config);
                 this.clickHandlers = new Map();
+                this.linkHandlers = new Map();
                 this.decorations = this.buildDecorations(view);
+                
+                // 使用事件委托处理所有链接点击
+                const handler = (e: MouseEvent) => {
+                    const target = e.target as HTMLElement;
+                    const widget = target.closest('.cm-url-widget') as HTMLElement;
+                    if (!widget) return;
+
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const widgetId = widget.dataset.widgetId;
+                    if (!widgetId) return;
+
+                    const handler = this.linkHandlers.get(widgetId);
+                    if (!handler) return;
+
+                    if (handler.onClick) {
+                        // 使用 setTimeout 来确保在正确的上下文中执行
+                        setTimeout(() => handler.onClick?.(handler.url), 0);
+                    } else if (handler.openInNewTab) {
+                        const link = document.createElement('a');
+                        link.href = handler.url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.click();
+                    }
+                };
+
+                view.dom.addEventListener('click', handler);
+                this.clickHandlers.set('link-delegate', handler);
             }
 
             update(update: ViewUpdate) {
                 if (update.docChanged || update.viewportChanged) {
                     this.cleanupClickHandlers(update.view);
+                    this.linkHandlers.clear();
                     this.decorations = this.buildDecorations(update.view);
                 }
             }
 
             destroy() {
-                // 在插件销毁时清理所有点击处理器
                 if (this.clickHandlers.size > 0) {
                     const editor = document.querySelector('.cm-editor') as HTMLElement;
                     if (editor) {
@@ -211,6 +267,7 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                         }
                     }
                 }
+                this.linkHandlers.clear();
             }
 
             private cleanupClickHandlers(view: EditorView) {
@@ -261,9 +318,16 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
 
                 // 处理 URL 装饰
                 if (utils.isValidUrl(cleanValue)) {
-                    builder.push(this.factory.createUrlDecoration(cleanValue).range(valueEnd));
+                    const decoration = this.factory.createUrlDecoration(cleanValue);
+                    if (decoration.spec.widget instanceof LinkWidget) {
+                        const handler = decoration.spec.widget.getHandler();
+                        this.linkHandlers.set(handler.id, handler);
+                    }
+                    builder.push(decoration.range(valueEnd));
                 }
 
+                // 处理 path 配置的装饰
+                const config = this.factory.getConfig();
                 if (path && config.paths && path in config.paths) {
                     const pathConfig = config.paths[path];
                     const decorations = this.factory.createPathDecoration(

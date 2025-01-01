@@ -137,13 +137,16 @@ const darkTheme = EditorView.theme({
         }
     },
     ".cm-json-underline": {
-        textDecoration: "underline"
+        textDecoration: "none",
+        borderBottom: "1px dashed #61afef",
+        paddingBottom: "2px"
     },
     ".cm-json-bold": {
-        fontWeight: "bold"
+        fontWeight: "700"
     },
     ".cm-json-italic": {
-        fontStyle: "italic"
+        fontStyle: "italic",
+        transform: "skew(-10deg)"
     },
     ".cm-action-button": {
         color: "#9090AF",
@@ -216,13 +219,16 @@ const lightTheme = EditorView.theme({
         }
     },
     ".cm-json-underline": {
-        textDecoration: "underline"
+        textDecoration: "none",
+        borderBottom: "1px dashed #0366d6",
+        paddingBottom: "2px"
     },
     ".cm-json-bold": {
-        fontWeight: "bold"
+        fontWeight: "700"
     },
     ".cm-json-italic": {
-        fontStyle: "italic"
+        fontStyle: "italic",
+        transform: "skew(-10deg)"
     },
     ".cm-action-button": {
         color: "#4050CF",

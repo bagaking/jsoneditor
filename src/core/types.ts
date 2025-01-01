@@ -120,6 +120,12 @@ export interface UrlHandler {
      * 如果不提供,则默认在新标签页打开链接
      */
     onClick?: (url: string) => void;
+    /**
+     * 是否在新标签页打开链接
+     * 仅在未提供 onClick 回调时生效
+     * @default true
+     */
+    openInNewTab?: boolean;
 }
 
 export type DecorationPathHook = {
