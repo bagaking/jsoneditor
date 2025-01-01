@@ -11,11 +11,11 @@ function App() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 py-8 h-screen">
-      <div className="max-w-screen-2xl mx-auto px-4 ">
+      <div className="max-w-screen-2xl mx-auto px-4 p-4">
         <div className="flex flex-col lg:flex-row gap-8 ">
 
           {/* 配置面板 */}
-          <div className="lg:w-[480px]">
+          <div className="lg:w-[480px] p-4">
             <ConfigPanel config={config} onChange={setConfig} />
           </div>
 

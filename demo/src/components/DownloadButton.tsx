@@ -24,7 +24,11 @@ export const DownloadButton: React.FC<{
     <div className="text-black dark:text-white">
       <button
         onClick={handleDownload}
-        className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800/90 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-md transition-colors border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+        className="px-3 py-1.5 
+          bg-gray-50 hover:bg-gray-100 dark:bg-gray-800/90 dark:hover:bg-gray-700 
+          text-gray-700 dark:text-gray-200 text-sm font-medium 
+          rounded-md transition-colors 
+          border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
       >
         🤖 下载 JSON
       </button>

@@ -93,8 +93,13 @@ const docSizeStateField = StateField.define<{ lines: number; bytes: number }>({
     }
 });
 
-// 创建配置 compartment
+// 创建配置 compartments
 const configCompartment = new Compartment();
+const basicFeaturesCompartment = new Compartment();
+const themeCompartment = new Compartment();
+const completionCompartment = new Compartment();
+const decorationCompartment = new Compartment();
+const styleCompartment = new Compartment();
 
 // 防抖函数
 const debounce = <T extends (...args: any[]) => any>(
@@ -118,15 +123,20 @@ const createEditorPlugin = (config: EditorConfig) => {
         private hadFocus: boolean = false;
         private debouncedDocChange: (value: string) => void;
         private debouncedCursorActivity: (info: { line: number; col: number }) => void;
-        private rafId: number | null = null;
+        private lastValue: string = '';
 
         constructor(private view: EditorView) {
             console.log('Editor plugin initialized');
+            this.lastValue = view.state.doc.toString();
             
             // 创建防抖的回调函数
             this.debouncedDocChange = debounce((value: string) => {
                 try {
-                    config.onChange?.(value);
+                    // 只在值真正变化时触发回调
+                    if (value !== this.lastValue) {
+                        this.lastValue = value;
+                        config.onChange?.(value);
+                    }
                 } catch (error) {
                     console.error('Error in onChange callback:', error);
                 }
@@ -143,59 +153,48 @@ const createEditorPlugin = (config: EditorConfig) => {
 
         update(update: ViewUpdate) {
             try {
-                // 使用 requestAnimationFrame 处理视图更新
-                if (this.rafId) {
-                    cancelAnimationFrame(this.rafId);
+                // 处理文档变化
+                if (update.docChanged) {
+                    const value = update.state.doc.toString();
+                    // 只在值真正变化时处理
+                    if (value !== this.lastValue) {
+                        console.log('Document changed:', { valueLength: value.length });
+                        this.debouncedDocChange(value);
+                    }
                 }
 
-                this.rafId = requestAnimationFrame(() => {
-                    this.handleUpdate(update);
-                });
+                // 处理光标移动
+                if (update.selectionSet && config.onCursorActivity) {
+                    const cursorInfo = update.state.field(cursorStateField);
+                    console.log('Cursor moved:', cursorInfo);
+                    this.debouncedCursorActivity(cursorInfo);
+                }
+
+                // 处理文档大小变化
+                if (update.docChanged && config.onDocChanged) {
+                    const docSize = update.state.field(docSizeStateField);
+                    console.log('Document size changed:', docSize);
+                    try {
+                        config.onDocChanged(docSize);
+                    } catch (error) {
+                        console.error('Error in onDocChanged callback:', error);
+                    }
+                }
+
+                // 处理焦点
+                const hasFocus = this.view.hasFocus;
+                if (this.hadFocus && !hasFocus) {
+                    console.log('Focus lost, restoring...');
+                    this.view.focus();
+                }
+                this.hadFocus = hasFocus;
             } catch (error) {
                 console.error('Error in plugin update:', error);
             }
         }
 
-        private handleUpdate(update: ViewUpdate) {
-            // 处理文档变化
-            if (update.docChanged) {
-                const value = update.state.doc.toString();
-                console.log('Document changed:', { valueLength: value.length });
-                this.debouncedDocChange(value);
-            }
-
-            // 处理光标移动
-            if (update.selectionSet && config.onCursorActivity) {
-                const cursorInfo = update.state.field(cursorStateField);
-                console.log('Cursor moved:', cursorInfo);
-                this.debouncedCursorActivity(cursorInfo);
-            }
-
-            // 处理文档大小变化
-            if (update.docChanged && config.onDocChanged) {
-                const docSize = update.state.field(docSizeStateField);
-                console.log('Document size changed:', docSize);
-                try {
-                    config.onDocChanged(docSize);
-                } catch (error) {
-                    console.error('Error in onDocChanged callback:', error);
-                }
-            }
-
-            // 处理焦点
-            const hasFocus = this.view.hasFocus;
-            if (this.hadFocus && !hasFocus) {
-                console.log('Focus lost, restoring...');
-                this.view.focus();
-            }
-            this.hadFocus = hasFocus;
-        }
-
         destroy() {
             console.log('Editor plugin destroyed');
-            if (this.rafId) {
-                cancelAnimationFrame(this.rafId);
-            }
         }
     });
 };
@@ -278,15 +277,49 @@ export class EditorCore {
             const hadFocus = this.view?.hasFocus;
             const cursorPos = this.view?.state.selection.main.head;
             
+            // 检查配置是否真的变化
+            const newConfig = this.normalizeConfig({ ...this.config, ...config });
+            if (this.configEquals(this.config, newConfig)) {
+                console.log('Config not changed, skipping update');
+                return;
+            }
+            
             // 更新配置
-            this.config = this.normalizeConfig({ ...this.config, ...config });
+            this.config = newConfig;
             this.schema = this.config.schemaConfig?.schema || null;
             
             // 重新创建编辑器状态
             if (this.view) {
-                // 更新插件配置
+                // 批量更新所有配置
                 this.view.dispatch({
-                    effects: configCompartment.reconfigure(createEditorPlugin(this.config))
+                    effects: [
+                        // 更新基础功能
+                        basicFeaturesCompartment.reconfigure(
+                            this.createBasicFeatures(this.config.codeSettings)
+                        ),
+                        // 更新主题
+                        themeCompartment.reconfigure(
+                            this.config.themeConfig?.theme === 'dark' ? oneDark : light
+                        ),
+                        // 更新自动补全
+                        completionCompartment.reconfigure(
+                            this.createCompletionExtension(this.config.codeSettings)
+                        ),
+                        // 更新样式
+                        styleCompartment.reconfigure(
+                            this.createStyleExtension(this.config.codeSettings)
+                        ),
+                        // 更新事件处理插件
+                        configCompartment.reconfigure(
+                            createEditorPlugin(this.config)
+                        ),
+                        // 更新装饰
+                        ...(this.config.decorationConfig
+                            ? [decorationCompartment.reconfigure(
+                                createDecorationExtension(this.config.decorationConfig)
+                              )]
+                            : [])
+                    ]
                 });
 
                 // 恢复焦点和光标位置
@@ -306,12 +339,47 @@ export class EditorCore {
     }
 
     /**
-     * 创建编辑器状态
+     * 比较两个配置是否相等
      */
-    private createEditorState(content: string) {
-        console.log('Creating editor state with content length:', content.length);
-        const { codeSettings, themeConfig } = this.config;
-        
+    private configEquals(a: EditorConfig, b: EditorConfig): boolean {
+        // 比较基础配置
+        if (a.readonly !== b.readonly) return false;
+
+        // 比较代码设置
+        const codeSettingsEqual = 
+            a.codeSettings?.fontSize === b.codeSettings?.fontSize &&
+            a.codeSettings?.lineNumbers === b.codeSettings?.lineNumbers &&
+            a.codeSettings?.bracketMatching === b.codeSettings?.bracketMatching &&
+            a.codeSettings?.autoCompletion === b.codeSettings?.autoCompletion &&
+            a.codeSettings?.highlightActiveLine === b.codeSettings?.highlightActiveLine;
+        if (!codeSettingsEqual) return false;
+
+        // 比较主题配置
+        if (a.themeConfig?.theme !== b.themeConfig?.theme) return false;
+
+        // 比较 schema 配置
+        const schemaEqual = 
+            a.schemaConfig?.validateOnType === b.schemaConfig?.validateOnType &&
+            a.schemaConfig?.validateDebounce === b.schemaConfig?.validateDebounce &&
+            JSON.stringify(a.schemaConfig?.schema) === JSON.stringify(b.schemaConfig?.schema);
+        if (!schemaEqual) return false;
+
+        // 比较验证配置
+        const validationEqual =
+            a.validationConfig?.validateOnChange === b.validationConfig?.validateOnChange &&
+            a.validationConfig?.autoFormat === b.validationConfig?.autoFormat;
+        if (!validationEqual) return false;
+
+        // 比较装饰配置
+        if (JSON.stringify(a.decorationConfig) !== JSON.stringify(b.decorationConfig)) return false;
+
+        return true;
+    }
+
+    /**
+     * 创建基础功能扩展
+     */
+    private createBasicFeatures(codeSettings: CodeSettings | undefined): Extension[] {
         const extensions: Extension[] = [];
 
         // 基础功能
@@ -327,46 +395,32 @@ export class EditorCore {
         }
         extensions.push(keymap.of([...defaultKeymap, ...historyKeymap]));
 
-        // 状态字段
-        extensions.push(cursorStateField);
-        extensions.push(docSizeStateField);
+        return extensions;
+    }
 
-        // 使用 compartment 包装插件
-        extensions.push(configCompartment.of(createEditorPlugin(this.config)));
+    /**
+     * 创建自动补全扩展
+     */
+    private createCompletionExtension(codeSettings: CodeSettings | undefined): Extension[] {
+        if (codeSettings?.autoCompletion === false) return [];
+        
+        return [autocompletion({
+            override: [(context: CompletionContext) => {
+                if (this.schema) {
+                    return getSchemaCompletions(this.schema, context);
+                }
+                return null;
+            }],
+            defaultKeymap: true
+        })];
+    }
 
-        // 滚动配置
-        extensions.push(scrollConfig);
-
-        // JSON 支持
-        extensions.push(json());
-
-        // 自动补全
-        if (codeSettings?.autoCompletion !== false) {
-            extensions.push(autocompletion({
-                override: [(context: CompletionContext) => {
-                    if (this.schema) {
-                        return getSchemaCompletions(this.schema, context);
-                    }
-                    return null;
-                }],
-                defaultKeymap: true
-            }));
-        }
-
-        // 装饰扩展
-        if (this.config.decorationConfig) {
-            extensions.push(createDecorationExtension(this.config.decorationConfig));
-        }
-
-        // 主题
-        extensions.push(themeConfig?.theme === 'dark' ? oneDark : light);
-
-        // 基础样式
-        extensions.push(baseTheme);
-
-        // 字体大小和样式设置
+    /**
+     * 创建样式扩展
+     */
+    private createStyleExtension(codeSettings: CodeSettings | undefined): Extension {
         const fontSize = codeSettings?.fontSize || 14;
-        extensions.push(EditorView.theme({
+        return EditorView.theme({
             "&": {
                 fontSize: `${fontSize}px`,
                 fontFamily: 'monospace'
@@ -403,7 +457,38 @@ export class EditorCore {
                 fontSize: `${fontSize}px !important`,
                 fontFamily: 'monospace'
             }
-        }));
+        });
+    }
+
+    /**
+     * 创建编辑器状态
+     */
+    private createEditorState(content: string) {
+        console.log('Creating editor state with content length:', content.length);
+        const { codeSettings, themeConfig } = this.config;
+        
+        const extensions: Extension[] = [];
+
+        // 状态字段
+        extensions.push(cursorStateField);
+        extensions.push(docSizeStateField);
+
+        // 使用 compartments 包装各类扩展
+        extensions.push(basicFeaturesCompartment.of(this.createBasicFeatures(codeSettings)));
+        extensions.push(themeCompartment.of(themeConfig?.theme === 'dark' ? oneDark : light));
+        extensions.push(completionCompartment.of(this.createCompletionExtension(codeSettings)));
+        extensions.push(styleCompartment.of(this.createStyleExtension(codeSettings)));
+        extensions.push(configCompartment.of(createEditorPlugin(this.config)));
+
+        // 装饰扩展
+        if (this.config.decorationConfig) {
+            extensions.push(decorationCompartment.of(createDecorationExtension(this.config.decorationConfig)));
+        }
+
+        // 基础样式和滚动配置
+        extensions.push(baseTheme);
+        extensions.push(scrollConfig);
+        extensions.push(json());
 
         // 用户自定义扩展
         if (this.config.extensions) {
