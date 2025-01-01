@@ -144,6 +144,15 @@ const darkTheme = EditorView.theme({
     },
     ".cm-json-italic": {
         fontStyle: "italic"
+    },
+    ".cm-action-button": {
+        color: "#9090AF",
+        height: "16px",
+        padding: "0px 1px",
+        cursor: "pointer"
+    },
+    ".cm-action-button:hover": {
+        color: "#C0C0DF",
     }
 }, { dark: true });
 
@@ -213,7 +222,17 @@ const lightTheme = EditorView.theme({
     },
     ".cm-json-italic": {
         fontStyle: "italic"
+    },
+    ".cm-action-button": {
+        color: "#4050CF",
+        height: "16px",
+        padding: "0px 1px",
+        cursor: "pointer"
+    },
+    ".cm-action-button:hover": {
+        color: "#8080FF",
     }
+
 }, { dark: false });
 
 // 导出主题

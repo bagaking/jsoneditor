@@ -24,3 +24,8 @@ export type {
     ExpandOption,
 } from './ui/types'; 
 
+export {
+    linkActionIcon,
+    rocketActionIcon
+} from './utils/svg';
+
