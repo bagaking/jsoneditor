@@ -64,7 +64,7 @@ export const exampleJson = {
   status: "active",
   type: "application",
   description: "A powerful JSON editor with rich features",
-  
+  ttt_url: "https://github.com/bagaking/jsoneditor/issues",
   // 时间相关
   createdAt: "2024-01-20T08:00:00Z",
   updatedAt: "2024-01-21T10:30:00Z",
@@ -133,6 +133,16 @@ export const exampleJson = {
 // 装饰器配置
 export const decorationConfig: DecorationConfig = {
   paths: {
+
+    '$["name"]': {
+      style: "underline",
+      target: 'key',
+    },
+    '$["ttt_url"]': {
+      style: "underline",
+      target: 'key',
+    },
+
     // 版本号使用特殊样式
     '$["version"]': {
       style: "italic bg-blue-100/30 dark:bg-blue-900/30 rounded px-1",
@@ -146,6 +156,8 @@ export const decorationConfig: DecorationConfig = {
       target: 'value',
       onClick: (value: string) => console.log('Status:', value)
     },
+
+     
     
     // 时间使用自定义组件
     '$["createdAt"]': {

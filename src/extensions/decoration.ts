@@ -334,49 +334,59 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                 const valueEnd = cursor.to;
                 const cleanValue = JsonPath.getCleanValue(value, cursor.node, view);
 
-                // 处理 URL 装饰
-                if (utils.isValidUrl(cleanValue)) {
-                    const decoration = this.factory.createUrlDecoration(cleanValue);
-                    if (decoration.spec.widget instanceof LinkWidget) {
-                        const handler = decoration.spec.widget.getHandler();
-                        this.linkHandlers.set(handler.id, handler);
-                    }
-                    builder.push(decoration.range(valueEnd));
-                }
+                // 收集所有装饰器
+                const decorations: { range: [number, number]; decoration: Decoration }[] = [];
 
-                // 处理 path 配置的装饰
+                // 1. 处理 path 配置的装饰
                 const config = this.factory.getConfig();
                 if (path && config.paths && path in config.paths) {
                     const pathConfig = config.paths[path];
-                    const decorations = this.factory.createPathDecoration(
+                    const pathDecorations = this.factory.createPathDecoration(
                         pathConfig.style,
                         cleanValue,
                         pathConfig.onClick,
                         pathConfig.icon
                     );
 
-                    for (const decoration of decorations) {
+                    for (const decoration of pathDecorations) {
                         if ('widget' in decoration.spec) {
                             // Widget (按钮) 总是放在值的末尾
-                            builder.push(decoration.range(valueEnd));
+                            decorations.push({ range: [valueEnd, valueEnd], decoration });
                         } else {
                             // 样式装饰根据 target 应用
                             const target = pathConfig.target || 'key';
                             switch (target) {
                                 case 'key':
-                                    builder.push(decoration.range(keyStart, keyEnd));
+                                    decorations.push({ range: [keyStart, keyEnd], decoration });
                                     break;
                                 case 'both':
-                                    builder.push(decoration.range(keyStart, valueEnd)); 
+                                    decorations.push({ range: [keyStart, valueEnd], decoration }); 
                                     break;
                                 case 'value':
                                 default:
-                                    builder.push(decoration.range(valueStart, valueEnd));
+                                    decorations.push({ range: [valueStart, valueEnd], decoration });
                                     break;
                             }                        
                         }
                     }
                 }
+
+                // 2. 处理 URL 装饰
+                if (utils.isValidUrl(cleanValue)) {
+                    const urlDecoration = this.factory.createUrlDecoration(cleanValue);
+                    if (urlDecoration.spec.widget instanceof LinkWidget) {
+                        const handler = urlDecoration.spec.widget.getHandler();
+                        this.linkHandlers.set(handler.id, handler);
+                    }
+                    decorations.push({ range: [valueEnd, valueEnd], decoration: urlDecoration });
+                }
+
+                // 按照 from 位置排序并添加到 builder
+                decorations
+                    .sort((a, b) => a.range[0] - b.range[0])
+                    .forEach(({ range, decoration }) => {
+                        builder.push(decoration.range(range[0], range[1]));
+                    });
             }
         },
         {

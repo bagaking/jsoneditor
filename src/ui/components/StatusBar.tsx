@@ -24,7 +24,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         <div className="
             sticky bottom-0
             flex justify-between items-center 
-            px-3 py-2 text-xs 
+            px-3 py-1 text-xs 
             bg-white/90 dark:bg-gray-900/90
             backdrop-blur-sm
             border-t border-gray-200 dark:border-gray-700
