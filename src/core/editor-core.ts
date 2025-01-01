@@ -9,7 +9,7 @@ import { configEquals } from '../extensions/config';
 import { defaultCodeSettings, defaultSchemaConfig, defaultThemeConfig, defaultValidationConfig } from '../extensions/config';
 import { light, dark } from '../extensions/themes';
 import { createDecorationExtension } from '../extensions/decoration';
-import { JsonPath } from '../extensions/path';
+import { JsonPath } from '../jsonkit/path';
 
 // 基础样式增强
 const baseTheme = EditorView.theme({
@@ -134,7 +134,12 @@ export class EditorCore {
 
         // 装饰扩展
         if (this.config.decorationConfig) {
-            extensions.push(decorationCompartment.of(createDecorationExtension(this.config.decorationConfig)));
+            console.log('[Decoration] Adding decoration extension with config:', this.config.decorationConfig);
+            const decorationExtension = createDecorationExtension(this.config.decorationConfig);
+            extensions.push(decorationCompartment.of(decorationExtension));
+            console.log('[Decoration] Decoration extension added');
+        } else {
+            console.log('[Decoration] No decoration config provided');
         }
 
         // 基础样式和滚动配置
@@ -167,7 +172,7 @@ export class EditorCore {
             // 检查配置是否真的变化
             const newConfig = this.normalizeConfig({ ...this.config, ...config });
             if (configEquals(this.config, newConfig)) {
-                console.log('Config not changed, skipping update');
+                // console.log('Config not changed, skipping update');
                 return;
             }
             

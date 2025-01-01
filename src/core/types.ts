@@ -127,6 +127,8 @@ export type DecorationPathHook = {
      * 但不会阻止文本选择等其他交互
      */
     onClick?: (value: string) => void;
+    /** 图标 */
+    icon?: string;
 }
 
 /**

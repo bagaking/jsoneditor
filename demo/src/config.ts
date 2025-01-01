@@ -114,8 +114,8 @@ export const exampleJson = {
   
   // 资源链接
   resources: {
-    documentation: "https://example.com/docs",
-    repository: "https://github.com/example/repo",
+    documentation: "https://github.com/bagaking/jsoneditor#readme",
+    repository: "https://github.com/bagaking/jsoneditor",
     api: "https://api.example.com/v1",
     cdn: "https://cdn.example.com"
   },

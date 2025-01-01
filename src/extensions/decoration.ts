@@ -2,7 +2,7 @@ import { Extension } from '@codemirror/state';
 import { EditorView, Decoration, DecorationSet, WidgetType, ViewPlugin, ViewUpdate, PluginValue } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
 import { DecorationConfig, DecorationStyle, CustomComponent } from '../core/types';
-import { JsonPath } from './path';
+import { JsonPath } from '../jsonkit';
 import { rocketActionIcon, linkActionIcon } from '../utils/svg';
 
 // 组件定义
@@ -136,12 +136,18 @@ class DecorationFactory {
                 side: 1
             }));
         } else if (typeof style === 'string') {
-            const className = utils.createStyleClassName(style);
-            if (className) {
-                decorations.push(Decoration.mark({
-                    class: className
-                }));
-            }
+            // 分离基础样式和 Tailwind 类名
+            const styles = style.split(' ');
+            const baseStyles = styles
+                .filter(s => ['underline', 'bold', 'italic'].includes(s))
+                .map(s => `cm-json-${s}`);
+            const tailwindClasses = styles
+                .filter(s => !['underline', 'bold', 'italic'].includes(s));
+            
+            const className = [...baseStyles, ...tailwindClasses].join(' ');
+            decorations.push(Decoration.mark({
+                class: className
+            }));
         }
 
         // 2. 如果有点击处理器，添加操作按钮
@@ -175,149 +181,140 @@ class DecorationFactory {
 
 // 主扩展创建函数
 export function createDecorationExtension(config: DecorationConfig = {}): Extension {
-    const decorationPlugin = ViewPlugin.fromClass(class implements PluginValue {
-        decorations: DecorationSet;
-        factory: DecorationFactory;
-        clickHandlers: Map<string, (e: MouseEvent) => void>;
+    return ViewPlugin.fromClass(
+        class {
+            decorations: DecorationSet;
+            factory: DecorationFactory;
+            clickHandlers: Map<string, (e: MouseEvent) => void>;
 
-        constructor(view: EditorView) {
-            this.factory = new DecorationFactory(config);
-            this.clickHandlers = new Map();
-            this.decorations = this.buildDecorations(view);
-        }
-
-        update(update: ViewUpdate) {
-            if (update.docChanged || update.viewportChanged) {
-                // 清理旧的点击处理器
-                this.cleanupClickHandlers(update.view);
-                this.decorations = this.buildDecorations(update.view);
+            constructor(view: EditorView) {
+                this.factory = new DecorationFactory(config);
+                this.clickHandlers = new Map();
+                this.decorations = this.buildDecorations(view);
             }
-        }
 
-        destroy() {
-            // 在插件销毁时清理所有点击处理器
-            if (this.clickHandlers.size > 0) {
-                const editor = document.querySelector('.cm-editor') as HTMLElement;
-                if (editor) {
-                    const view = EditorView.findFromDOM(editor);
-                    if (view) {
-                        this.cleanupClickHandlers(view);
+            update(update: ViewUpdate) {
+                if (update.docChanged || update.viewportChanged) {
+                    this.cleanupClickHandlers(update.view);
+                    this.decorations = this.buildDecorations(update.view);
+                }
+            }
+
+            destroy() {
+                // 在插件销毁时清理所有点击处理器
+                if (this.clickHandlers.size > 0) {
+                    const editor = document.querySelector('.cm-editor') as HTMLElement;
+                    if (editor) {
+                        const view = EditorView.findFromDOM(editor);
+                        if (view) {
+                            this.cleanupClickHandlers(view);
+                        }
                     }
                 }
             }
-        }
 
-        private cleanupClickHandlers(view: EditorView) {
-            this.clickHandlers.forEach((handler, key) => {
-                view.dom.removeEventListener('click', handler);
-            });
-            this.clickHandlers.clear();
-        }
-
-        buildDecorations(view: EditorView) {
-            const builder = new Array<any>();
-            const tree = syntaxTree(view.state);
-            let cursor = tree.cursor();
-
-            while (cursor.next()) {
-                if (cursor.name === "Property") {
-                    this.processProperty(view, cursor, builder);
-                }
+            private cleanupClickHandlers(view: EditorView) {
+                this.clickHandlers.forEach((handler, key) => {
+                    view.dom.removeEventListener('click', handler);
+                });
+                this.clickHandlers.clear();
             }
 
-            return Decoration.set(builder);
-        }
+            buildDecorations(view: EditorView) {
+                const builder = new Array<any>();
+                const tree = syntaxTree(view.state);
+                let cursor = tree.cursor();
 
-        private processProperty(view: EditorView, cursor: any, builder: any[]) {
-            const content = view.state.doc.sliceString(cursor.from, cursor.to);
-            const extracted = JsonPath.extractPropertyValue(content);
-            if (!extracted) return;
+                while (cursor.next()) {
+                    if (cursor.name === "Property") {
+                        this.processProperty(view, cursor, builder);
+                    }
+                }
 
-            const { key, value } = extracted;
-            const keyMatch = content.match(new RegExp(`"${key}"`));
-            if (!keyMatch) return;
+                return Decoration.set(builder);
+            }
 
-            const keyStart = cursor.from + keyMatch.index;
-            const keyEnd = keyStart + key.length + 2; // +2 for quotes
-            const colonMatch = content.slice(keyMatch.index).match(/:\s*/);
-            if (!colonMatch) return;
+            private processProperty(view: EditorView, cursor: any, builder: any[]) {
+                // 先获取路径
+                const path = JsonPath.fromNode(view, cursor.node);
+                
+                // 再提取属性值
+                const content = view.state.doc.sliceString(cursor.from, cursor.to);
+                const extracted = JsonPath.extractPropertyValue(content);
 
-            const valueStart = cursor.from + keyMatch.index + colonMatch.index + colonMatch[0].length;
-            const valueEnd = cursor.to;
+                if (!extracted) return;
 
-            // 处理路径装饰
-            const path = JsonPath.fromNode(view, cursor.node);
-            if (config.paths && path in config.paths) {
-                const pathConfig = config.paths[path];
+                const { key, value } = extracted;
+                
+                // 找到键的位置
+                const keyMatch = content.match(new RegExp(`"${key}"`));
+                if (!keyMatch) return;
+                const keyStart = cursor.from + keyMatch.index;
+                const keyEnd = keyStart + key.length + 2; // +2 for quotes
+
+                // 找到值的位置
+                const colonMatch = content.slice(keyMatch.index).match(/:\s*/);
+                if (!colonMatch) return;
+                const valueStart = keyStart + colonMatch.index + colonMatch[0].length;
+                const valueEnd = cursor.to;
                 const cleanValue = JsonPath.getCleanValue(value, cursor.node, view);
-                const decorations = this.factory.createPathDecoration(
-                    pathConfig.style,
-                    cleanValue,
-                    pathConfig.onClick
-                );
 
-                for (const decoration of decorations) {
-                    if ('widget' in decoration.spec) {
-                        // Widget (按钮) 总是放在值的末尾
-                        builder.push(decoration.range(cursor.to));
-                    } else {
-                        // 样式装饰根据 target 应用
-                        const target = pathConfig.target || 'key';
-                        if (target === 'key' || target === 'both') {
-                            builder.push(decoration.range(keyStart, keyEnd));
-                        }
-                        if (target === 'value' || target === 'both') {
-                            builder.push(decoration.range(valueStart, valueEnd));
+                // 处理 URL 装饰
+                if (utils.isValidUrl(cleanValue)) {
+                    builder.push(this.factory.createUrlDecoration(cleanValue).range(valueEnd));
+                }
+
+                if (path && config.paths && path in config.paths) {
+                    const pathConfig = config.paths[path];
+                    const decorations = this.factory.createPathDecoration(
+                        pathConfig.style,
+                        cleanValue,
+                        pathConfig.onClick,
+                        pathConfig.icon
+                    );
+
+                    for (const decoration of decorations) {
+                        if ('widget' in decoration.spec) {
+                            // Widget (按钮) 总是放在值的末尾
+                            builder.push(decoration.range(valueEnd));
+                        } else {
+                            // 样式装饰根据 target 应用
+                            const target = pathConfig.target || 'key';
+                            switch (target) {
+                                case 'key':
+                                    builder.push(decoration.range(keyStart, keyEnd));
+                                    break;
+                                case 'both':
+                                    builder.push(decoration.range(keyStart, valueEnd)); 
+                                    break;
+                                case 'value':
+                                default:
+                                    builder.push(decoration.range(valueStart, valueEnd));
+                                    break;
+                            }                        
                         }
                     }
                 }
             }
-
-            // 处理 URL 装饰
-            const urlMatch = value.match(/^"(https?:\/\/[^"]+)"/);
-            if (urlMatch && utils.isValidUrl(urlMatch[1])) {
-                builder.push(this.factory.createUrlDecoration(urlMatch[1]).range(cursor.to));
-            }
+        },
+        {
+            /**
+             * 【关键配置】装饰器系统与 CodeMirror 的桥接点
+             * 
+             * 这个配置告诉 CodeMirror 如何从插件实例中获取装饰器集合：
+             * 1. v 是插件实例
+             * 2. v.decorations 返回 DecorationSet
+             * 3. CodeMirror 使用返回的集合来渲染装饰器
+             * 
+             * 这个配置是必需的，没有它：
+             * - 装饰器虽然会被创建
+             * - 但不会被应用到编辑器中
+             * - DOM 不会显示任何装饰效果
+             * 
+             * @param v - 插件实例
+             * @returns DecorationSet - 当前的装饰器集合
+             */
+            decorations: v => v.decorations
         }
-    }, {
-        decorations: v => v.decorations
-    });
-
-    return [
-        decorationPlugin,
-        EditorView.baseTheme({
-            '.cm-json-underline': {
-                borderBottom: '1px dashed #0366d6 !important'
-            },
-            '.cm-json-bold': {
-                fontWeight: '600 !important'
-            },
-            '.cm-json-italic': {
-                fontStyle: 'italic !important'
-            },
-            '&dark .cm-json-underline': {
-                borderBottom: '1px dashed #58a6ff !important'
-            },
-            '.cm-action-button': {
-                border: 'none',
-                background: 'none',
-                color: 'inherit',
-                cursor: 'pointer',
-                padding: '0 4px',
-                fontSize: '14px',
-                verticalAlign: 'middle',
-                opacity: 0.7,
-                transition: 'opacity 0.2s',
-                display: 'inline-flex',
-                alignItems: 'center',
-                '&:hover': {
-                    opacity: 1
-                },
-                '& svg': {
-                    width: '16px',
-                    height: '16px'
-                }
-            }
-        })
-    ];
+    );
 } 

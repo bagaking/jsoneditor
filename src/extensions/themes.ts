@@ -135,6 +135,15 @@ const darkTheme = EditorView.theme({
             background: "#2c313a",
             color: darkColors.ivory
         }
+    },
+    ".cm-json-underline": {
+        textDecoration: "underline"
+    },
+    ".cm-json-bold": {
+        fontWeight: "bold"
+    },
+    ".cm-json-italic": {
+        fontStyle: "italic"
     }
 }, { dark: true });
 
@@ -195,6 +204,15 @@ const lightTheme = EditorView.theme({
             background: "#0366d625",
             color: lightColors.ivory
         }
+    },
+    ".cm-json-underline": {
+        textDecoration: "underline"
+    },
+    ".cm-json-bold": {
+        fontWeight: "bold"
+    },
+    ".cm-json-italic": {
+        fontStyle: "italic"
     }
 }, { dark: false });
 

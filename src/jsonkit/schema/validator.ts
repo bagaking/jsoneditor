@@ -1,29 +1,13 @@
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
-
-/**
- * 验证结果
- */
-export interface ValidationResult {
-    valid: boolean;
-    errors?: ValidationError[];
-}
-
-/**
- * 验证错误
- */
-export interface ValidationError {
-    path: string;
-    message: string;
-    keyword: string;
-    params?: Record<string, any>;
-}
+import { ValidationResult, ValidationError, ISchemaValidator } from './types';
+import { JsonSchemaProperty } from '../path/types';
 
 /**
  * Schema 验证器
  * 负责 JSON Schema 的验证
  */
-export class SchemaValidator {
+export class SchemaValidator implements ISchemaValidator {
     private ajv: Ajv;
 
     constructor() {
@@ -38,7 +22,7 @@ export class SchemaValidator {
     /**
      * 验证 JSON 数据
      */
-    public validate(data: any, schema: object): ValidationResult {
+    public validate(data: any, schema: JsonSchemaProperty): ValidationResult {
         const validate = this.ajv.compile(schema);
         const valid = validate(data);
 
@@ -89,4 +73,7 @@ export class SchemaValidator {
     public getValidator(): Ajv {
         return this.ajv;
     }
-} 
+}
+
+// 导出默认实例
+export const schemaValidator = new SchemaValidator(); 

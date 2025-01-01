@@ -7,7 +7,7 @@ import { JsonSchemaProperty } from '../core/types';
 import { SchemaValidator } from '../core/schema-validator';
 import { ExpandOption, JsonEditorProps } from './types';
 import { EditorView } from '@codemirror/view';
-import { getMaxMinifyLevel, minifyJson } from '../utils/json';
+import { jsonParser } from '../jsonkit/parser';
 
 // 防抖函数
 const debounce = <T extends (...args: any[]) => any>(
@@ -410,8 +410,6 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
             },
             extensions
         };
-
-        console.log('Updating editor config');
         editorRef.current.updateConfig(currentConfig);
     }, [themeConfig?.theme, schemaConfig?.schema, decorationConfig, readOnly, codeSettings, validationConfig, extensions]);
 
@@ -440,14 +438,14 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
         const content = editorRef.current.getValue();
         try {
             // 获取最大压缩层级
-            const maxLevel = getMaxMinifyLevel(content);
+            const maxLevel = jsonParser.getMaxShrinkLevel(content);
             
             // 计算新的压缩层级
             const newLevel = minifyLevel >= maxLevel ? 0 : minifyLevel + 1;
             setMinifyLevel(newLevel);
             
             // 使用多级压缩
-            const minified = minifyJson(content, {
+            const minified = jsonParser.shrink(content, {
                 level: newLevel,
                 keepIndent: true,
                 indentSize: 2

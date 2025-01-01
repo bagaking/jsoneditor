@@ -1,7 +1,7 @@
 import { EditorView } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
 import type { SyntaxNode } from '@lezer/common';
-import { JsonSchemaProperty } from '../core/types';
+import { JsonSchemaProperty } from './types';
 
 /**
  * JSON 路径工具类
@@ -11,21 +11,42 @@ export class JsonPath {
      * 从节点获取完整的 JSON 路径
      */
     static fromNode(view: EditorView, node: SyntaxNode): string {
-        const parts: string[] = [];
-        let current = node;
+        // console.log('JsonPath.fromNode input:', {
+        //     name: node.name,
+        //     text: view.state.doc.sliceString(node.from, node.to),
+        //     parent: node.parent?.name
+        // });
 
-        while (current && current.parent) {
+        const parts: string[] = [];
+        let current: SyntaxNode | null = node;
+
+        // 先找到最近的 Property 节点
+        if (current.name !== "Property" && current.parent) {
+            current = current.parent;
+        }
+
+        // 然后向上遍历所有父节点
+        while (current) {
+            // console.log('Processing node:', {
+            //     name: current.name,
+            //     text: view.state.doc.sliceString(current.from, current.to),
+            //     parent: current.parent?.name
+            // });
+
             if (current.name === "Property") {
                 const content = view.state.doc.sliceString(current.from, current.to);
                 const keyMatch = content.match(/"([^"]+)"\s*:/);
                 if (keyMatch) {
+                    console.log('Found property key:', keyMatch[1]);
                     parts.unshift(`["${keyMatch[1]}"]`);
                 }
             }
             current = current.parent;
         }
 
-        return '$' + parts.join('');
+        const result = '$' + parts.join('');
+        console.log('Generated path:', result);
+        return result;
     }
 
     /**
@@ -145,7 +166,7 @@ export class JsonPath {
         const required = new Set(current.required || []);
         return Object.entries(current.properties).map(([name, prop]) => ({
             name,
-            description: prop.description,
+            description: (prop as JsonSchemaProperty).description,
             required: required.has(name)
         }));
     }

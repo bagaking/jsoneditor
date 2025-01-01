@@ -3,9 +3,10 @@ import { linter, Diagnostic } from '@codemirror/lint';
 import { EditorView } from '@codemirror/view';
 import { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
-import { JsonPath } from './path';
-import { SchemaValidator } from '../core/schema-validator';
-import { JsonSchemaProperty } from '../core/types';
+import { JsonPath, JsonSchemaProperty } from '../jsonkit';
+import { SchemaValidator } from '../jsonkit/schema/validator';
+import { ValidationResult } from '../jsonkit/schema/types';
+
 /**
  * Schema 编辑器扩展配置
  */
@@ -28,19 +29,21 @@ export function createSchemaEditorExtension(config: SchemaEditorConfig): Extensi
 
         try {
             const value = JSON.parse(content);
-            const errors = validator.validate(value, config.schema);
+            const result = validator.validate(value, config.schema);
 
-            for (const error of errors) {
-                const path = error.path || '';
-                const pos = findPositionForPath(view, path);
-                
-                if (pos !== null) {
-                    diagnostics.push({
-                        from: pos,
-                        to: pos,
-                        severity: 'error',
-                        message: error.message
-                    });
+            if (!result.valid && result.errors) {
+                for (const error of result.errors) {
+                    const path = error.path || '';
+                    const pos = findPositionForPath(view, path);
+                    
+                    if (pos !== null) {
+                        diagnostics.push({
+                            from: pos,
+                            to: pos,
+                            severity: 'error',
+                            message: error.message
+                        });
+                    }
                 }
             }
         } catch (e) {
@@ -83,7 +86,7 @@ export function getSchemaCompletions(schema: JsonSchemaProperty, context: Comple
     if (currentSchema.enum) {
         return {
             from: context.pos,
-            options: currentSchema.enum.map(value => ({
+            options: currentSchema.enum.map((value: unknown) => ({
                 label: String(value),
                 type: 'value'
             }))
@@ -95,7 +98,7 @@ export function getSchemaCompletions(schema: JsonSchemaProperty, context: Comple
         const properties = JsonPath.getPropertiesAtPath(schema, path);
         return {
             from: context.pos,
-            options: properties.map(prop => ({
+            options: properties.map((prop: { name: string; description?: string; required?: boolean }) => ({
                 label: prop.name,
                 type: 'property',
                 info: prop.description,
