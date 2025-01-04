@@ -1,0 +1,84 @@
+title: JSON Editor
+description: A powerful JSON editor component with schema validation, path highlighting, and theme support.
+baseurl: /jsoneditor
+repository: bagaking/jsoneditor
+
+# 主题设置
+theme: jekyll-theme-cayman
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# 导航配置
+nav:
+  - title: 使用指南
+    children:
+      - title: 快速开始
+        url: /guide/getting-started
+      - title: 基础用法
+        url: /guide/basic-usage
+      - title: Schema 验证
+        url: /guide/schema-validation
+      - title: 自定义配置
+        url: /guide/customization
+  - title: API 参考
+    children:
+      - title: 编辑器
+        url: /api/editor
+      - title: 编辑器核心
+        url: /api/editor-core
+      - title: 工具栏
+        url: /api/toolbar
+      - title: 状态栏
+        url: /api/statusbar
+      - title: Schema 面板
+        url: /api/schema-panel
+      - title: 装饰系统
+        url: /api/decoration
+      - title: 主题定制
+        url: /api/customization
+      - title: Schema 验证
+        url: /api/schema-validation
+      - title: 配置项
+        url: /api/props
+  - title: 示例
+    children:
+      - title: 基础示例
+        url: /examples/basic
+      - title: Schema 示例
+        url: /examples/schema
+      - title: 自定义示例
+        url: /examples/custom
+  - title: 设计文档
+    children:
+      - title: 架构设计
+        url: /design/architecture
+      - title: 设计原则
+        url: /design/principles
+
+# GitHub 配置
+github:
+  is_project_page: true
+  repository_url: https://github.com/bagaking/jsoneditor
+  repository_name: jsoneditor
+  owner_url: https://github.com/bagaking
+  owner_name: bagaking
+
+# 其他设置
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - package.json
+  - package-lock.json
+  - README.md
+  - CHANGELOG.md
+  - LICENSE
+  - .git
+  - .gitignore
+  - .github 

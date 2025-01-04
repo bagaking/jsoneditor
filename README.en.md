@@ -1,50 +1,50 @@
 # @bagaking/jsoneditor
 
-一个功能强大的 **JSON 编辑器组件**，支持 *JSON Schema 验证*、*路径高亮*、*主题切换*、*自定义操作*等功能。
+A powerful **JSON editor component** with support for *JSON Schema validation*, *path highlighting*, *theme switching*, and *custom operations*.
 
-📚 [查看完整文档](https://bagaking.github.io/jsoneditor) | [English](./README.en.md)
+📚 [Full Documentation](https://bagaking.github.io/jsoneditor) | [中文](./README.md)
 
-## 🌟 特性
+## 🌟 Features
 
-- 🎨 **主题系统**
-  - 内置明暗主题
-  - 可自定义主题变量
-  - 支持组件级样式定制
+- 🎨 **Theme System**
+  - Built-in light and dark themes
+  - Customizable theme variables
+  - Component-level style customization
   
-- 🔍 **智能编辑**
-  - 路径高亮和提示
-  - 支持路径点击和自定义操作
-  - 格式化和多级压缩
+- 🔍 **Smart Editing**
+  - Path highlighting and hints
+  - Support for path clicking and custom operations
+  - Format and multi-level minification
   
-- ✨ **Schema 支持**
-  - 支持 JSON5 语法
-  - 基于 JSON Schema 的自动智能补全
-  - 基于 JSON Schema 实时验证和错误排查
-  - 支持枚举、日期、颜色等特殊类型的白屏编辑
+- ✨ **Schema Support**
+  - JSON5 syntax support
+  - Smart auto-completion based on JSON Schema
+  - Real-time validation and error diagnosis based on JSON Schema
+  - Visual editing support for special types like enums, dates, colors
     
-- 🎯 **状态栏**
-  - 光标位置显示
-  - 文档大小统计
-  - 错误信息展示
+- 🎯 **Status Bar**
+  - Cursor position display
+  - Document size statistics
+  - Error message display
 
-- 💡 **开发友好**
-  - TypeScript 支持
-  - 丰富的 API
-  - 灵活的扩展机制
+- 💡 **Developer Friendly**
+  - TypeScript support
+  - Rich API
+  - Flexible extension mechanism
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 安装
+### Installation
 
 ```bash
 pnpm add @bagaking/jsoneditor
-# 或
+# or
 npm install @bagaking/jsoneditor
-# 或
+# or
 yarn add @bagaking/jsoneditor
 ```
 
-### 基础使用
+### Basic Usage
 
 ```tsx
 import { JsonEditor } from '@bagaking/jsoneditor';
@@ -58,29 +58,28 @@ function App() {
       onValueChange={setValue}
       onError={setError}
 
-      // 编辑器配置
+      // Editor settings
       codeSettings={{
         fontSize: 14,
         lineNumbers: true,
         bracketMatching: true
       }}
 
-      // 主题配置
+      // Theme configuration
       themeConfig={{
         theme: 'light'
       }}
-
     />
   );
 }
 ```
 
-## 🎮 在线演示
+## 🎮 Live Demo
 
 - [CodeSandbox](https://codesandbox.io/s/bagaking-jsoneditor-demo)
 - [StackBlitz](https://stackblitz.com/edit/bagaking-jsoneditor-demo)
 
-或者克隆仓库本地运行：
+Or clone the repository and run locally:
 
 ```bash
 git clone https://github.com/bagaking/jsoneditor.git
@@ -89,11 +88,11 @@ pnpm install
 pnpm dev
 ```
 
-## 📖 高级用法
+## 📖 Advanced Usage
 
-### Schema 验证
+### Schema Validation
 
-本组件使用 [JSON Schema](https://json-schema.org/) 进行数据验证和自动补全。支持 [Draft 2020-12](https://json-schema.org/draft/2020-12/json-schema-core.html) 规范。
+This component uses [JSON Schema](https://json-schema.org/) for data validation and auto-completion. It supports the [Draft 2020-12](https://json-schema.org/draft/2020-12/json-schema-core.html) specification.
 
 ```tsx
 import { JsonEditor } from '@bagaking/jsoneditor';
@@ -103,13 +102,13 @@ const schema = {
   properties: {
     name: {
       type: 'string',
-      description: '项目名称',
+      description: 'Project name',
       minLength: 1
     },
     version: {
       type: 'string',
       pattern: '^\\d+\\.\\d+\\.\\d+$',
-      description: '版本号 (Semver)'
+      description: 'Version number (Semver)'
     }
   },
   required: ['name', 'version']
@@ -131,11 +130,11 @@ function App() {
 }
 ```
 
-更多用法请参考 [Schema 验证指南](https://bagaking.github.io/jsoneditor/guide/schema-validation)。
+For more details, please refer to the [Schema Validation Guide](https://bagaking.github.io/jsoneditor/guide/schema-validation).
 
-### 路径装饰
+### Path Decoration
 
-支持为不同的 JSON 路径添加自定义样式和交互：
+Support for adding custom styles and interactions to different JSON paths:
 
 ```tsx
 import { JsonEditor } from '@bagaking/jsoneditor';
@@ -146,12 +145,12 @@ function App() {
       defaultValue={value}
       decorationConfig={{
         paths: {
-          // 版本号使用特殊样式
+          // Special style for version
           '$["version"]': {
             style: "italic bg-blue-100/30 rounded px-1",
             onClick: (value) => console.log('Version:', value)
           },
-          // 状态使用不同颜色
+          // Different color for status
           '$["status"]': {
             style: "text-green-600 font-medium"
           }
@@ -162,9 +161,9 @@ function App() {
 }
 ```
 
-更多用法请参考 [装饰系统文档](https://bagaking.github.io/jsoneditor/api/decoration)。
+For more details, please refer to the [Decoration System Documentation](https://bagaking.github.io/jsoneditor/api/decoration).
 
-### 使用 Ref
+### Using Ref
 
 ```tsx
 import { JsonEditor, EditorCore } from '@bagaking/jsoneditor';
@@ -184,7 +183,7 @@ function App() {
 
   return (
     <>
-      <button onClick={handleFormat}>格式化</button>
+      <button onClick={handleFormat}>Format</button>
       <JsonEditor
         ref={editorRef}
         defaultValue={value}
@@ -195,11 +194,10 @@ function App() {
 }
 ```
 
+## 🤝 Contributing
 
-## 🤝 贡献指南
+Contributions are welcome! Feel free to submit [Issues](https://github.com/bagaking/jsoneditor/issues) or [Pull Requests](https://github.com/bagaking/jsoneditor/pulls)!
 
-欢迎提交 [Issue](https://github.com/bagaking/jsoneditor/issues) 或 [Pull Request](https://github.com/bagaking/jsoneditor/pulls)!
-
-## 📄 许可证
+## 📄 License
 
 [MIT](./LICENSE) 
