@@ -11,17 +11,21 @@ export interface StatusBarProps {
         bytes: number;
     };
     isValid?: boolean;
+    className?: string;
+    style?: React.CSSProperties;
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
     error,
     cursorInfo,
     jsonSize,
-    isValid
+    isValid,
+    className,
+    style
 }) => {
     
     return (
-        <div className="
+        <div className={`
             sticky bottom-0
             flex justify-between items-center 
             px-3 py-1 text-xs 
@@ -29,7 +33,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             backdrop-blur-sm
             border-t border-gray-200 dark:border-gray-700
             z-10
-        ">
+            ${className || ''}
+        `}
+        style={style}
+        data-bkjson-status
+        >
             <div className="flex items-center gap-2">
                 {error ? (
                     <span className="text-red-600 dark:text-red-400 font-semibold flex items-center gap-1" title={error}>

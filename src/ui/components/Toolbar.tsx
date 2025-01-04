@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ToolbarProps } from '../types';
+import { EditorCore } from '../../core/editor-core';
+import { ToolbarConfig } from '../types';
 
 const buttonClassNames = {
     default: `
@@ -26,6 +27,24 @@ const buttonClassNames = {
 };
 
 const EDITOR_ACTIONS: string[] = ['validate', 'expand'] as const;
+
+export interface ToolbarProps {
+    config: ToolbarConfig;
+    editor: EditorCore | null;
+    state: {
+        isValid?: boolean;
+        isExpanded?: boolean;
+    };
+    handlers: {
+        onFormat?: () => void;
+        onMinify?: () => void;
+        onValidate?: () => void;
+        onCopy?: () => void;
+        onToggleExpand?: () => void;
+    };
+    className?: string;
+    style?: React.CSSProperties;
+}
 
 export const Toolbar: React.FC<ToolbarProps> = ({
     config,
@@ -83,6 +102,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 ${config.className || ''}
             `}
             style={config.style}
+            data-bkjson-toolbar
         >
             <div className="px-2 flex flex-wrap items-center gap-1.5">
                 <div className="flex items-center gap-1">

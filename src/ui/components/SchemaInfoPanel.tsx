@@ -6,13 +6,17 @@ export interface SchemaInfo {
     schema: JsonSchemaProperty;
     value?: string;
     onValueChange?: (value: string) => void;
+    className?: string;
+    style?: React.CSSProperties;
 }
 
 export const SchemaInfoPanel: React.FC<SchemaInfo> = ({
     path,
     schema,
     value,
-    onValueChange
+    onValueChange,
+    className,
+    style
 }) => {
     // 编辑状态
     const [editingValue, setEditingValue] = useState<string | undefined>(value);
@@ -212,7 +216,7 @@ export const SchemaInfoPanel: React.FC<SchemaInfo> = ({
     };
 
     return (
-        <div className="
+        <div className={`
             sticky bottom-[32px]
             px-3 py-2 
             bg-blue-50/95 dark:bg-blue-900/30 
@@ -221,7 +225,11 @@ export const SchemaInfoPanel: React.FC<SchemaInfo> = ({
             shadow-sm
             z-[9]
             transition-all duration-200
-        ">
+            ${className || ''}
+        `}
+        style={style}
+        data-bkjson-schema
+        >
             <div className="text-xs text-blue-700 dark:text-blue-300">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-[200px]">

@@ -47,6 +47,8 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
 
     // UI 配置
     toolbarConfig,
+    statusBarConfig,
+    schemaInfoConfig,
     expandOption
 }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -62,6 +64,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
         value?: string;
     } | null>(null);
     const [minifyLevel, setMinifyLevel] = useState(-1);
+    const [isEditorReady, setIsEditorReady] = useState(false);
     
     // 使用 useRef 存储所有可变的配置和回调
     const stateRef = useRef({
@@ -78,7 +81,36 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
     });
 
     // 暴露编辑器实例给父组件
-    useImperativeHandle(ref, () => editorRef.current!, []);
+    useImperativeHandle(ref, () => {
+        if (!editorRef.current) {
+            console.warn('[@bagaking/jsoneditor/core] Editor instance not ready');
+            // 返回一个空的实现，但保持类型兼容
+            const emptyEditor = {
+                view: null,
+                container: null,
+                config: {},
+                schema: null,
+                getValue: () => '',
+                setValue: () => {},
+                format: () => {},
+                minify: () => {},
+                destroy: () => {},
+                updateConfig: () => {},
+                getValueAtPath: () => null,
+                setValueAtPath: () => false,
+                getSchemaAtPath: () => null,
+                getCursorPosition: () => ({ line: 0, column: 0 }),
+                setCursorPosition: () => {},
+                getSelection: () => ({ start: { line: 0, column: 0 }, end: { line: 0, column: 0 } }),
+                setSelection: () => {},
+                validate: () => true,
+                focus: () => {},
+                blur: () => {},
+            } as unknown as EditorCore;
+            return emptyEditor;
+        }
+        return editorRef.current;
+    }, [isEditorReady]);
 
 
         // 计算收起状态的高度
@@ -339,6 +371,9 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
                 extensions
             });
 
+            // 标记编辑器已准备就绪
+            setIsEditorReady(true);
+
             if (stateRef.current.validateOnChange && stateRef.current.defaultValue) {
                 console.log('Performing initial validation');
                 validateJson(stateRef.current.defaultValue);
@@ -354,8 +389,11 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
 
         return () => {
             console.log('Cleaning up editor');
-            editorRef.current?.destroy();
-            editorRef.current = null;
+            if (editorRef.current) {
+                editorRef.current.destroy();
+                editorRef.current = null;
+                setIsEditorReady(false);
+            }
         };
     }, []);
 
@@ -439,7 +477,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
 
 
     return (
-        <div className={`${themeConfig.theme === 'dark' ? 'dark' : ''} bg-transparent`}>
+        <div className={`${themeConfig.theme === 'dark' ? 'dark' : ''} bg-transparent`} data-bkjson-root>
             <div className={`flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 ${className || ''}`}>
                 {toolbarConfig?.position !== 'none' && (
                     <Toolbar
@@ -466,6 +504,8 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
                             onCopy: handleCopy,
                             onToggleExpand: handleToggleExpand
                         }}
+                        className={toolbarConfig?.className}
+                        style={toolbarConfig?.style}
                     />
                 )}
                 <div 
@@ -476,6 +516,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
                         ...containerStyle,
                         overflow: expanded ? undefined : 'auto'
                     }}
+                    data-bkjson-editor
                 >
                    
                 </div>
@@ -485,6 +526,8 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
                         schema={schemaInfo.schema}
                         value={schemaInfo.value}
                         onValueChange={handleSchemaValueChange}
+                        className={schemaInfoConfig?.className}
+                        style={schemaInfoConfig?.style}
                     />
                 )}
                 <StatusBar
@@ -492,6 +535,8 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
                     jsonSize={jsonSize}
                     isValid={isValid}
                     error={error}
+                    className={statusBarConfig?.className}
+                    style={statusBarConfig?.style}
                 />
             </div>
         </div>
