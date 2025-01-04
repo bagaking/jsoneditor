@@ -18,6 +18,7 @@ export interface EditorConfigState {
   };
   toolbarConfig: ToolbarConfig;
   expandOption: ExpandOption;
+  decorationConfig: DecorationConfig;
 }
 
 export const defaultConfig: EditorConfigState = {
@@ -54,6 +55,12 @@ export const defaultConfig: EditorConfigState = {
       timing: 'ease-in-out'
     }
   },
+  decorationConfig: {
+    paths: {},
+    urlHandler: {
+      openInNewTab: true
+    }
+  }
 };
 
 // 示例 JSON 数据
