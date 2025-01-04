@@ -34,6 +34,7 @@ JSON Editor 的配置系统分为几个主要部分：
 
 ### 示例
 
+{% raw %}
 ```tsx
 <JsonEditor
   // 基础配置
@@ -60,6 +61,7 @@ JSON Editor 的配置系统分为几个主要部分：
   }}
 />
 ```
+{% endraw %}
 
 ## 编辑器设置 (CodeSettings)
 
@@ -93,6 +95,7 @@ JSON Editor 的配置系统分为几个主要部分：
 
 ### 示例
 
+{% raw %}
 ```tsx
 <JsonEditor
   codeSettings={{
@@ -115,6 +118,7 @@ JSON Editor 的配置系统分为几个主要部分：
   }}
 />
 ```
+{% endraw %}
 
 ## Schema 配置 (SchemaConfig)
 
@@ -138,6 +142,7 @@ JSON Editor 的配置系统分为几个主要部分：
 
 ### 示例
 
+{% raw %}
 ```tsx
 <JsonEditor
   schemaConfig={{
@@ -191,6 +196,7 @@ JSON Editor 的配置系统分为几个主要部分：
   }}
 />
 ```
+{% endraw %}
 
 ## 主题配置 (ThemeConfig)
 
@@ -212,6 +218,7 @@ JSON Editor 的配置系统分为几个主要部分：
 
 ### 示例
 
+{% raw %}
 ```tsx
 <JsonEditor
   themeConfig={{
@@ -240,6 +247,7 @@ JSON Editor 的配置系统分为几个主要部分：
   }}
 />
 ```
+{% endraw %}
 
 ## 装饰配置 (DecorationConfig)
 
@@ -262,6 +270,7 @@ JSON Editor 的配置系统分为几个主要部分：
 
 ### 示例
 
+{% raw %}
 ```tsx
 <JsonEditor
   decorationConfig={{
@@ -312,6 +321,7 @@ JSON Editor 的配置系统分为几个主要部分：
   }}
 />
 ```
+{% endraw %}
 
 ## 工具栏配置 (ToolbarConfig)
 
@@ -335,6 +345,7 @@ JSON Editor 的配置系统分为几个主要部分：
 
 ### 示例
 
+{% raw %}
 ```tsx
 <JsonEditor
   toolbarConfig={{
@@ -400,6 +411,7 @@ JSON Editor 的配置系统分为几个主要部分：
   }}
 />
 ```
+{% endraw %}
 
 ## 展开配置 (ExpandOption)
 
@@ -421,6 +433,7 @@ JSON Editor 的配置系统分为几个主要部分：
 
 ### 示例
 
+{% raw %}
 ```tsx
 <JsonEditor
   expandOption={{
@@ -443,10 +456,12 @@ JSON Editor 的配置系统分为几个主要部分：
   }}
 />
 ```
+{% endraw %}
 
 ## 最佳实践
 
 1. **配置分组**
+   {% raw %}
    ```tsx
    <JsonEditor
      // 1. 基础配置
@@ -469,6 +484,7 @@ JSON Editor 的配置系统分为几个主要部分：
      onError={handleError}
    />
    ```
+   {% endraw %}
 
 2. **性能优化**
    - 使用 `validateDebounce` 控制验证频率
@@ -476,6 +492,7 @@ JSON Editor 的配置系统分为几个主要部分：
    - 合理使用 `React.memo` 包装自定义组件
 
 3. **错误处理**
+   {% raw %}
    ```tsx
    <JsonEditor
      onError={(error) => {
@@ -493,8 +510,10 @@ JSON Editor 的配置系统分为几个主要部分：
      }}
    />
    ```
+   {% endraw %}
 
 4. **主题切换**
+   {% raw %}
    ```tsx
    const [theme, setTheme] = useState('light');
    
@@ -507,28 +526,9 @@ JSON Editor 的配置系统分为几个主要部分：
      }}
    />
    ```
+   {% endraw %}
 
 5. **动态配置**
-   ```tsx
-   const [config, setConfig] = useState(defaultConfig);
-   
-   useEffect(() => {
-     // 根据条件更新配置
-     setConfig(prev => ({
-       ...prev,
-       readOnly: !hasPermission('edit'),
-       toolbarConfig: {
-         ...prev.toolbarConfig,
-         features: {
-           ...prev.toolbarConfig.features,
-           save: hasPermission('save')
-         }
-       }
-     }));
-   }, [hasPermission]);
-   
-   <JsonEditor {...config} />
-   ```
 
 ## 类型定义
 

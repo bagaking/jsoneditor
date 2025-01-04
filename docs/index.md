@@ -38,6 +38,7 @@ pnpm add @bagaking/jsoneditor
 
 ### 基础使用
 
+{% raw %}
 ```tsx
 import { JsonEditor } from '@bagaking/jsoneditor';
 
@@ -50,6 +51,7 @@ function App() {
   );
 }
 ```
+{% endraw %}
 
 ## 📖 文档导航
 

@@ -23,6 +23,7 @@ yarn add @bagaking/jsoneditor
 
 最简单的使用方式：
 
+{% raw %}
 ```tsx
 import { JsonEditor } from '@bagaking/jsoneditor';
 
@@ -40,11 +41,13 @@ function App() {
   );
 }
 ```
+{% endraw %}
 
 ### 命令式控制
 
 如果需要从外部控制编辑器，可以使用 ref：
 
+{% raw %}
 ```tsx
 import { JsonEditor, EditorCore } from '@bagaking/jsoneditor';
 import { useRef } from 'react';
@@ -85,6 +88,7 @@ function App() {
   );
 }
 ```
+{% endraw %}
 
 更多高级用法请参考：
 - [编辑器核心 API](../api/editor-core.md)
@@ -94,6 +98,7 @@ function App() {
 
 ### 编辑器配置
 
+{% raw %}
 ```tsx
 <JsonEditor
   // 基础配置
@@ -115,9 +120,11 @@ function App() {
   }}
 />
 ```
+{% endraw %}
 
 ### 工具栏配置
 
+{% raw %}
 ```tsx
 <JsonEditor
   toolbarConfig={{
@@ -134,9 +141,11 @@ function App() {
   }}
 />
 ```
+{% endraw %}
 
 ### 状态栏配置
 
+{% raw %}
 ```tsx
 <JsonEditor
   statusBarConfig={{
@@ -154,11 +163,13 @@ function App() {
   }}
 />
 ```
+{% endraw %}
 
 ## Schema 支持
 
 ### 基础验证
 
+{% raw %}
 ```tsx
 const schema = {
   type: 'object',
@@ -187,9 +198,11 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ### Schema 面板
 
+{% raw %}
 ```tsx
 <JsonEditor
   schemaConfig={{
@@ -204,11 +217,13 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ## 事件处理
 
 ### 值变化
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{}`}
@@ -220,9 +235,11 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ### 错误处理
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{}`}
@@ -235,9 +252,11 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ### 光标移动
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{}`}
@@ -246,6 +265,7 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ## 实例方法
 

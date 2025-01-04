@@ -89,6 +89,7 @@ toolbarConfig: {
 - 支持快捷键绑定
 
 示例:实现一个智能导出按钮
+{% raw %}
 ```tsx
 <JsonEditor
   toolbarConfig={{
@@ -114,6 +115,7 @@ toolbarConfig: {
   }}
 />
 ```
+{% endraw %}
 
 ## 交互优化
 
@@ -175,6 +177,7 @@ toolbarConfig: {
 
 适合简单的数据编辑场景:
 
+{% raw %}
 ```tsx
 <JsonEditor
   toolbarConfig={{
@@ -186,11 +189,13 @@ toolbarConfig: {
   }}
 />
 ```
+{% endraw %}
 
 ### 场景二：专业工作台
 
 面向开发者的完整功能集:
 
+{% raw %}
 ```tsx
 <JsonEditor
   toolbarConfig={{
@@ -220,11 +225,13 @@ toolbarConfig: {
   }}
 />
 ```
+{% endraw %}
 
 ### 场景三：自定义工作流
 
 为特定团队定制的工具链:
 
+{% raw %}
 ```tsx
 <JsonEditor
   toolbarConfig={{
@@ -232,6 +239,7 @@ toolbarConfig: {
   }}
 />
 ```
+{% endraw %}
 
 ## 性能考虑
 

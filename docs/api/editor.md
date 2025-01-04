@@ -6,6 +6,7 @@
 
 ### 简单示例
 
+{% raw %}
 ```tsx
 import { JsonEditor } from '@bagaking/jsoneditor';
 
@@ -23,11 +24,13 @@ function App() {
   );
 }
 ```
+{% endraw %}
 
 ### 命令式控制
 
 通过 ref 可以获取编辑器实例，实现命令式控制：
 
+{% raw %}
 ```tsx
 import { JsonEditor, EditorCore } from '@bagaking/jsoneditor';
 import { useRef } from 'react';
@@ -63,6 +66,7 @@ function App() {
   );
 }
 ```
+{% endraw %}
 
 更多关于编辑器核心 API 的使用，请参考 [编辑器核心 API](./editor-core.md)。
 
@@ -250,184 +254,56 @@ interface EditorChangeEvent {
   cursor?: CursorPosition;             // 变化的光标位置
   selection?: Selection;               // 变化的选区
   config?: Partial<EditorProps>;       // 变化的配置
-  timestamp: number;                   // 时间戳
 }
-```
-
-### CursorPosition
-
-光标位置类型。
-
-```typescript
-interface CursorPosition {
-  line: number;                        // 行号（从 1 开始）
-  column: number;                      // 列号（从 1 开始）
-  offset?: number;                     // 偏移量
-}
-```
-
-### Selection
-
-选区类型。
-
-```typescript
-interface Selection {
-  start: CursorPosition;              // 开始位置
-  end: CursorPosition;                // 结束位置
-  text: string;                       // 选中的文本
-}
-```
-
-## 插件系统
-
-### EditorPlugin
-
-插件接口定义。
-
-```typescript
-interface EditorPlugin {
-  name: string;                       // 插件名称
-  setup: (editor: EditorCore) => {    // 插件设置函数
-    onValueChange?: (value: string) => void;        // 值变化处理
-    onCursorChange?: (pos: CursorPosition) => void; // 光标变化处理
-    onError?: (error: EditorError) => void;         // 错误处理
-    destroy?: () => void;                           // 销毁处理
-  };
-}
-```
-
-### 插件示例
-
-```typescript
-const autoSavePlugin: EditorPlugin = {
-  name: 'autosave',
-  setup: (editor) => {
-    let timer: NodeJS.Timeout;
-    
-    return {
-      onValueChange: (value) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-          // 自动保存处理...
-        }, 1000);
-      },
-      destroy: () => {
-        clearTimeout(timer);
-      }
-    };
-  }
-};
 ```
 
 ## 使用示例
 
-### 基础使用
+### 基础配置
 
+{% raw %}
 ```tsx
-import { JsonEditor } from '@bagaking/jsoneditor';
-import { useRef } from 'react';
-
-function App() {
-  const editorRef = useRef<EditorCore>(null);
-
-  const handleFormat = () => {
-    editorRef.current?.format();
-  };
-
-  return (
-    <JsonEditor
-      ref={editorRef}
-      defaultValue={`{
-        "name": "JSON Editor",
-        "version": "1.0.0"
-      }`}
-      onValueChange={(value) => {
-        console.log('Content changed:', value);
-      }}
-      onError={(error) => {
-        console.error('Editor error:', error);
-      }}
-    />
-  );
-}
+<JsonEditor
+  // 基础配置
+  defaultValue={`{}`}
+  readOnly={false}
+  className="custom-editor"
+  
+  // 代码配置
+  codeSettings={{
+    fontSize: 14,
+    lineNumbers: true,
+    bracketMatching: true
+  }}
+  
+  // 主题配置
+  themeConfig={{
+    theme: 'light'  // 'light' | 'dark'
+  }}
+  
+  // 验证配置
+  validationConfig={{
+    validateOnChange: true,
+    validateDebounce: 300
+  }}
+  
+  // 快捷键配置
+  shortcuts={{
+    'Ctrl-S': (editor) => {
+      // 保存操作
+    }
+  }}
+  
+  // 右键菜单配置
+  contextMenu={{
+    items: [
+      {
+        key: 'format',
+        label: '格式化',
+        onClick: (editor) => editor.format()
+      }
+    ]
+  }}
+/>
 ```
-
-### 高级使用
-
-```tsx
-import { JsonEditor } from '@bagaking/jsoneditor';
-
-function App() {
-  return (
-    <JsonEditor
-      defaultValue={`{}`}
-      codeSettings={{
-        fontSize: 14,
-        lineNumbers: true,
-        bracketMatching: true
-      }}
-      themeConfig={{
-        theme: 'dark',
-        vars: {
-          primary: '#1890ff'
-        }
-      }}
-      validationConfig={{
-        validateOnChange: true,
-        validateDebounce: 300
-      }}
-      plugins={[autoSavePlugin]}
-      shortcuts={{
-        'mod+s': (editor) => {
-          // 保存处理...
-        }
-      }}
-      contextMenu={{
-        custom: [
-          {
-            label: '保存',
-            onClick: (editor) => {
-              // 保存处理...
-            }
-          }
-        ]
-      }}
-    />
-  );
-}
-```
-
-## 最佳实践
-
-1. **错误处理**
-   - 始终提供 `onError` 回调
-   - 区分不同类型的错误
-   - 提供友好的错误提示
-
-2. **性能优化**
-   - 使用 `validateDebounce` 防抖
-   - 避免频繁更新配置
-   - 合理使用插件系统
-
-3. **扩展开发**
-   - 遵循插件接口规范
-   - 注意资源的清理
-   - 提供完整的类型定义
-
-4. **配置管理**
-   - 集中管理配置项
-   - 使用类型检查
-   - 提供合理的默认值
-
-## 相关文档
-
-JSON Editor 提供了一系列强大的功能组件,每个组件都有其专门的配置文档:
-
-- [工具栏配置](./toolbar.md) - 自定义编辑器的工具栏按钮、样式和行为
-- [状态栏配置](./statusbar.md) - 配置底部状态栏的显示内容和样式
-- [Schema 面板配置](./schema-panel.md) - 自定义 Schema 信息面板的展示
-- [装饰系统](./decoration.md) - 为 JSON 数据添加丰富的视觉和交互效果
-- [定制化指南](./customization.md) - 深入了解编辑器的定制化能力
-- [Schema 验证](./schema-validation.md) - 详细的 Schema 验证配置和使用说明
-
-> 💡 **提示**: 建议先阅读本文档了解编辑器的核心 API,然后根据需要查看各个组件的详细配置文档。 
+{% endraw %} 

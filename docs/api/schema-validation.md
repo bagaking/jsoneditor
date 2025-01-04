@@ -36,6 +36,7 @@ Schema 验证是一种确保 JSON 数据符合预定义结构和规则的机制�
 
 ### 基础配置
 
+{% raw %}
 ```tsx
 const schema = {
   type: 'object',
@@ -64,9 +65,11 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ### 验证时机
 
+{% raw %}
 ```tsx
 <JsonEditor
   schemaConfig={{
@@ -77,9 +80,11 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ### 验证配置
 
+{% raw %}
 ```tsx
 <JsonEditor
   validationConfig={{
@@ -89,6 +94,7 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ## Schema 定义
 
@@ -187,6 +193,7 @@ const schema = {
 
 ### 基础错误处理
 
+{% raw %}
 ```tsx
 <JsonEditor
   schemaConfig={{
@@ -200,9 +207,11 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ### 自定义错误展示
 
+{% raw %}
 ```tsx
 <JsonEditor
   schemaConfig={{
@@ -214,9 +223,11 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ### 错误聚合
 
+{% raw %}
 ```tsx
 <JsonEditor
   validationConfig={{
@@ -235,11 +246,13 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ## Schema 面板配置
 
 ### 基础配置
 
+{% raw %}
 ```tsx
 <JsonEditor
   schemaInfoConfig={{
@@ -252,9 +265,11 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ### 自定义显示
 
+{% raw %}
 ```tsx
 <JsonEditor
   schemaInfoConfig={{
@@ -274,6 +289,7 @@ const schema = {
   }}
 />
 ```
+{% endraw %}
 
 ## 最佳实践
 

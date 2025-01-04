@@ -64,6 +64,7 @@ interface CustomComponent {
 
 ### 文本样式装饰
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{
@@ -85,9 +86,11 @@ interface CustomComponent {
   }}
 />
 ```
+{% endraw %}
 
 ### URL 自动识别
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{
@@ -104,9 +107,11 @@ interface CustomComponent {
   }}
 />
 ```
+{% endraw %}
 
 ### 自定义操作按钮
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{
@@ -134,9 +139,11 @@ interface CustomComponent {
   }}
 />
 ```
+{% endraw %}
 
 ### 自定义组件渲染
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{
@@ -175,11 +182,13 @@ interface CustomComponent {
   }}
 />
 ```
+{% endraw %}
 
 ## 高级用法
 
 ### 组合装饰效果
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{
@@ -217,9 +226,11 @@ interface CustomComponent {
   }}
 />
 ```
+{% endraw %}
 
 ### 动态装饰
 
+{% raw %}
 ```tsx
 function App() {
   const [decorations, setDecorations] = useState({});
@@ -244,35 +255,43 @@ function App() {
   );
 }
 ```
+{% endraw %}
 
 ### 条件装饰
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{
-    "items": [
-      { "id": 1, "status": "active" },
-      { "id": 2, "status": "inactive" }
-    ]
+    "status": "active",
+    "health": 98,
+    "errors": []
   }`}
   decorationConfig={{
     paths: {
-      "items[*].status": {
+      "status": {
+        style: (value) => value === "active" ? "text-green-500" : "text-red-500",
+        target: "value"
+      },
+      "health": {
         style: (value) => {
-          switch (value) {
-            case 'active':
-              return 'text-green-500 bold';
-            case 'inactive':
-              return 'text-gray-500 italic';
-            default:
-              return '';
-          }
+          const health = Number(value);
+          if (health > 90) return "text-green-500";
+          if (health > 70) return "text-yellow-500";
+          return "text-red-500";
+        }
+      },
+      "errors": {
+        style: (value) => {
+          const errors = JSON.parse(value);
+          return errors.length > 0 ? "text-red-500 font-bold" : "text-gray-400";
         }
       }
     }
   }}
 />
 ```
+{% endraw %}
 
 ## 性能优化
 
@@ -297,6 +316,7 @@ function App() {
 
 ### 按需渲染
 
+{% raw %}
 ```tsx
 <JsonEditor
   decorationConfig={{
@@ -318,6 +338,7 @@ function App() {
   }}
 />
 ```
+{% endraw %}
 
 ## 最佳实践
 

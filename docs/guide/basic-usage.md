@@ -6,6 +6,7 @@
 
 ### 创建实例
 
+{% raw %}
 ```tsx
 import { JsonEditor } from '@bagaking/jsoneditor';
 import { useRef } from 'react';
@@ -24,9 +25,11 @@ function App() {
   );
 }
 ```
+{% endraw %}
 
 ### 实例方法
 
+{% raw %}
 ```tsx
 // 获取内容
 const value = editorRef.current?.getValue();
@@ -40,11 +43,13 @@ editorRef.current?.updateConfig({
   themeConfig: { theme: 'dark' }
 });
 ```
+{% endraw %}
 
 ## 内容管理
 
 ### 设置初始值
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{
@@ -58,9 +63,11 @@ editorRef.current?.updateConfig({
   }`}
 />
 ```
+{% endraw %}
 
 ### 监听变化
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{}`}
@@ -75,9 +82,11 @@ editorRef.current?.updateConfig({
   }}
 />
 ```
+{% endraw %}
 
 ### 只读模式
 
+{% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{
@@ -86,11 +95,13 @@ editorRef.current?.updateConfig({
   readOnly={true}
 />
 ```
+{% endraw %}
 
 ## 基础样式
 
 ### 容器样式
 
+{% raw %}
 ```tsx
 <JsonEditor
   style={{
@@ -102,9 +113,11 @@ editorRef.current?.updateConfig({
   className="custom-editor"
 />
 ```
+{% endraw %}
 
 ### 代码样式
 
+{% raw %}
 ```tsx
 <JsonEditor
   codeSettings={{
@@ -115,9 +128,11 @@ editorRef.current?.updateConfig({
   }}
 />
 ```
+{% endraw %}
 
 ### 主题配置
 
+{% raw %}
 ```tsx
 <JsonEditor
   themeConfig={{
@@ -125,11 +140,13 @@ editorRef.current?.updateConfig({
   }}
 />
 ```
+{% endraw %}
 
 ## 工具栏
 
 ### 基础配置
 
+{% raw %}
 ```tsx
 <JsonEditor
   toolbarConfig={{
@@ -141,9 +158,11 @@ editorRef.current?.updateConfig({
   }}
 />
 ```
+{% endraw %}
 
 ### 功能定制
 
+{% raw %}
 ```tsx
 <JsonEditor
   toolbarConfig={{
@@ -160,11 +179,13 @@ editorRef.current?.updateConfig({
   }}
 />
 ```
+{% endraw %}
 
 ## 状态栏
 
 ### 基础配置
 
+{% raw %}
 ```tsx
 <JsonEditor
   statusBarConfig={{
@@ -176,9 +197,11 @@ editorRef.current?.updateConfig({
   }}
 />
 ```
+{% endraw %}
 
 ### 功能定制
 
+{% raw %}
 ```tsx
 <JsonEditor
   statusBarConfig={{
@@ -201,11 +224,13 @@ editorRef.current?.updateConfig({
   }}
 />
 ```
+{% endraw %}
 
 ## Schema 面板
 
 ### 基础配置
 
+{% raw %}
 ```tsx
 <JsonEditor
   schemaInfoConfig={{
@@ -218,9 +243,11 @@ editorRef.current?.updateConfig({
   }}
 />
 ```
+{% endraw %}
 
 ### 自定义显示
 
+{% raw %}
 ```tsx
 <JsonEditor
   schemaInfoConfig={{
@@ -240,35 +267,22 @@ editorRef.current?.updateConfig({
   }}
 />
 ```
+{% endraw %}
 
 ## 展开控制
 
 ### 基础配置
 
+{% raw %}
 ```tsx
 <JsonEditor
   expandOption={{
-    defaultExpanded: false,  // 默认收起
-    collapsedLines: 5       // 收起时显示 5 行
+    defaultExpand: true,  // 默认展开所有节点
+    maxExpandDepth: 3     // 最大展开深度
   }}
 />
 ```
-
-### 动画配置
-
-```tsx
-<JsonEditor
-  expandOption={{
-    defaultExpanded: true,
-    collapsedLines: 5,
-    animation: {
-      enabled: true,
-      duration: 300,
-      timing: 'ease-in-out'
-    }
-  }}
-/>
-```
+{% endraw %}
 
 ## 错误处理
 
@@ -288,6 +302,7 @@ editorRef.current?.updateConfig({
 
 ### 验证错误处理
 
+{% raw %}
 ```tsx
 <JsonEditor
   schemaConfig={{
@@ -306,11 +321,13 @@ editorRef.current?.updateConfig({
   }}
 />
 ```
+{% endraw %}
 
 ## 性能优化
 
 ### 防抖处理
 
+{% raw %}
 ```tsx
 import { debounce } from 'lodash';
 
@@ -330,9 +347,11 @@ function App() {
   );
 }
 ```
+{% endraw %}
 
 ### 按需更新
 
+{% raw %}
 ```tsx
 function App() {
   const [config, setConfig] = useState({
@@ -356,7 +375,7 @@ function App() {
   );
 }
 ```
-
+{% endraw %}
 ## 最佳实践
 
 1. **内容管理**

@@ -69,6 +69,7 @@ interface DateTimeConfig {
 ```
 
 示例：自定义日期时间输入
+{% raw %}
 ```tsx
 <JsonEditor
   schemaInfoConfig={{
@@ -85,6 +86,7 @@ interface DateTimeConfig {
   }}
 />
 ```
+{% endraw %}
 
 ### 颜色控件
 
@@ -132,6 +134,7 @@ format?: {
 ## 实战示例
 
 ### 基础配置
+{% raw %}
 ```tsx
 // 默认配置，显示所有信息
 <JsonEditor
@@ -145,8 +148,10 @@ format?: {
   }}
 />
 ```
+{% endraw %}
 
 ### API 文档场景
+{% raw %}
 ```tsx
 // 强调字段描述和类型
 <JsonEditor
@@ -167,8 +172,10 @@ format?: {
   }}
 />
 ```
+{% endraw %}
 
 ### 数据录入场景
+{% raw %}
 ```tsx
 // 优化输入体验
 <JsonEditor
@@ -195,6 +202,7 @@ format?: {
   }}
 />
 ```
+{% endraw %}
 
 ## 性能优化
 

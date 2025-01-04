@@ -10,6 +10,7 @@ JSON Editor 采用多层次的样式隔离机制，确保编辑器的样式不�
 
 每个主要组件都使用特定的 `data-bkjson-*` 属性来标识：
 
+{% raw %}
 ```tsx
 // 编辑器容器
 <div data-bkjson-root>
@@ -26,6 +27,7 @@ JSON Editor 采用多层次的样式隔离机制，确保编辑器的样式不�
   <div data-bkjson-schema>...</div>
 </div>
 ```
+{% endraw %}
 
 这种机制确保：
 1. 样式选择器具有足够的特异性
@@ -36,6 +38,7 @@ JSON Editor 采用多层次的样式隔离机制，确保编辑器的样式不�
 
 组件样式采用 CSS Modules 方案：
 
+{% raw %}
 ```typescript
 // Toolbar.module.css
 .toolbar {
@@ -53,6 +56,7 @@ export const Toolbar = () => (
   </div>
 );
 ```
+{% endraw %}
 
 优势：
 1. 样式作用域完全隔离
@@ -63,6 +67,7 @@ export const Toolbar = () => (
 
 主题相关的样式通过特定的选择器组合来实现隔离：
 
+{% raw %}
 ```typescript
 const darkTheme = {
   // 编辑器范围内的样式
@@ -83,6 +88,7 @@ const darkTheme = {
   }
 };
 ```
+{% endraw %}
 
 这种方式确保：
 1. 主题样式不会泄露
@@ -93,6 +99,7 @@ const darkTheme = {
 
 对于需要动态计算的样式，使用 CSS-in-JS 方案：
 
+{% raw %}
 ```typescript
 const dynamicStyle = {
   height: expanded ? 'auto' : getCollapsedHeight(),
@@ -103,6 +110,7 @@ const dynamicStyle = {
 // 使用 style 属性注入
 <div style={dynamicStyle}>...</div>
 ```
+{% endraw %}
 
 这种方式适用于：
 1. 需要基于状态计算的样式
@@ -136,6 +144,7 @@ JSON Editor 的主题系统基于 CodeMirror 的主题机制构建，同时扩�
 
 #### 暗色主题
 
+{% raw %}
 ```typescript
 // 暗色主题的颜色定义
 const darkColors = {
@@ -193,9 +202,11 @@ const darkTheme = EditorView.theme({
   }
 }, { dark: true });
 ```
+{% endraw %}
 
 #### 亮色主题
 
+{% raw %}
 ```typescript
 // 亮色主题的颜色定义
 const lightColors = {
@@ -253,201 +264,128 @@ const lightTheme = EditorView.theme({
   }
 }, { dark: false });
 ```
-
-### 主题配置
-
-主题配置支持多个层次的定制：
-
-1. **基础主题选择**
-   ```tsx
-   <JsonEditor
-     themeConfig={{
-       theme: 'dark'  // 'light' | 'dark'
-     }}
-   />
-   ```
-
-2. **主题变量覆盖**
-   ```tsx
-   <JsonEditor
-     themeConfig={{
-       theme: 'dark',
-       vars: {
-         // 基础颜色
-         primary: '#1890ff',
-         secondary: '#52c41a',
-         error: '#f5222d',
-         
-         // 编辑器颜色
-         editorBg: '#282c34',
-         editorFg: '#abb2bf',
-         selectionBg: '#3E4451',
-         
-         // 语法高亮
-         propertyColor: '#61afef',
-         stringColor: '#98c379',
-         numberColor: '#d19a66'
-       }
-     }}
-   />
-   ```
-
-3. **组件主题定制**
-   ```tsx
-   <JsonEditor
-     themeConfig={{
-       theme: 'dark',
-       components: {
-         // 工具栏主题
-         toolbar: {
-           background: '#21252b',
-           borderColor: '#181a1f',
-           buttonHoverBg: '#2c313a'
-         },
-         
-         // 状态栏主题
-         statusBar: {
-           background: '#21252b',
-           textColor: '#9da5b4'
-         }
-       }
-     }}
-   />
-   ```
-
-4. **编辑器主题定制**
-   ```tsx
-   <JsonEditor
-     themeConfig={{
-       theme: 'dark',
-       code: {
-         // 基础样式
-         background: '#282c34',
-         fontSize: '14px',
-         fontFamily: 'ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace',
-         
-         // 编辑器特性
-         lineNumbers: '#636d83',
-         selection: '#3e4451',
-         activeLine: '#2c313a',
-         
-         // 语法高亮
-         syntax: {
-           property: '#61afef',
-           string: '#98c379',
-           number: '#d19a66',
-           boolean: '#c678dd',
-           null: '#c678dd'
-         }
-       }
-     }}
-   />
-   ```
+{% endraw %}
 
 ### 自定义主题
 
-要创建完全自定义的主题，需要：
+你可以通过 `themeConfig` 属性来自定义主题：
 
-1. **定义颜色方案**
-   ```typescript
-   import { tags as t } from '@lezer/highlight';
+{% raw %}
+```typescript
+const customTheme = {
+  theme: 'dark',
+  vars: {
+    // 基础颜色
+    primary: '#1890ff',
+    secondary: '#52c41a',
+    error: '#f5222d',
+    
+    // 编辑器颜色
+    editorBg: '#282c34',
+    editorFg: '#abb2bf',
+    selectionBg: '#3E4451',
+    
+    // 语法高亮
+    propertyColor: '#61afef',
+    stringColor: '#98c379',
+    numberColor: '#d19a66'
+  }
+};
+
+// 使用自定义主题
+<JsonEditor themeConfig={customTheme} />
+```
+{% endraw %}
+
+主题配置支持以下选项：
+
+1. **基础设置**
+   - `theme`: 'light' | 'dark' - 基础主题
+   - `vars`: 主题变量对象
+
+2. **主题变量**
+   - 基础颜色
+     - `primary`: 主色调
+     - `secondary`: 次要色调
+     - `error`: 错误色
    
-   const customColors = {
-     // 定义你的颜色变量
-     background: '#1e1e1e',
-     foreground: '#d4d4d4',
-     property: '#9cdcfe',
-     string: '#ce9178',
-     number: '#b5cea8',
-     boolean: '#569cd6',
-     null: '#569cd6'
-   };
-   ```
-
-2. **创建语法高亮规则**
-   ```typescript
-   import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+   - 编辑器颜色
+     - `editorBg`: 编辑器背景色
+     - `editorFg`: 编辑器前景色
+     - `selectionBg`: 选中背景色
+     - `gutterBg`: 行号区域背景色
+     - `gutterFg`: 行号颜色
    
-   const customHighlightStyle = HighlightStyle.define([
-     { tag: t.propertyName, color: customColors.property },
-     { tag: t.string, color: customColors.string },
-     { tag: t.number, color: customColors.number },
-     { tag: t.bool, color: customColors.boolean },
-     { tag: t.null, color: customColors.null }
-   ]);
-   ```
+   - 语法高亮
+     - `propertyColor`: 属性名颜色
+     - `stringColor`: 字符串颜色
+     - `numberColor`: 数字颜色
+     - `booleanColor`: 布尔值颜色
+     - `nullColor`: null 值颜色
+     - `bracketColor`: 括号颜色
+     - `punctuationColor`: 标点符号颜色
 
-3. **定义主题样式**
-   ```typescript
-   import { EditorView } from '@codemirror/view';
+3. **组件主题**
+   - 工具栏
+     - `toolbarBg`: 工具栏背景色
+     - `toolbarBorder`: 工具栏边框色
+     - `buttonHoverBg`: 按钮悬停背景色
    
-   const customTheme = EditorView.theme({
-     "&": {
-       backgroundColor: customColors.background,
-       color: customColors.foreground
-     },
-     ".cm-content": {
-       caretColor: customColors.foreground,
-       fontFamily: 'Consolas, monospace',
-       fontSize: "14px"
-     },
-     // ... 更多样式定义
-   });
-   ```
-
-4. **注册主题**
-   ```typescript
-   import { Extension } from '@codemirror/state';
+   - 状态栏
+     - `statusBg`: 状态栏背景色
+     - `statusText`: 状态文本颜色
    
-   const custom: Extension[] = [
-     customTheme,
-     syntaxHighlighting(customHighlightStyle)
-   ];
-   
-   // 使用自定义主题
-   <JsonEditor
-     themeConfig={{
-       theme: custom
-     }}
-   />
-   ```
+   - Schema 面板
+     - `schemaBg`: Schema 面板背景色
+     - `schemaText`: Schema 文本颜色
+     - `schemaBorder`: Schema 面板边框色
 
-### 主题切换
+### 最佳实践
 
-主题切换涉及几个关键点：
-
-1. **状态管理**
+1. **主题继承**
    ```typescript
-   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-   
-   // 切换主题
-   const toggleTheme = () => {
-     setTheme(prev => prev === 'light' ? 'dark' : 'light');
-   };
-   ```
-
-2. **主题应用**
-   ```typescript
-   <JsonEditor
-     themeConfig={{
-       theme,
-       // 确保主题相关的配置随主题切换而更新
-       vars: theme === 'dark' ? darkVars : lightVars,
-       components: theme === 'dark' ? darkComponents : lightComponents
-     }}
-   />
-   ```
-
-3. **样式过渡**
-   ```typescript
-   // 在主题配置中添加过渡效果
-   components: {
-     toolbar: {
-       transition: 'background-color 0.3s ease',
-       // ... 其他样式
+   // 继承暗色主题
+   const customDarkTheme = {
+     theme: 'dark',
+     vars: {
+       ...darkTheme.vars,
+       primary: '#1890ff'
      }
-   }
+   };
    ```
+
+2. **响应式主题**
+   {% raw %}
+   ```typescript
+   // 根据系统主题切换
+   const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+   
+   <JsonEditor themeConfig={{ theme: systemTheme }} />
+   ```
+   {% endraw %}
+
+3. **主题变量复用**
+   ```typescript
+   const brandColors = {
+     primary: '#1890ff',
+     success: '#52c41a',
+     warning: '#faad14',
+     error: '#f5222d'
+   };
+   
+   const editorTheme = {
+     theme: 'light',
+     vars: {
+       primary: brandColors.primary,
+       error: brandColors.error
+     }
+   };
+   ```
+
+4. **性能优化**
+   - 避免频繁切换主题
+   - 使用 `useMemo` 缓存主题配置
+   - 提取公共主题变量
 
 ## 组件定制
 
@@ -478,6 +416,7 @@ const lightTheme = EditorView.theme({
    ```
 
 3. **示例配置**
+   {% raw %}
    ```tsx
    <JsonEditor
      toolbarConfig={{
@@ -522,6 +461,7 @@ const lightTheme = EditorView.theme({
      }}
    />
    ```
+   {% endraw %}
 
 ### 状态栏定制
 
@@ -547,6 +487,7 @@ const lightTheme = EditorView.theme({
    ```
 
 3. **示例配置**
+   {% raw %}
    ```tsx
    <JsonEditor
      statusBarConfig={{
@@ -581,6 +522,7 @@ const lightTheme = EditorView.theme({
      }}
    />
    ```
+   {% endraw %}
 
 ### Schema 面板定制
 
@@ -608,6 +550,7 @@ Schema 面板支持以下定制选项：
    ```
 
 3. **示例配置**
+   {% raw %}
    ```tsx
    <JsonEditor
      schemaInfoConfig={{
@@ -639,6 +582,7 @@ Schema 面板支持以下定制选项：
      }}
    />
    ```
+   {% endraw %}
 
 ## 最佳实践
 
