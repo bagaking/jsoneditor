@@ -53,9 +53,14 @@ class LinkWidget extends WidgetType {
         this.id = `${this.editorId}-link-${Math.random().toString(36).slice(2, 8)}`;
     }
 
+    // @ts-ignore
     toDOM(view: EditorView): HTMLElement {
         const wrapper = document.createElement('span');
         wrapper.className = 'cm-url-widget';
+        wrapper.dataset.url = this.url;
+        wrapper.dataset.widgetId = this.id;
+        wrapper.dataset.hasCustomHandler = this.onClick ? 'true' : 'false';
+        wrapper.dataset.openInNewTab = String(this.openInNewTab);
         
         const button = document.createElement('button');
         button.className = 'cm-action-button';
@@ -86,6 +91,7 @@ class CustomDecorationWidget extends WidgetType {
         super();
     }
 
+    // @ts-ignore
     toDOM(view: EditorView): HTMLElement {
         return this.component.render({
             value: this.value,
@@ -248,40 +254,35 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                 event.stopPropagation();
 
                 // 找到最近的链接组件
-                const widget = target.closest('.cm-url-widget');
+                const widget = target.closest('.cm-url-widget') as HTMLElement;
                 if (!widget) return false;
 
-                // 获取链接信息
-                const pos = view.posAtDOM(widget);
-                const line = view.state.doc.lineAt(pos);
-                const lineText = line.text;
+                // 从 dataset 获取链接信息
+                const url = widget.dataset.url;
+                const hasCustomHandler = widget.dataset.hasCustomHandler === 'true';
+                const openInNewTab = widget.dataset.openInNewTab === 'true';
 
-                // 提取 URL
-                const urlMatch = lineText.match(/"([^"]*)":\s*"([^"]*)"/);
-                if (!urlMatch) return false;
-
-                const url = urlMatch[2];
-                const handler = config.urlHandler;
+                if (!url) return false;
 
                 // 分发链接点击效果
                 view.dispatch({
                     effects: linkClickEffect.of({
                         url,
-                        onClick: handler?.onClick,
-                        openInNewTab: handler?.openInNewTab ?? true
+                        onClick: config.urlHandler?.onClick,
+                        openInNewTab: openInNewTab
                     })
                 });
 
                 // 处理点击
-                if (handler?.onClick) {
+                if (hasCustomHandler && config.urlHandler?.onClick) {
                     requestAnimationFrame(() => {
                         try {
-                            handler.onClick!(url);
+                            config.urlHandler!.onClick!(url);
                         } catch (error) {
                             console.error('[LinkWidget] Error in onClick handler:', error);
                         }
                     });
-                } else if (handler?.openInNewTab ?? true) {
+                } else if (openInNewTab) {
                     const link = document.createElement('a');
                     link.href = url;
                     link.target = '_blank';

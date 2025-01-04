@@ -200,6 +200,11 @@ export const decorationConfig: DecorationConfig = {
         }
       }
     }
+  }, 
+  urlHandler: {
+    onClick: (url: string) => {
+      console.log('Clicked URL:', url);
+    }
   }
 };
 

@@ -1,6 +1,6 @@
 {
   "name": "@bagaking/jsoneditor",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "A powerful JSON editor with schema validation",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -40,7 +40,6 @@
     "@codemirror/language": "^6.10.8",
     "@codemirror/lint": "^6.4.2",
     "@codemirror/theme-one-dark": "^6.1.2",
-    
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1"
   },
@@ -63,6 +62,7 @@
   },
   "license": "MIT",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
