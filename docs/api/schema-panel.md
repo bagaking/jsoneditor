@@ -1,3 +1,12 @@
+---
+layout: default
+title: Schema 面板配置
+description: JSON Editor Schema 面板配置文档，包含类型显示、字段描述和布局设置的详细说明
+keywords: JSON Editor, Schema Panel, JSON Schema, Type Display, Field Description, Layout Configuration
+parent: API 参考
+nav_order: 5
+---
+
 # Schema 面板配置
 
 > "优秀的编辑体验源于对数据结构的深刻理解。Schema 面板不仅是类型的展示器，更是数据建模的助手。"

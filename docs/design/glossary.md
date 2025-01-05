@@ -1,4 +1,13 @@
-# JSON Editor 术语表
+---
+layout: default
+title: 术语表
+description: JSON Editor 的术语表，包含核心概念、组件概念和技术概念的详细定义
+keywords: JSON Editor, Glossary, Terminology, Core Concepts, Component Concepts, Technical Terms
+parent: 架构设计
+nav_order: 2
+---
+
+# 术语表
 
 ## 核心概念
 

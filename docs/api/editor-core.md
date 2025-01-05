@@ -1,3 +1,12 @@
+---
+layout: default
+title: 编辑器核心 API
+description: JSON Editor 的核心 API 文档，包含底层编辑器实例的所有方法和功能
+keywords: JSON Editor, Editor Core, Low-level API, Editor Instance, Methods, State Management
+parent: API 参考
+nav_order: 2
+---
+
 # 编辑器核心 API
 
 > "编辑器核心（EditorCore）提供了一组强大的命令式 API，让你能够完全控制编辑器的行为。"

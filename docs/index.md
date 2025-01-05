@@ -1,3 +1,9 @@
+---
+layout: default
+title: 首页
+nav_order: 1
+---
+
 # JSON Editor
 
 > 一个功能强大的 **JSON 编辑器组件**，专注于提供最佳的 JSON 编辑体验。

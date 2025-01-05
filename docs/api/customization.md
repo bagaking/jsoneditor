@@ -1,3 +1,12 @@
+---
+layout: default
+title: 定制化指南
+description: JSON Editor 定制化指南，包含主题系统、样式隔离和组件定制的详细说明
+keywords: JSON Editor, Customization, Theming, Style Isolation, Component Customization, Visual Design
+parent: API 参考
+nav_order: 8
+---
+
 # 定制化指南
 
 > "主题和样式系统是编辑器的核心基础设施之一。通过深入理解其工作原理，我们可以构建出既美观又实用的编辑体验。"

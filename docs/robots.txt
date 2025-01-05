@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://bagaking.github.io/jsoneditor/sitemap.xml

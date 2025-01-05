@@ -1,3 +1,12 @@
+---
+layout: default
+title: Schema 验证
+description: JSON Editor Schema 验证功能文档，包含验证规则、错误处理和自定义验证器的详细说明
+keywords: JSON Editor, Schema Validation, JSON Schema, Validation Rules, Error Handling, Custom Validators
+parent: API 参考
+nav_order: 6
+---
+
 # Schema 验证
 
 > "Schema 验证不仅是一种约束，更是一种保护。它帮助我们在编辑过程中及时发现问题，确保数据的正确性和一致性。"

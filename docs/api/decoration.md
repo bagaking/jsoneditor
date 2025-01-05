@@ -1,3 +1,12 @@
+---
+layout: default
+title: 装饰系统
+description: JSON Editor 装饰系统文档，包含路径装饰、样式定制和交互功能的详细说明
+keywords: JSON Editor, Decoration System, Path Decoration, Custom Styles, Interactive Features, Visual Enhancement
+parent: API 参考
+nav_order: 7
+---
+
 # 装饰系统
 
 > "强大的装饰系统让 JSON 编辑器不仅是一个编辑器，更是一个可视化的数据交互平台。通过灵活的装饰配置，我们可以为 JSON 数据添加丰富的视觉和交互效果。"

@@ -1,3 +1,12 @@
+---
+layout: default
+title: 工具栏配置
+description: JSON Editor 工具栏配置文档，包含按钮、布局、样式和自定义功能的详细说明
+keywords: JSON Editor, Toolbar, Configuration, Buttons, Layout, Customization, UI Components
+parent: API 参考
+nav_order: 3
+---
+
 # 工具栏配置
 
 > "如果说编辑器是乐器,那工具栏就是它的控制面板。一个好的工具栏设计,不仅要让常用功能触手可及,更要能启发用户探索更多可能。" 

@@ -1,3 +1,12 @@
+---
+layout: default
+title: 基础用法
+description: JSON Editor 基础用法教程，包含常见场景示例、代码片段和使用技巧
+keywords: JSON Editor, React, Basic Usage, Examples, Code Snippets, JSON Schema, Validation
+parent: 使用指南
+nav_order: 2
+---
+
 # 基础用法
 
 > "掌握基础功能是驾驭复杂工具的第一步。让我们深入了解 JSON 编辑器的核心特性。"

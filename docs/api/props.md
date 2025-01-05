@@ -1,4 +1,13 @@
-# API 参考
+---
+layout: default
+title: API 清单
+description: JSON Editor 完整的 API 清单，包含所有属性、配置项和类型定义的详细说明
+keywords: JSON Editor, API Reference, Properties, Configuration, Type Definitions, Interface Documentation
+parent: API 参考
+nav_order: 9
+---
+
+# API 清单
 
 > "优秀的 API 设计应该是直观的、一致的，并且能够满足各种使用场景。让我们深入了解 JSON Editor 的配置选项。"
 

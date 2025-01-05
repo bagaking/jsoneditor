@@ -1,3 +1,13 @@
+---
+layout: default
+title: 架构设计
+description: JSON Editor 的架构设计文档，包含核心模块、扩展机制和数据流的详细说明
+keywords: JSON Editor, Architecture Design, Core Modules, Extension System, Data Flow, Technical Architecture
+parent: 设计文档
+nav_order: 1
+has_children: true
+---
+
 # 架构设计
 
 > "优秀的架构源于对问题本质的深刻理解。JSON 编辑器的架构设计不仅要满足当前需求，更要为未来的扩展预留空间。"

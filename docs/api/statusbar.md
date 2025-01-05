@@ -1,3 +1,12 @@
+---
+layout: default
+title: 状态栏配置
+description: JSON Editor 状态栏配置文档，包含状态显示、错误提示和自定义格式的详细说明
+keywords: JSON Editor, Status Bar, Configuration, Error Display, Cursor Position, Document Size
+parent: API 参考
+nav_order: 4
+---
+
 # 状态栏配置
 
 > "优秀的反馈机制应该像呼吸一样自然。" 

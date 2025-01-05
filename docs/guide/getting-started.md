@@ -1,3 +1,12 @@
+---
+layout: default
+title: 快速开始
+description: 快速上手 JSON Editor，包含安装指南、基本配置和简单示例
+keywords: JSON Editor, React, Getting Started, Installation, Quick Start, NPM
+parent: 使用指南
+nav_order: 1
+---
+
 # 快速开始
 
 > "从基础开始，循序渐进地掌握 JSON Editor 的强大功能。"

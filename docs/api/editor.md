@@ -1,3 +1,12 @@
+---
+layout: default
+title: 编辑器 API
+description: JSON Editor 的主要 API 文档，包含编辑器组件的所有属性、方法和事件
+keywords: JSON Editor, React Component, Editor API, Properties, Methods, Events, Configuration
+parent: API 参考
+nav_order: 1
+---
+
 # 编辑器 API
 
 > "JSON Editor 提供了丰富的 API 来满足各种编辑需求。让我们从基础用法开始，逐步深入了解它的强大功能。"
