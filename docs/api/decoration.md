@@ -195,6 +195,138 @@ interface CustomComponent {
 
 ## 高级用法
 
+### 复杂配置装饰
+
+通过组合使用样式、图标和交互，可以为复杂的配置对象提供更好的可视化和操作体验：
+
+{% raw %}
+```tsx
+const complexConfig = {
+  advancedConfig: {
+    performance: {
+      cacheStrategy: "memory",
+      maxCacheSize: 1024,
+      ttl: 3600,
+      prefetch: true
+    },
+    security: {
+      encryption: {
+        algorithm: "AES-256-GCM",
+        keyRotation: "30d"
+      },
+      rateLimit: {
+        enabled: true,
+        maxRequests: 1000,
+        window: "1h"
+      }
+    },
+    optimization: {
+      compression: true,
+      minification: true,
+      treeshaking: true
+    }
+  }
+};
+
+<JsonEditor
+  value={JSON.stringify(complexConfig, null, 2)}
+  decorationConfig={{
+    paths: {
+      '$["advancedConfig"]': {
+        // 使用紫色背景突出显示
+        style: "bg-purple-100/30 dark:bg-purple-900/30 rounded px-1 font-semibold",
+        target: 'key',
+        // 点击时格式化显示配置详情
+        onClick: (value) => {
+          const formatted = JSON.stringify(JSON.parse(value), null, 2);
+          alert(`高级配置详情:\n${formatted}`);
+        },
+        // 添加设置图标
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`
+      }
+    }
+  }}
+  schemaConfig={{
+    schema: {
+      type: "object",
+      properties: {
+        advancedConfig: {
+          type: "object",
+          description: "高级配置选项",
+          properties: {
+            performance: {
+              type: "object",
+              properties: {
+                cacheStrategy: { 
+                  type: "string",
+                  enum: ["memory", "disk", "hybrid"]
+                },
+                maxCacheSize: { 
+                  type: "number",
+                  minimum: 0 
+                },
+                ttl: { 
+                  type: "number",
+                  minimum: 0 
+                },
+                prefetch: { type: "boolean" }
+              }
+            },
+            security: {
+              type: "object",
+              properties: {
+                encryption: {
+                  type: "object",
+                  properties: {
+                    algorithm: { 
+                      type: "string",
+                      enum: ["AES-256-GCM", "ChaCha20-Poly1305"]
+                    },
+                    keyRotation: { 
+                      type: "string",
+                      pattern: "^\\d+[dhmw]$"
+                    }
+                  }
+                },
+                rateLimit: {
+                  type: "object",
+                  properties: {
+                    enabled: { type: "boolean" },
+                    maxRequests: { 
+                      type: "number",
+                      minimum: 1 
+                    },
+                    window: { 
+                      type: "string",
+                      pattern: "^\\d+[dhm]$"
+                    }
+                  }
+                }
+              }
+            },
+            optimization: {
+              type: "object",
+              properties: {
+                compression: { type: "boolean" },
+                minification: { type: "boolean" },
+                treeshaking: { type: "boolean" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }}
+/>
+```
+{% endraw %}
+
+这个示例展示了如何:
+1. 为复杂的配置对象添加视觉提示
+2. 使用自定义图标增强可识别性
+3. 添加交互功能以查看详细信息
+4. 结合 Schema 验证确保数据正确性
+
 ### 组合装饰效果
 
 {% raw %}
