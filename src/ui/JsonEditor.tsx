@@ -80,6 +80,8 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
         fontSize: codeSettings?.fontSize
     });
 
+    console.log('[StateRef] Initial state:', stateRef.current);
+
     // 暴露编辑器实例给父组件
     useImperativeHandle(ref, () => {
         if (!editorRef.current) {
@@ -190,8 +192,18 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
             stateRef.current.readOnly !== readOnly ||
             stateRef.current.fontSize !== codeSettings?.fontSize;
             
+        console.log('[StateRef] Checking config update:', {
+            needsUpdate,
+            currentSchema: stateRef.current.schema,
+            newSchema: schemaConfig?.schema,
+            currentTheme: stateRef.current.theme,
+            newTheme: themeConfig?.theme,
+            currentDecoration: stateRef.current.decoration,
+            newDecoration: decorationConfig
+        });
+
         if (needsUpdate) {
-            console.log('Updating config refs');
+            console.log('[StateRef] Updating config');
             stateRef.current = {
                 ...stateRef.current,
                 schema: schemaConfig?.schema,
@@ -201,17 +213,20 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
                 readOnly,
                 fontSize: codeSettings?.fontSize
             };
+            console.log('[StateRef] Updated config:', stateRef.current);
         }
     }, [schemaConfig?.schema, themeConfig?.theme, decorationConfig, defaultValue, readOnly, codeSettings?.fontSize]);
 
     // 更新回调引用
     useEffect(() => {
+        console.log('[StateRef] Updating callbacks');
         stateRef.current = {
             ...stateRef.current,
             onValueChange,
             onError,
             validateOnChange: validationConfig?.validateOnChange
         };
+        console.log('[StateRef] Updated callbacks:', stateRef.current);
     }, [onValueChange, onError, validationConfig?.validateOnChange]);
 
     // 初始化时计算文档大小
@@ -280,27 +295,34 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
     // 光标位置变化处理
     const handleCursorActivity = useCallback((info: { line: number; col: number }) => {
         setCursorInfo(info);
+        console.log('[handleCursorActivity][SchemaInfo] info:', { info, editorRef, stateRef });
         
         // 获取当前位置的 schema 信息
         if (editorRef.current && stateRef.current.schema) {
             const pos = editorRef.current.getCursorPosition();
+            console.log('[handleCursorActivity][SchemaInfo] Current schema:', { pos, rootSchema: stateRef.current.schema });
             if (pos !== null) {
                 const path = editorRef.current.getSchemaPathAtPosition(pos);
+                console.log('[handleCursorActivity][SchemaInfo] Schema path:', { pos, path });
                 if (path) {
                     const schema = editorRef.current.getSchemaAtPath(path);
+                    console.log('[handleCursorActivity][SchemaInfo] Schema at path:', { pos, path, schema, editorRef});
                     if (schema) {
                         // 获取当前值
                         const value = editorRef.current.getValueAtPath(path);
-                        setSchemaInfo({
-                            path,
-                            schema,
-                            value
-                        });
+                        setSchemaInfo({ path, schema, value});
+                        console.log('[handleCursorActivity][SchemaInfo] Schema info set:', { pos, path, schema, value });
                         return;
                     }
                 }
             }
+        } else {
+            console.log('[handleCursorActivity][SchemaInfo] Missing editor or schema:', {
+                hasEditor: !!editorRef.current,
+                hasSchema: !!stateRef.current.schema
+            });
         }
+        console.log('[SchemaInfo] Setting schema info to null');
         setSchemaInfo(null);
     }, []);
 
@@ -343,7 +365,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
  
     // 初始化编辑器
     useEffect(() => {
-        console.log('Initializing editor...');
+        console.log('[StateRef] Editor initialization with stateRef:', stateRef.current);
         if (!containerRef.current) {
             console.log('Container ref not ready');
             return;
@@ -370,16 +392,21 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
                 },
                 extensions
             });
+            console.log('[StateRef] Editor initialized with config:', {
+                schema: stateRef.current.schema,
+                theme: stateRef.current.theme,
+                decoration: stateRef.current.decoration
+            });
 
             // 标记编辑器已准备就绪
             setIsEditorReady(true);
 
             if (stateRef.current.validateOnChange && stateRef.current.defaultValue) {
-                console.log('Performing initial validation');
+                // console.log('Performing initial validation');
                 validateJson(stateRef.current.defaultValue);
             }
 
-            console.log('Editor initialized successfully');
+            console.log('JsonEditor initialized successfully');
         } catch (err) {
             console.error('Failed to initialize editor:', err);
             setError(err instanceof Error ? err.message : String(err));

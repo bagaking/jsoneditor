@@ -142,7 +142,7 @@ const darkTheme = EditorView.theme({
         paddingBottom: "1px"
     },
     ".cm-json-bold": {
-        fontWeight: "700"
+        fontWeight: "bold"
     },
     ".cm-json-italic": {
         fontStyle: "italic",

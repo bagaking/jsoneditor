@@ -31,6 +31,12 @@ interface DecorationConfig {
   // 路径装饰配置
   paths?: Record<string, PathDecoration>;
   
+  // 基于值的匹配装饰配置
+  matchers?: Array<{
+    matcher: (key: string, value: any) => boolean;
+    decoration: PathDecoration;
+  }>;
+
   // URL 处理配置
   urlHandler?: {
     component?: CustomComponent;
@@ -193,6 +199,193 @@ interface CustomComponent {
 ```
 {% endraw %}
 
+### 基于值的匹配装饰
+
+除了基于路径的装饰外，还可以使用 `matchers` 来基于键值对的内容进行装饰。这种方式更加灵活，可以根据值的内容、类型或模式来应用装饰。
+
+#### 基本用法
+
+{% raw %}
+```tsx
+<JsonEditor
+  defaultValue={`{
+    "status": "warning",
+    "severity": "high",
+    "memory": {
+      "total": 16384,
+      "used": 8192
+    }
+  }`}
+  decorationConfig={{
+    matchers: [
+      {
+        // 匹配所有 severity 字段
+        matcher: (key, value) => 
+          key === 'severity' && 
+          typeof value === 'string' && 
+          ['high', 'medium', 'low'].includes(value),
+        decoration: {
+          style: "bg-orange-200 text-orange-800 px-2 rounded-full",
+          target: 'value',
+          icon: '⚠️'
+        }
+      },
+      {
+        // 匹配大于 80% 的内存使用率
+        matcher: (key, value) => {
+          if (key !== 'memory') return false;
+          try {
+            const mem = JSON.parse(value);
+            return (mem.used / mem.total) > 0.8;
+          } catch {
+            return false;
+          }
+        },
+        decoration: {
+          style: "bg-red-100 text-red-800 px-2 rounded",
+          target: 'both',
+          onClick: (value) => alert('内存使用率过高！'),
+          icon: '🚨'
+        }
+      }
+    ]
+  }}
+/>
+```
+{% endraw %}
+
+#### 复杂数据分析示例
+
+使用 matchers 来识别和装饰复杂的数据结构：
+
+{% raw %}
+```tsx
+<JsonEditor
+  defaultValue={`{
+    "metrics": {
+      "cpu": {
+        "usage": 78.5,
+        "temperature": 65
+      },
+      "memory": {
+        "total": 16384,
+        "used": 8192
+      }
+    },
+    "analysis": {
+      "status": "warning",
+      "issues": [
+        {
+          "type": "performance",
+          "severity": "medium",
+          "description": "High CPU usage detected"
+        }
+      ]
+    },
+    "timestamp": "2024-01-22T08:30:00Z"
+  }`}
+  decorationConfig={{
+    matchers: [
+      {
+        // 匹配包含完整指标和分析的数据结构
+        matcher: (key, value) => {
+          try {
+            const data = JSON.parse(value);
+            return (
+              data &&
+              typeof data === 'object' &&
+              'metrics' in data &&
+              'analysis' in data &&
+              'timestamp' in data
+            );
+          } catch {
+            return false;
+          }
+        },
+        decoration: {
+          style: "bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded",
+          target: 'key',
+          onClick: (value) => {
+            const data = JSON.parse(value);
+            alert(
+              `分析报告:\n` +
+              `状态: ${data.analysis.status}\n` +
+              `CPU使用率: ${data.metrics.cpu.usage}%\n` +
+              `内存使用: ${data.metrics.memory.used}/${data.metrics.memory.total} MB`
+            );
+          },
+          icon: '📊'
+        }
+      }
+    ]
+  }}
+/>
+```
+{% endraw %}
+
+#### 条件样式装饰
+
+使用 matchers 来根据值的内容应用不同的样式：
+
+{% raw %}
+```tsx
+<JsonEditor
+  defaultValue={`{
+    "temperature": 75.5,
+    "humidity": 45,
+    "pressure": 1013
+  }`}
+  decorationConfig={{
+    matchers: [
+      {
+        // 匹配温度值并根据范围应用不同样式
+        matcher: (key, value) => {
+          if (key !== 'temperature') return false;
+          const temp = Number(value);
+          return !isNaN(temp);
+        },
+        decoration: {
+          style: (value) => {
+            const temp = Number(value);
+            if (temp > 80) return "bg-red-100 text-red-800";
+            if (temp > 60) return "bg-yellow-100 text-yellow-800";
+            return "bg-green-100 text-green-800";
+          },
+          target: 'value'
+        }
+      }
+    ]
+  }}
+/>
+```
+{% endraw %}
+
+#### 最佳实践
+
+1. **性能优化**
+   - 保持 matcher 函数简单高效
+   - 避免在 matcher 中进行复杂计算
+   - 对于频繁使用的正则表达式，考虑预编译
+   - 缓存 JSON.parse 的结果
+
+2. **错误处理**
+   - 始终在 JSON.parse 时使用 try-catch
+   - 为所有类型检查添加防御性编程
+   - 处理 undefined 和 null 值
+   - 验证数值范围和类型
+
+3. **可维护性**
+   - 将复杂的 matcher 逻辑拆分为小函数
+   - 使用清晰的命名约定
+   - 添加注释说明匹配逻辑
+   - 考虑使用 TypeScript 类型
+
+4. **用户体验**
+   - 提供清晰的视觉反馈
+   - 使用合适的图标
+   - 添加有用的交互功能
+   - 保持装饰风格的一致性
+
 ## 高级用法
 
 ### 复杂配置装饰
@@ -242,7 +435,7 @@ const complexConfig = {
           alert(`高级配置详情:\n${formatted}`);
         },
         // 添加设置图标
-        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19. ....."></path></svg>`
       }
     }
   }}

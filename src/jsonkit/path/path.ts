@@ -37,7 +37,7 @@ export class JsonPath {
                 const content = view.state.doc.sliceString(current.from, current.to);
                 const keyMatch = content.match(/"([^"]+)"\s*:/);
                 if (keyMatch) {
-                    console.log('Found property key:', keyMatch[1]);
+                    // console.log('Found property key:', keyMatch[1]);
                     parts.unshift(`["${keyMatch[1]}"]`);
                 }
             }
@@ -45,7 +45,7 @@ export class JsonPath {
         }
 
         const result = '$' + parts.join('');
-        console.log('Generated path:', result);
+        // console.log('Generated path:', result);
         return result;
     }
 
@@ -53,16 +53,24 @@ export class JsonPath {
      * 从位置获取 JSON 路径
      */
     static fromPosition(view: EditorView, pos: number): string | null {
+        console.log('[JsonPath] Resolving path at position:', pos);
         const node = syntaxTree(view.state).resolveInner(pos);
+        console.log('[JsonPath] Found node:', {
+            name: node?.name,
+            text: node ? view.state.doc.sliceString(node.from, node.to) : null,
+            node
+        });
         if (!node) return null;
 
         // 如果在属性名上，直接返回路径
         if (node.name === "PropertyName" || node.parent?.name === "Property") {
+            console.log('[JsonPath] Found property node', { node });
             return this.fromNode(view, node.parent || node);
         }
 
         // 如果在值上，返回父属性的路径
         const property = this.findParentProperty(node);
+        console.log('[JsonPath] Found parent property:', property?.name);
         return property ? this.fromNode(view, property) : null;
     }
 
@@ -133,26 +141,35 @@ export class JsonPath {
      * 从 schema 中获取指定路径的定义
      */
     static getSchemaAtPath(schema: JsonSchemaProperty, path: string): JsonSchemaProperty | null {
+        console.log('[JsonPath] Getting schema at path:', { path, schema });
         const parts = this.parsePath(path);
+        console.log('[JsonPath] Parsed path parts:', parts);
         let current: JsonSchemaProperty | null = schema;
 
         for (const part of parts) {
-            if (!current) return null;
+            if (!current) {
+                console.log('[JsonPath] Current schema is null, returning null');
+                return null;
+            }
 
             // 处理数组
             if (Array.isArray(current.type) && current.type.includes('array')) {
+                console.log('[JsonPath] Processing array type');
                 current = current.items || null;
                 continue;
             }
 
             // 处理对象
             if (current.properties && part in current.properties) {
+                console.log('[JsonPath] Found property in schema:', part);
                 current = current.properties[part];
             } else {
+                console.log('[JsonPath] Property not found in schema:', part);
                 return null;
             }
         }
 
+        console.log('[JsonPath] Returning schema:', current);
         return current;
     }
 

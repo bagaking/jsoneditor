@@ -57,6 +57,7 @@ export class EditorCore {
         this.container = container;
         this.config = this.normalizeConfig(config);
         this.schema = this.config.schemaConfig?.schema || null;
+        console.log('[Schema] Initialized with schema:', this.schema);
 
         // 立即初始化编辑器
         this.init(config.value || '');
@@ -91,7 +92,7 @@ export class EditorCore {
      * 初始化编辑器
      */
     private init(initialValue: string = '') {
-        console.log('Initializing editor with value:', initialValue);
+        // console.log('Initializing editor with value:', initialValue);
         try {
             const state = this.createEditorState(initialValue);
             
@@ -138,7 +139,7 @@ export class EditorCore {
             console.log('[Decoration] Adding decoration extension with config:', this.config.decorationConfig);
             const decorationExtension = createDecorationExtension(this.config.decorationConfig);
             extensions.push(decorationCompartment.of(decorationExtension));
-            console.log('[Decoration] Decoration extension added');
+            console.log('[Decoration] Decoration extension added', {extensions});
         } else {
             console.log('[Decoration] No decoration config provided');
         }
@@ -176,13 +177,19 @@ export class EditorCore {
             // 检查配置是否真的变化
             const newConfig = this.normalizeConfig({ ...this.config, ...config });
             if (configEquals(this.config, newConfig)) {
-                // console.log('Config not changed, skipping update');
+                console.log('[Schema] Config not changed, skipping update');
                 return;
             }
             
             // 更新配置
             this.config = newConfig;
+            const oldSchema = this.schema;
             this.schema = this.config.schemaConfig?.schema || null;
+            console.log('[Schema] Updated schema:', {
+                oldSchema,
+                newSchema: this.schema,
+                hasChanged: oldSchema !== this.schema
+            });
             
             // 重新创建编辑器状态
             if (this.view) {
@@ -292,21 +299,28 @@ export class EditorCore {
      */
     getSchemaPathAtPosition(pos: number): string | null {
         if (!this.view) return null;
-        return JsonPath.fromPosition(this.view, pos);
+        console.log('[Schema] Getting path at position:', pos);
+        const path = JsonPath.fromPosition(this.view, pos);
+        console.log('[Schema] Found path:', path);
+        return path;
     }
 
     /**
      * 获取指定路径的 schema 定义
      */
     getSchemaAtPath(path: string): JsonSchemaProperty | null {
+        console.log('[Schema] Getting schema at path:', { path, schema: this.schema });
         if (!this.schema) return null;
-        return JsonPath.getSchemaAtPath(this.schema as JsonSchemaProperty, path);
+        const result = JsonPath.getSchemaAtPath(this.schema as JsonSchemaProperty, path);
+        console.log('[Schema] Found schema:', result);
+        return result;
     }
 
     /**
      * 根据路径获取值
      */
     getValueAtPath(path: string): string | undefined {
+        console.log('[Schema] Getting value at path:', path);
         try {
             const content = this.getValue();
             const data = JSON.parse(content);
@@ -318,9 +332,11 @@ export class EditorCore {
                 current = current[part];
             }
             
-            return typeof current === 'string' ? current : JSON.stringify(current);
+            const result = typeof current === 'string' ? current : JSON.stringify(current);
+            console.log('[Schema] Found value:', result);
+            return result;
         } catch (e) {
-            console.error('Failed to get value at path:', e);
+            console.error('[Schema] Failed to get value at path:', e);
             return undefined;
         }
     }

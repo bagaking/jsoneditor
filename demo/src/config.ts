@@ -160,6 +160,47 @@ export const exampleJson = {
       minification: true,
       treeshaking: true
     }
+  },
+
+  // 复杂分析数据示例
+  complexAnalysis: {
+    metrics: {
+      cpu: {
+        usage: 78.5,
+        temperature: 65,
+        frequency: 3.2
+      },
+      memory: {
+        total: 16384,
+        used: 8192,
+        cached: 4096
+      },
+      network: {
+        rx: 1024000,
+        tx: 512000,
+        latency: 35
+      }
+    },
+    analysis: {
+      status: "warning",
+      issues: [
+        {
+          type: "performance",
+          severity: "medium",
+          description: "High CPU usage detected"
+        },
+        {
+          type: "memory",
+          severity: "low",
+          description: "Memory usage is within normal range"
+        }
+      ],
+      recommendations: [
+        "Consider scaling up CPU resources",
+        "Monitor memory usage trends"
+      ]
+    },
+    timestamp: "2024-01-22T08:30:00Z"
   }
 };
 
@@ -238,6 +279,85 @@ export const decorationConfig: DecorationConfig = {
       icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`
     }
   }, 
+  matchers: [
+    {
+      // 匹配复杂分析数据
+      matcher: (key: string, value: any) => {
+        // console.log('Matcher called for key :::', key);
+        // console.log('Value type:', typeof value);
+        // console.log('Value:', value);
+        
+        // 如果是字符串，尝试解析成对象
+        let objValue = value;
+        if (typeof value === 'string') {
+          try {
+            objValue = JSON.parse(value);
+            // console.log('Parsed value:', objValue);
+          } catch (e) {
+            // console.log('Failed to parse value as JSON');
+            return false;
+          }
+        }
+        
+        if (typeof objValue !== 'object' || !objValue) {
+          // console.log('Value is not an object or is null');
+          return false;
+        }
+        
+        // 检查是否包含特定字段组合
+        const hasMetrics = 'metrics' in objValue;
+        const hasAnalysis = 'analysis' in objValue;
+        const hasTimestamp = 'timestamp' in objValue;
+        
+        const result = hasMetrics && hasAnalysis && hasTimestamp;
+        // console.log('Matcher result:', result);
+        
+        return result;
+      },
+      decoration: {
+        style: "underline bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-md px-2 py-1",
+        target: 'key',
+        onClick: (value: string) => {
+          const data = JSON.parse(value);
+          const analysis = data.analysis;
+          const metrics = data.metrics;
+          
+          // 格式化显示分析结果
+          const message = [
+            `状态: ${analysis.status}`,
+            `\n问题:`,
+            ...analysis.issues.map((issue: any) => 
+              `- [${issue.severity}] ${issue.description}`
+            ),
+            `\n关键指标:`,
+            `- CPU: ${metrics.cpu.usage}% @ ${metrics.cpu.temperature}°C`,
+            `- 内存: ${metrics.memory.used}/${metrics.memory.total} MB`,
+            `- 网络延迟: ${metrics.network.latency}ms`,
+            `\n建议:`,
+            ...analysis.recommendations.map((rec: string) => `- ${rec}`)
+          ].join('\n');
+          
+          alert(message);
+        },
+        icon: '📊'  // 使用 emoji 替代 SVG
+      }
+    },
+    {
+      // 匹配严重性指标
+      matcher: (key: string, value: any) => {
+        return (
+          key === 'severity' &&
+          typeof value === 'string' &&
+          ['high', 'medium', 'low'].includes(value)
+        );
+      },
+      decoration: {
+        style: "bold underline",
+        target: 'value',
+        icon: '⚠️'  // 使用 emoji 替代 SVG
+      }
+    }
+  ],
   urlHandler: {
     onClick: (url: string) => {
       console.log('Clicked URL:', url);

@@ -111,7 +111,7 @@ class ActionButton extends WidgetType {
 
     constructor(
         private value: string,
-        private onClick: (value: string) => void,
+        private onClick?: (value: string) => void,
         icon?: string
     ) {
         super();
@@ -126,7 +126,9 @@ class ActionButton extends WidgetType {
         button.onclick = (e) => {
             // 只阻止冒泡，不阻止默认行为
             e.stopPropagation();
-            this.onClick(this.value);
+            if (this.onClick) {
+                this.onClick(this.value);
+            }
         };
         return button;
     }
@@ -205,9 +207,9 @@ class DecorationFactory {
         }
 
         // 2. 如果有点击处理器，添加操作按钮
-        if (onClick) {
+        if (icon ||onClick) {
             decorations.push(Decoration.widget({
-                widget: new ActionButton(value, onClick, icon),
+                widget: new ActionButton(value, onClick || (() => {}), icon),
                 side: 1
             }));
         }
@@ -237,6 +239,14 @@ class DecorationFactory {
         });
     }
 }
+
+// 装饰器类型定义
+type DecorationRange = {
+    range: [number, number];
+    decoration: Decoration;
+    source: 'path' | 'matcher' | 'url';  // 标记装饰器来源
+    priority: number;  // 优先级，用于排序
+};
 
 // 主扩展创建函数
 export function createDecorationExtension(config: DecorationConfig = {}): Extension {
@@ -310,7 +320,7 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                 }
 
                 buildDecorations(view: EditorView) {
-                    const builder = new Array<any>();
+                    const builder = new Array<DecorationRange>();
                     const tree = syntaxTree(view.state);
                     let cursor = tree.cursor();
 
@@ -320,10 +330,23 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                         }
                     }
 
-                    return Decoration.set(builder);
+                    // 统一排序：先按优先级，再按位置
+                    const sortedDecorations = builder
+                        .sort((a, b) => {
+                            // 优先级不同，按优先级排序
+                            // if (a.priority !== b.priority) {
+                            //     return b.priority - a.priority;
+                            // }
+                            // 优先级相同，按位置排序
+                            return a.range[0] - b.range[0];
+                        })
+                        .map(({ range, decoration }) => decoration.range(range[0], range[1]));
+
+                    console.log('Builder after sort:', {sortedDecorations});
+                    return Decoration.set(sortedDecorations);
                 }
 
-                private processProperty(view: EditorView, cursor: any, builder: any[]) {
+                private processProperty(view: EditorView, cursor: any, builder: DecorationRange[]) {
                     // 先获取路径
                     const path = JsonPath.fromNode(view, cursor.node);
                     
@@ -348,9 +371,6 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                     const valueEnd = cursor.to;
                     const cleanValue = JsonPath.getCleanValue(value, cursor.node, view);
 
-                    // 收集所有装饰器
-                    const decorations: { range: [number, number]; decoration: Decoration }[] = [];
-
                     // 1. 处理 path 配置的装饰
                     const config = this.factory.getConfig();
                     if (path && config.paths && path in config.paths) {
@@ -364,58 +384,76 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
 
                         for (const decoration of pathDecorations) {
                             if ('widget' in decoration.spec) {
-                                // Widget (按钮) 总是放在值的末尾
-                                decorations.push({ range: [valueEnd, valueEnd], decoration });
+                                builder.push({
+                                    range: [valueEnd, valueEnd],
+                                    decoration,
+                                    source: 'path',
+                                    priority: 100  // path based 装饰优先级最高
+                                });
                             } else {
-                                // 样式装饰根据 target 应用
                                 const target = pathConfig.target || 'key';
-                                switch (target) {
-                                    case 'key':
-                                        decorations.push({ range: [keyStart, keyEnd], decoration });
-                                        break;
-                                    case 'both':
-                                        decorations.push({ range: [keyStart, valueEnd], decoration }); 
-                                        break;
-                                    case 'value':
-                                    default:
-                                        decorations.push({ range: [valueStart, valueEnd], decoration });
-                                        break;
-                                }                        
+                                const range: [number, number] = target === 'key' ? [keyStart, keyEnd] :
+                                            target === 'both' ? [keyStart, valueEnd] :
+                                            [valueStart, valueEnd];
+                                builder.push({
+                                    range,
+                                    decoration,
+                                    source: 'path',
+                                    priority: 100
+                                });
                             }
                         }
                     }
 
-                    // 2. 处理 URL 装饰
-                    if (utils.isValidUrl(cleanValue)) {
-                        const urlDecoration = this.factory.createUrlDecoration(cleanValue);
-                        decorations.push({ range: [valueEnd, valueEnd], decoration: urlDecoration });
+                    // 2. 处理 matchers 配置的装饰
+                    if (config.matchers?.length) {
+                        for (const { matcher, decoration } of config.matchers) {
+                            if (matcher(key, cleanValue)) {
+                                const matcherDecorations = this.factory.createPathDecoration(
+                                    decoration.style,
+                                    cleanValue,
+                                    decoration.onClick,
+                                    decoration.icon
+                                );
+
+                                for (const decorationItem of matcherDecorations) {
+                                    if ('widget' in decorationItem.spec) {
+                                        builder.push({
+                                            range: [valueEnd, valueEnd],
+                                            decoration: decorationItem,
+                                            source: 'matcher',
+                                            priority: 50  // matcher based 装饰优先级中等
+                                        });
+                                    } else {
+                                        const target = decoration.target || 'key';
+                                        const range: [number, number] = target === 'key' ? [keyStart, keyEnd] :
+                                                    target === 'both' ? [keyStart, valueEnd] :
+                                                    [valueStart, valueEnd];
+                                        builder.push({
+                                            range,
+                                            decoration: decorationItem,
+                                            source: 'matcher',
+                                            priority: 50
+                                        });
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    // 按照 from 位置排序并添加到 builder
-                    decorations
-                        .sort((a, b) => a.range[0] - b.range[0])
-                        .forEach(({ range, decoration }) => {
-                            builder.push(decoration.range(range[0], range[1]));
+                    // 3. 处理 URL 装饰
+                    if (utils.isValidUrl(cleanValue)) {
+                        const urlDecoration = this.factory.createUrlDecoration(cleanValue);
+                        builder.push({
+                            range: [valueEnd, valueEnd],
+                            decoration: urlDecoration,
+                            source: 'url',
+                            priority: 0  // URL 装饰优先级最低
                         });
+                    }
                 }
             },
             {
-                /**
-                * 【关键配置】装饰器系统与 CodeMirror 的桥接点
-                * 
-                * 这个配置告诉 CodeMirror 如何从插件实例中获取装饰器集合：
-                * 1. v 是插件实例
-                * 2. v.decorations 返回 DecorationSet
-                * 3. CodeMirror 使用返回的集合来渲染装饰器
-                * 
-                * 这个配置是必需的，没有它：
-                * - 装饰器虽然会被创建
-                * - 但不会被应用到编辑器中
-                * - DOM 不会显示任何装饰效果
-                * 
-                * @param v - 插件实例
-                * @returns DecorationSet - 当前的装饰器集合
-                */
                 decorations: v => v.decorations
             }
         )

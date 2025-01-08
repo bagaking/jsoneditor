@@ -168,6 +168,14 @@ export interface DecorationConfig {
     };
 
     /**
+     * 结构匹配规则
+     */
+    matchers?: {
+        matcher: (key: string, value: any) => boolean;
+        decoration: DecorationPathHook;
+    }[];
+
+    /**
      * URL 处理器
      * 用于自定义 URL 的展示和交互方式
      * 如果不提供,则使用默认的链接按钮
