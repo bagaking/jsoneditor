@@ -128,10 +128,6 @@ class CustomDecorationWidget extends WidgetType {
     }
 }
 
-// 添加 IconWrapper 组件
-const IconWrapper = React.memo(function IconWrapper({ icon }: { icon: ReactNode }) {
-    return React.createElement(React.Fragment, null, icon);
-});
 
 // 操作按钮组件
 class ActionButton extends WidgetType {
@@ -178,12 +174,14 @@ class ActionButton extends WidgetType {
                this.svgContent === other.svgContent;
     }
 
+    // @ts-ignore
     updateDOM(dom: HTMLElement): boolean {
         console.log('🔵 [ActionButton] updateDOM called');
         // 总是返回 false 以确保重新创建 DOM
         return false;
     }
 
+    // @ts-ignore
     toDOM(view: EditorView): HTMLElement {
         console.log('🔵 [ActionButton] toDOM called with:', {
             svgContent: this.svgContent,
