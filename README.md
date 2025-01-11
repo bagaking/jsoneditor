@@ -45,6 +45,12 @@ npm install @bagaking/jsoneditor
 yarn add @bagaking/jsoneditor
 ```
 
+### 兼容性
+
+- React peer dependency: `react` 和 `react-dom` 支持 `^18.3.0 || ^19.0.0`。
+- 样式入口: 如需使用包内样式，请在应用入口导入 `@bagaking/jsoneditor/style.css`。
+- 包格式: 同时提供 ESM、CommonJS 和 TypeScript 类型声明。
+
 ### 基础使用
 
 ```tsx
@@ -87,6 +93,18 @@ cd jsoneditor
 pnpm install
 pnpm dev
 ```
+
+## ✅ 发布前验证
+
+维护者在发布前建议运行：
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+pnpm pack:dry-run
+```
+
+CI 会执行 frozen install、build 和 `npm pack --dry-run`，用于确认锁文件、产物和 npm 包内容可发布。
 
 ## 📖 高级用法
 

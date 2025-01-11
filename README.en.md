@@ -43,6 +43,12 @@ npm install @bagaking/jsoneditor
 yarn add @bagaking/jsoneditor
 ```
 
+### Compatibility
+
+- React peer dependency: `react` and `react-dom` support `^18.3.0 || ^19.0.0`.
+- Style entry: import `@bagaking/jsoneditor/style.css` from your app entry when you need the packaged styles.
+- Package formats: ESM, CommonJS, and TypeScript declarations are published.
+
 ### Basic Usage
 
 ```tsx
@@ -84,6 +90,18 @@ cd jsoneditor
 pnpm install
 pnpm dev
 ```
+
+## ✅ Release Readiness
+
+Maintainers should run the following checks before publishing:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+pnpm pack:dry-run
+```
+
+CI runs frozen install, build, and `npm pack --dry-run` to verify the lockfile, build output, and npm package contents.
 
 ## 📖 Advanced Usage
 

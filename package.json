@@ -2,6 +2,13 @@
   "name": "@bagaking/jsoneditor",
   "version": "0.1.14",
   "description": "A powerful JSON editor with schema validation",
+  "keywords": [
+    "react",
+    "json",
+    "json-editor",
+    "json-schema",
+    "codemirror"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bagaking/jsoneditor.git"
@@ -32,8 +39,11 @@
   ],
   "scripts": {
     "dev": "vite demo",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && pnpm build:style",
+    "build:style": "tailwindcss -i ./src/style.css -o ./dist/style.css --minify",
     "preview": "vite preview",
+    "pack:dry-run": "npm pack --dry-run",
+    "release:check": "pnpm install --frozen-lockfile && pnpm build && npm pack --dry-run",
     "prepublishOnly": "pnpm build",
     "publish:patch": "npm version patch && npm publish --access public",
     "publish:minor": "npm version minor && npm publish --access public",
@@ -53,8 +63,8 @@
     "ajv-formats": "^2.1.1"
   },
   "peerDependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^18.3.0 || ^19.0.0",
+    "react-dom": "^18.3.0 || ^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
