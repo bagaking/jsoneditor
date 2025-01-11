@@ -99,14 +99,6 @@ export function PackageJsonEditor() {
       defaultValue={JSON.stringify({ name: 'demo', version: '1.0.0' }, null, 2)}
       schemaConfig={{ schema }}
       validationConfig={{ validateOnChange: true }}
-      statusBarConfig={{
-        features: {
-          error: true,
-          cursorPosition: true,
-          documentSize: true,
-          validStatus: true
-        }
-      }}
     />
   );
 }
@@ -148,7 +140,7 @@ See the [Decoration System Documentation](https://bagaking.github.io/jsoneditor/
 
 ### Imperative Ref
 
-`EditorCore` exposes methods such as `getValue`, `setValue`, `format`, `minify`, `validate`, `focus`, `getValueAtPath`, and `setValueAtPath`. This is useful for external buttons, form submission, or debugging tools.
+`EditorCore` exposes methods such as `getValue`, `setValue`, `getCursorPosition`, `getSchemaPathAtPosition`, `getSchemaAtPath`, `getValueAtPath`, `setValueAtPath`, `getLineEndPosition`, `addExtension`, `removeExtension`, `scrollToLine`, `updateConfig`, and `destroy`. This is useful for external buttons, form submission, or debugging tools.
 
 ```tsx
 import { useRef } from 'react';
@@ -161,9 +153,15 @@ export function RefDrivenEditor() {
     <>
       <button
         type="button"
-        onClick={() => editorRef.current?.format()}
+        onClick={() => console.log(editorRef.current?.getValue())}
       >
-        Format
+        Log JSON
+      </button>
+      <button
+        type="button"
+        onClick={() => editorRef.current?.setValueAtPath('$["hello"]', 'reader')}
+      >
+        Update hello
       </button>
       <JsonEditor
         ref={editorRef}

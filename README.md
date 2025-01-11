@@ -99,14 +99,6 @@ export function PackageJsonEditor() {
       defaultValue={JSON.stringify({ name: 'demo', version: '1.0.0' }, null, 2)}
       schemaConfig={{ schema }}
       validationConfig={{ validateOnChange: true }}
-      statusBarConfig={{
-        features: {
-          error: true,
-          cursorPosition: true,
-          documentSize: true,
-          validStatus: true
-        }
-      }}
     />
   );
 }
@@ -148,7 +140,7 @@ export function DecoratedEditor() {
 
 ### Imperative ref
 
-`EditorCore` 暴露 `getValue`、`setValue`、`format`、`minify`、`validate`、`focus`、`getValueAtPath` 和 `setValueAtPath` 等方法，适合和外部按钮、表单提交或调试工具联动。
+`EditorCore` 暴露 `getValue`、`setValue`、`getCursorPosition`、`getSchemaPathAtPosition`、`getSchemaAtPath`、`getValueAtPath`、`setValueAtPath`、`getLineEndPosition`、`addExtension`、`removeExtension`、`scrollToLine`、`updateConfig` 和 `destroy` 等方法，适合和外部按钮、表单提交或调试工具联动。
 
 ```tsx
 import { useRef } from 'react';
@@ -161,9 +153,15 @@ export function RefDrivenEditor() {
     <>
       <button
         type="button"
-        onClick={() => editorRef.current?.format()}
+        onClick={() => console.log(editorRef.current?.getValue())}
       >
-        Format
+        Log JSON
+      </button>
+      <button
+        type="button"
+        onClick={() => editorRef.current?.setValueAtPath('$["hello"]', 'reader')}
+      >
+        Update hello
       </button>
       <JsonEditor
         ref={editorRef}
