@@ -224,7 +224,7 @@ export interface ValidationError {
  * JSON Schema 相关类型
  */
 export interface JsonSchemaProperty {
-    type?: string;
+    type?: string | string[];
     description?: string;
     enum?: any[];
     properties?: Record<string, JsonSchemaProperty>;

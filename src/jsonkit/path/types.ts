@@ -5,7 +5,7 @@ import { SyntaxNode } from '@lezer/common';
  * JSON Schema 属性
  */
 export interface JsonSchemaProperty {
-    type?: string;
+    type?: string | string[];
     properties?: Record<string, JsonSchemaProperty>;
     items?: JsonSchemaProperty;
     required?: string[];
@@ -50,4 +50,4 @@ export interface IJsonPath {
      * 提取属性值
      */
     extractPropertyValue(content: string): { key: string; value: string } | null;
-} 
+}

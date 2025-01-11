@@ -141,36 +141,43 @@ export class JsonPath {
      * 从 schema 中获取指定路径的定义
      */
     static getSchemaAtPath(schema: JsonSchemaProperty, path: string): JsonSchemaProperty | null {
-        console.log('[JsonPath] Getting schema at path:', { path, schema });
         const parts = this.parsePath(path);
-        console.log('[JsonPath] Parsed path parts:', parts);
         let current: JsonSchemaProperty | null = schema;
 
         for (const part of parts) {
+            while (current && this.isArraySchema(current)) {
+                current = current.items || null;
+            }
+
             if (!current) {
-                console.log('[JsonPath] Current schema is null, returning null');
                 return null;
             }
 
-            // 处理数组
-            if (Array.isArray(current.type) && current.type.includes('array')) {
-                console.log('[JsonPath] Processing array type');
-                current = current.items || null;
+            if (this.isArrayIndex(part)) {
                 continue;
             }
 
-            // 处理对象
             if (current.properties && part in current.properties) {
-                console.log('[JsonPath] Found property in schema:', part);
                 current = current.properties[part];
             } else {
-                console.log('[JsonPath] Property not found in schema:', part);
                 return null;
             }
         }
 
-        console.log('[JsonPath] Returning schema:', current);
+        while (current && this.isArraySchema(current)) {
+            current = current.items || null;
+        }
         return current;
+    }
+
+    private static isArraySchema(schema: JsonSchemaProperty): boolean {
+        return Array.isArray(schema.type)
+            ? schema.type.includes('array')
+            : schema.type === 'array';
+    }
+
+    private static isArrayIndex(part: string): boolean {
+        return new RegExp('^\\d+$').test(part);
     }
 
     /**
@@ -239,4 +246,4 @@ export class JsonPath {
             path === '$' ? `$["${key}"]` : `${path}["${key}"]`
         );
     }
-} 
+}
