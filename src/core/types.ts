@@ -1,4 +1,5 @@
 import type { Extension } from '@codemirror/state';
+import { ReactNode } from 'react';
 
 // 基础样式类型
 export type BaseStyle = 'underline' | 'bold' | 'italic';
@@ -152,8 +153,9 @@ export type DecorationPathHook = {
      * 但不会阻止文本选择等其他交互
      */
     onClick?: (value: string) => void;
+
     /** 图标 */
-    icon?: string;
+    icon?: string | ReactNode;
 }
 
 /**

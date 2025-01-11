@@ -627,26 +627,136 @@ function App() {
 ```
 {% endraw %}
 
-## 性能优化
+## 图标和组件支持
 
-### 装饰缓存
+装饰系统现在完整支持 ReactNode 类型的图标和组件，这意味着你可以：
 
+- 使用任何 React 组件作为装饰
+- 集成第三方组件库
+- 创建复杂的交互式装饰
+- 实现动态数据可视化
+
+### 使用 React 组件作为图标
+
+{% raw %}
 ```tsx
-function App() {
-  const decorationCache = useMemo(() => ({
-    paths: {
-      // 缓存装饰配置...
-    }
-  }), [/* 依赖项 */]);
+import { EyeIcon, HeartIcon, StarIcon } from '@heroicons/react/24/outline';
 
-  return (
-    <JsonEditor
-      defaultValue={`{...}`}
-      decorationConfig={decorationCache}
-    />
-  );
-}
+<JsonEditor
+  defaultValue={`{
+    "stats": {
+      "views": 1234,
+      "likes": 567,
+      "rating": 4.8
+    }
+  }`}
+  decorationConfig={{
+    paths: {
+      '$["stats"]["views"]': {
+        style: "bg-blue-100/50 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded text-sm",
+        target: 'value',
+        onClick: (value) => console.log('Views:', value),
+        icon: <EyeIcon className="h-4 w-4 text-blue-500" />
+      },
+      '$["stats"]["likes"]': {
+        style: "bg-pink-100/50 dark:bg-pink-900/50 text-pink-800 dark:text-pink-200 px-1.5 py-0.5 rounded text-sm",
+        target: 'value',
+        onClick: (value) => console.log('Likes:', value),
+        icon: <HeartIcon className="h-4 w-4 text-pink-500" />
+      },
+      '$["stats"]["rating"]': {
+        style: "bg-yellow-100/50 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 px-1.5 py-0.5 rounded text-sm",
+        target: 'value',
+        onClick: (value) => console.log('Rating:', value),
+        icon: <StarIcon className="h-4 w-4 text-yellow-500" />
+      }
+    }
+  }}
+/>
 ```
+{% endraw %}
+
+### 集成第三方组件
+
+例如集成 Ant Design 组件：
+
+{% raw %}
+```tsx
+import { Tag, Badge, Progress } from 'antd';
+
+<JsonEditor
+  defaultValue={`{
+    "task": {
+      "status": "in_progress",
+      "priority": "high",
+      "progress": 75
+    }
+  }`}
+  decorationConfig={{
+    paths: {
+      '$["task"]["status"]': {
+        style: "px-1",
+        target: 'value',
+        icon: <Badge status="processing" text="进行中" />
+      },
+      '$["task"]["priority"]': {
+        style: "px-1",
+        target: 'value',
+        icon: <Tag color="error">高优先级</Tag>
+      },
+      '$["task"]["progress"]': {
+        style: "px-1",
+        target: 'value',
+        icon: <Progress type="circle" percent={75} width={20} />
+      }
+    }
+  }}
+/>
+```
+{% endraw %}
+
+### 动态数据可视化
+
+使用图表库展示数据：
+
+{% raw %}
+```tsx
+import { AreaChart, Area, Tooltip } from 'recharts';
+
+<JsonEditor
+  defaultValue={`{
+    "performance": {
+      "cpu": [45, 62, 28, 50, 75, 62, 48],
+      "memory": [1024, 1536, 2048, 1792, 1536, 1280, 1024]
+    }
+  }`}
+  decorationConfig={{
+    paths: {
+      '$["performance"]["cpu"]': {
+        style: "px-2",
+        target: 'value',
+        icon: (
+          <AreaChart width={100} height={20} data={cpuData}>
+            <Area dataKey="value" stroke="#3b82f6" fill="#93c5fd" />
+            <Tooltip />
+          </AreaChart>
+        )
+      },
+      '$["performance"]["memory"]': {
+        style: "px-2",
+        target: 'value',
+        icon: (
+          <AreaChart width={100} height={20} data={memoryData}>
+            <Area dataKey="value" stroke="#10b981" fill="#6ee7b7" />
+            <Tooltip />
+          </AreaChart>
+        )
+      }
+    }
+  }}
+/>
+```
+{% endraw %}
 
 ### 按需渲染
 
@@ -674,56 +784,30 @@ function App() {
 ```
 {% endraw %}
 
-## 最佳实践
-
-1. **性能考虑**
-   - 避免过多的装饰器
-   - 使用简单的样式字符串
-   - 缓存装饰配置
-   - 延迟加载大型组件
-
-2. **样式管理**
-   - 使用一致的样式命名
-   - 避免样式冲突
-   - 保持视觉统一
-   - 注意响应式设计
-
-3. **交互设计**
-   - 提供清晰的视觉反馈
-   - 保持交互一致性
-   - 处理边界情况
-   - 支持键盘操作
-
-4. **错误处理**
-   - 验证装饰配置
-   - 处理渲染错误
-   - 提供降级方案
-   - 记录错误日志
-
 ## 常见问题
 
-### 1. 装饰不生效
+### 1. React 组件不渲染
 
 检查以下几点：
-- 路径是否正确
-- 样式语法是否正确
-- 组件是否正确渲染
-- 配置是否正确传入
+- 确保组件正确导入
+- 检查 props 传递
+- 验证组件生命周期
+- 查看控制台错误
 
 ### 2. 性能问题
 
 优化建议：
-- 减少装饰器数量
-- 简化样式定义
-- 使用性能分析工具
-- 实现虚拟化渲染
+- 使用 React.memo 优化渲染
+- 实现必要的缓存
+- 延迟加载大型组件
+- 优化数据流转
 
-### 3. 样式冲突
+### 3. 样式问题
 
 解决方案：
-- 使用唯一的类名前缀
-- 采用 CSS Modules
-- 使用 CSS-in-JS
-- 避免全局样式
+- 检查样式优先级
+- 使用独立的样式作用域
+- 实现主题兼容
+- 处理样式冲突
 
 > 💡 **小贴士**: 装饰系统是 JSON 编辑器的一个强大特性，它可以让你的 JSON 数据更具可读性和交互性。但要记住，装饰应该服务于提升用户体验，而不是喧宾夺主。在添加装饰时，始终要考虑其必要性和对性能的影响。 

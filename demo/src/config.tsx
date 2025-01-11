@@ -1,5 +1,7 @@
 import { ToolbarConfig, ExpandOption, DecorationConfig } from '@bagaking/jsoneditor';
 import { JsonSchemaProperty } from '@bagaking/jsoneditor';
+import { EyeIcon } from '@heroicons/react/24/outline';
+
 
 export interface EditorConfigState {
   codeSettings: {
@@ -207,7 +209,6 @@ export const exampleJson = {
 // 装饰器配置
 export const decorationConfig: DecorationConfig = {
   paths: {
-
     '$["name"]': {
       style: "underline",
       target: 'key',
@@ -231,7 +232,13 @@ export const decorationConfig: DecorationConfig = {
       onClick: (value: string) => console.log('Status:', value)
     },
 
-     
+    // 为 stats.views 添加眼睛图标
+    '$["stats"]["views"]': {
+      style: "underline",
+      target: 'value',
+      onClick: (value: string) => console.log('Views:', value),
+      icon: <EyeIcon className= "h-4 w-4 text-blue-500" />
+    },
     
     // 时间使用自定义组件
     '$["createdAt"]': {
@@ -266,22 +273,11 @@ export const decorationConfig: DecorationConfig = {
           return el;
         }
       }
-    },
-
-    // 高级配置装饰器
-    '$["advancedConfig"]': {
-      style: "bg-purple-100/30 dark:bg-purple-900/30 rounded px-1 font-semibold",
-      target: 'key',
-      onClick: (value: string) => {
-        const formatted = JSON.stringify(JSON.parse(value), null, 2);
-        alert(`高级配置详情:\n${formatted}`);
-      },
-      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`
     }
-  }, 
+  },
   matchers: [
     {
-      // 匹配复杂分析数据
+      // @ts-ignore 匹配复杂分析数据
       matcher: (key: string, value: any) => {
         // console.log('Matcher called for key :::', key);
         // console.log('Value type:', typeof value);

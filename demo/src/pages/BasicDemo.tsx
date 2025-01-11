@@ -4,6 +4,7 @@ import { ConfigPanel } from '../components/ConfigPanel';
 import { DownloadButton } from '../components/DownloadButton';
 import { defaultConfig, exampleJson, exampleSchema, decorationConfig } from '../config';
 
+
 export const BasicDemo = () => {
   const [config, setConfig] = useState(defaultConfig);
   const editorRef = useRef<EditorCore>(null);

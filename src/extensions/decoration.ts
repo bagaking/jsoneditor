@@ -4,6 +4,27 @@ import { syntaxTree } from '@codemirror/language';
 import { DecorationConfig, DecorationStyle, CustomComponent } from '../core/types';
 import { JsonPath } from '../jsonkit';
 import { rocketActionIcon, linkActionIcon } from '../utils/svg';
+import React, { ReactNode } from 'react';
+import ReactDOM from 'react-dom/client';
+
+// 添加必要的样式
+const decorationStyles = EditorView.baseTheme({
+    '.cm-action-button': {
+        border: 'none',
+        background: 'none',
+        padding: '0 2px',
+        cursor: 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        verticalAlign: 'middle',
+        color: 'inherit',
+        height: '1.2em',
+        '&:hover': {
+            opacity: 0.8
+        }
+    }
+});
 
 // 链接点击效果
 const linkClickEffect = StateEffect.define<{
@@ -13,11 +34,13 @@ const linkClickEffect = StateEffect.define<{
 }>();
 
 // 链接状态字段
-const linkStateField = StateField.define<Map<string, {
-    url: string;
-    onClick?: (url: string) => void;
-    openInNewTab: boolean;
-}>>({
+const linkStateField = StateField.define<
+    Map<string, {
+        url: string;
+        onClick?: (url: string) => void;
+        openInNewTab: boolean;
+    }>
+>({
     create() {
         return new Map();
     },
@@ -105,36 +128,139 @@ class CustomDecorationWidget extends WidgetType {
     }
 }
 
+// 添加 IconWrapper 组件
+const IconWrapper = React.memo(function IconWrapper({ icon }: { icon: ReactNode }) {
+    return React.createElement(React.Fragment, null, icon);
+});
+
 // 操作按钮组件
 class ActionButton extends WidgetType {
-    private svgContent: string;
+    private svgContent: string | ReactNode;
+    private root: ReactDOM.Root | null = null;
+    private mounted: boolean = false;
+    private container: HTMLElement | null = null;
 
     constructor(
         private value: string,
         private onClick?: (value: string) => void,
-        icon?: string
+        icon?: string | ReactNode
     ) {
         super();
         this.svgContent = icon || rocketActionIcon || `👆`;
+        console.log('🔵 [ActionButton] Constructor called with icon:', {
+            hasIcon: !!icon,
+            iconType: icon ? typeof icon : 'none',
+            isReactElement: icon ? React.isValidElement(icon) : false
+        });
     }
 
-    toDOM() {
+    destroy() {
+        console.log('🔵 [ActionButton] Destroy called');
+        this.unmountReactComponent();
+    }
+
+    private unmountReactComponent() {
+        if (this.root) {
+            try {
+                this.root.unmount();
+            } catch (error) {
+                console.error('🔴 [ActionButton] Error unmounting React component:', error);
+            }
+            this.root = null;
+        }
+        this.mounted = false;
+        this.container = null;
+    }
+
+    eq(other: WidgetType): boolean {
+        return other instanceof ActionButton && 
+               this.value === other.value && 
+               this.svgContent === other.svgContent;
+    }
+
+    updateDOM(dom: HTMLElement): boolean {
+        console.log('🔵 [ActionButton] updateDOM called');
+        // 总是返回 false 以确保重新创建 DOM
+        return false;
+    }
+
+    toDOM(view: EditorView): HTMLElement {
+        console.log('🔵 [ActionButton] toDOM called with:', {
+            svgContent: this.svgContent,
+            isReactElement: React.isValidElement(this.svgContent),
+            contentType: typeof this.svgContent
+        });
+
         const button = document.createElement('button');
         button.className = 'cm-action-button';
-        button.innerHTML = this.svgContent;
         button.title = 'Click to trigger action';
+        button.style.display = 'inline-flex';
+        button.style.alignItems = 'center';
+        button.style.justifyContent = 'center';
+        button.style.height = '100%';
+        button.style.margin = '0 2px';
+        button.style.minWidth = '1.2em';
+        button.style.minHeight = '1.2em';
+
         button.onclick = (e) => {
-            // 只阻止冒泡，不阻止默认行为
+            console.log('🔵 [ActionButton] Click event triggered');
             e.stopPropagation();
             if (this.onClick) {
                 this.onClick(this.value);
             }
         };
-        return button;
-    }
 
-    eq(other: ActionButton) {
-        return this.value === other.value && this.svgContent === other.svgContent;
+        // Handle string content
+        if (typeof this.svgContent === 'string') {
+            console.log('🔵 [ActionButton] Handling string content');
+            button.innerHTML = this.svgContent;
+            return button;
+        }
+
+        // Handle React content
+        if (React.isValidElement(this.svgContent)) {
+            console.log('🔵 [ActionButton] Handling React content');
+            this.container = button;
+
+            // 使用 requestAnimationFrame 确保 DOM 已挂载
+            requestAnimationFrame(() => {
+                if (document.contains(this.container) && !this.mounted) {
+                    try {
+                        console.log('🔵 [ActionButton] Creating root for React component');
+                        this.root = ReactDOM.createRoot(this.container!);
+                        
+                        const IconContainer = React.memo(() => (
+                            React.createElement('div', {
+                                style: {
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '100%',
+                                    height: '100%',
+                                    lineHeight: '1'
+                                }
+                            }, this.svgContent)
+                        ));
+                        
+                        this.root.render(React.createElement(IconContainer));
+                        this.mounted = true;
+                        console.log('🔵 [ActionButton] React component rendered');
+                    } catch (error) {
+                        console.error('🔴 [ActionButton] Failed to render React component:', error);
+                        // 回退到默认图标
+                        if (this.container) {
+                            this.container.innerHTML = '👆';
+                        }
+                    }
+                }
+            });
+
+            return button;
+        }
+
+        console.log('🔴 [ActionButton] Invalid content to render');
+        button.innerHTML = '👆'; // 默认图标
+        return button;
     }
 }
 
@@ -176,22 +302,38 @@ const utils = {
 class DecorationFactory {
     constructor(
         private readonly config: DecorationConfig
-    ) {}
+    ) {
+        console.log('🔍 [DecorationFactory] Created with config:', {
+            paths: Object.keys(config.paths || {}),
+            hasMatchers: !!config.matchers?.length,
+            hasUrlHandler: !!config.urlHandler
+        });
+    }
 
     getConfig(): DecorationConfig {
         return this.config;
     }
 
-    createPathDecoration(style: DecorationStyle, value: string, onClick?: (value: string) => void, icon?: string) {
+    createPathDecoration(style: DecorationStyle, value: string, onClick?: (value: string) => void, icon?: string | ReactNode) {
+        console.log('🔍 [DecorationFactory] Creating path decoration:', {
+            hasStyle: !!style,
+            styleType: typeof style,
+            hasOnClick: !!onClick,
+            hasIcon: !!icon,
+            iconType: icon ? typeof icon : 'none'
+        });
+
         const decorations: Decoration[] = [];
 
         // 1. 处理样式装饰
         if (typeof style === 'object' && style.type === 'component') {
+            console.log('🔍 [DecorationFactory] Creating component decoration');
             decorations.push(Decoration.widget({
                 widget: new CustomDecorationWidget(style, value),
                 side: 1
             }));
         } else if (typeof style === 'string') {
+            console.log('🔍 [DecorationFactory] Creating style decoration');
             // 分离基础样式和 Tailwind 类名
             const styles = style.split(' ');
             const baseStyles = styles
@@ -206,8 +348,9 @@ class DecorationFactory {
             }));
         }
 
-        // 2. 如果有点击处理器，添加操作按钮
-        if (icon ||onClick) {
+        // 2. 如果有点击处理器或图标，添加操作按钮
+        if (icon || onClick) {
+            console.log('🔍 [DecorationFactory] Creating action button');
             decorations.push(Decoration.widget({
                 widget: new ActionButton(value, onClick || (() => {}), icon),
                 side: 1
@@ -250,76 +393,35 @@ type DecorationRange = {
 
 // 主扩展创建函数
 export function createDecorationExtension(config: DecorationConfig = {}): Extension {
+    console.log('🔍 [Decoration] Creating decoration extension with config:', {
+        paths: Object.keys(config.paths || {}),
+        hasMatchers: !!config.matchers?.length,
+        hasUrlHandler: !!config.urlHandler
+    });
+
     return [
+        decorationStyles,
         linkStateField,
-        EditorView.domEventHandlers({
-            click: (event, view) => {
-                const target = event.target as HTMLElement;
-                if (!target.closest('.cm-url-widget .cm-action-button')) {
-                    return false;
-                }
-
-                // 阻止事件冒泡和默认行为
-                event.preventDefault();
-                event.stopPropagation();
-
-                // 找到最近的链接组件
-                const widget = target.closest('.cm-url-widget') as HTMLElement;
-                if (!widget) return false;
-
-                // 从 dataset 获取链接信息
-                const url = widget.dataset.url;
-                const hasCustomHandler = widget.dataset.hasCustomHandler === 'true';
-                const openInNewTab = widget.dataset.openInNewTab === 'true';
-
-                if (!url) return false;
-
-                // 分发链接点击效果
-                view.dispatch({
-                    effects: linkClickEffect.of({
-                        url,
-                        onClick: config.urlHandler?.onClick,
-                        openInNewTab: openInNewTab
-                    })
-                });
-
-                // 处理点击
-                if (hasCustomHandler && config.urlHandler?.onClick) {
-                    requestAnimationFrame(() => {
-                        try {
-                            config.urlHandler!.onClick!(url);
-                        } catch (error) {
-                            console.error('[LinkWidget] Error in onClick handler:', error);
-                        }
-                    });
-                } else if (openInNewTab) {
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                    link.click();
-                }
-
-                return true;
-            }
-        }),
         ViewPlugin.fromClass(
             class {
                 decorations: DecorationSet;
                 factory: DecorationFactory;
 
                 constructor(view: EditorView) {
+                    console.log('🔍 [Decoration] Plugin constructor called');
                     this.factory = new DecorationFactory(config);
                     this.decorations = this.buildDecorations(view);
                 }
 
                 update(update: ViewUpdate) {
+                    console.log('🔍 [Decoration] Plugin update called');
                     if (update.docChanged || update.viewportChanged) {
                         this.decorations = this.buildDecorations(update.view);
                     }
                 }
 
                 buildDecorations(view: EditorView) {
+                    console.log('🔍 [Decoration] Building decorations');
                     const builder = new Array<DecorationRange>();
                     const tree = syntaxTree(view.state);
                     let cursor = tree.cursor();
@@ -330,50 +432,63 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                         }
                     }
 
-                    // 统一排序：先按优先级，再按位置
+                    console.log('🔍 [Decoration] Built decorations:', {
+                        count: builder.length,
+                        types: builder.map(d => d.source)
+                    });
+
                     const sortedDecorations = builder
-                        .sort((a, b) => {
-                            // 优先级不同，按优先级排序
-                            // if (a.priority !== b.priority) {
-                            //     return b.priority - a.priority;
-                            // }
-                            // 优先级相同，按位置排序
-                            return a.range[0] - b.range[0];
-                        })
+                        .sort((a, b) => a.range[0] - b.range[0])
                         .map(({ range, decoration }) => decoration.range(range[0], range[1]));
 
-                    console.log('Builder after sort:', {sortedDecorations});
                     return Decoration.set(sortedDecorations);
                 }
 
                 private processProperty(view: EditorView, cursor: any, builder: DecorationRange[]) {
-                    // 先获取路径
+                    // 获取路径
                     const path = JsonPath.fromNode(view, cursor.node);
+                    console.log('🔍 [Decoration] Processing property:', {
+                        path,
+                        hasConfig: path ? path in (config.paths || {}) : false
+                    });
                     
-                    // 再提取属性值
+                    // 提取属性值
                     const content = view.state.doc.sliceString(cursor.from, cursor.to);
                     const extracted = JsonPath.extractPropertyValue(content);
 
-                    if (!extracted) return;
+                    if (!extracted) {
+                        console.log('🔴 [Decoration] Failed to extract property value');
+                        return;
+                    }
 
                     const { key, value } = extracted;
-                    
+                    console.log('🔍 [Decoration] Extracted property:', { key, value });
+
                     // 找到键的位置
                     const keyMatch = content.match(new RegExp(`"${key}"`));
-                    if (!keyMatch) return;
+                    if (!keyMatch) {
+                        console.log('🔴 [Decoration] Failed to find key position');
+                        return;
+                    }
                     const keyStart = cursor.from + keyMatch.index;
                     const keyEnd = keyStart + key.length + 2; // +2 for quotes
 
                     // 找到值的位置
                     const colonMatch = content.slice(keyMatch.index).match(/:\s*/);
-                    if (!colonMatch) return;
+                    if (!colonMatch) {
+                        console.log('🔴 [Decoration] Failed to find value position');
+                        return;
+                    }
                     const valueStart = keyStart + colonMatch.index + colonMatch[0].length;
                     const valueEnd = cursor.to;
                     const cleanValue = JsonPath.getCleanValue(value, cursor.node, view);
 
-                    // 1. 处理 path 配置的装饰
-                    const config = this.factory.getConfig();
+                    // 处理 path 配置的装饰
                     if (path && config.paths && path in config.paths) {
+                        console.log('🔍 [Decoration] Found path config:', {
+                            path,
+                            config: config.paths[path]
+                        });
                         const pathConfig = config.paths[path];
                         const pathDecorations = this.factory.createPathDecoration(
                             pathConfig.style,
@@ -388,7 +503,7 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                                     range: [valueEnd, valueEnd],
                                     decoration,
                                     source: 'path',
-                                    priority: 100  // path based 装饰优先级最高
+                                    priority: 100
                                 });
                             } else {
                                 const target = pathConfig.target || 'key';
@@ -405,7 +520,7 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                         }
                     }
 
-                    // 2. 处理 matchers 配置的装饰
+                    // 处理 matchers 配置的装饰
                     if (config.matchers?.length) {
                         for (const { matcher, decoration } of config.matchers) {
                             if (matcher(key, cleanValue)) {
@@ -422,7 +537,7 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                                             range: [valueEnd, valueEnd],
                                             decoration: decorationItem,
                                             source: 'matcher',
-                                            priority: 50  // matcher based 装饰优先级中等
+                                            priority: 50
                                         });
                                     } else {
                                         const target = decoration.target || 'key';
@@ -441,14 +556,14 @@ export function createDecorationExtension(config: DecorationConfig = {}): Extens
                         }
                     }
 
-                    // 3. 处理 URL 装饰
+                    // 处理 URL 装饰
                     if (utils.isValidUrl(cleanValue)) {
                         const urlDecoration = this.factory.createUrlDecoration(cleanValue);
                         builder.push({
                             range: [valueEnd, valueEnd],
                             decoration: urlDecoration,
                             source: 'url',
-                            priority: 0  // URL 装饰优先级最低
+                            priority: 0
                         });
                     }
                 }
