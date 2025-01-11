@@ -25,7 +25,7 @@ const debounce = <T extends (...args: any[]) => any>(
     };
 };
 
-export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
+export const JsonEditor = forwardRef<EditorCore | null, JsonEditorProps>(({
     // 基础属性
     className,
     style,
@@ -81,33 +81,7 @@ export const JsonEditor = forwardRef<EditorCore, JsonEditorProps>(({
     });
 
     // 暴露编辑器实例给父组件
-    useImperativeHandle(ref, () => {
-        if (!editorRef.current) {
-            // 返回一个空的实现，但保持类型兼容
-            const emptyEditor = {
-                view: null,
-                container: null,
-                config: {},
-                schema: null,
-                getValue: () => '',
-                setValue: () => {},
-                format: () => {},
-                minify: () => {},
-                destroy: () => {},
-                updateConfig: () => {},
-                getValueAtPath: () => null,
-                setValueAtPath: () => false,
-                getSchemaAtPath: () => null,
-                getCursorPosition: () => ({ line: 0, column: 0 }),
-                setCursorPosition: () => {},
-                getSelection: () => ({ start: { line: 0, column: 0 }, end: { line: 0, column: 0 } }),
-                setSelection: () => {},
-                validate: () => true,
-                focus: () => {},
-                blur: () => {},
-            } as unknown as EditorCore;
-            return emptyEditor;
-        }
+    useImperativeHandle<EditorCore | null, EditorCore | null>(ref, () => {
         return editorRef.current;
     }, [isEditorReady]);
 
