@@ -17,7 +17,6 @@ A powerful **JSON editor component** with support for *JSON Schema validation*, 
   - Format and multi-level minification
   
 - ✨ **Schema Support**
-  - JSON5 syntax support
   - Smart auto-completion based on JSON Schema
   - Real-time validation and error diagnosis based on JSON Schema
   - Visual editing support for special types like enums, dates, colors
