@@ -39,12 +39,14 @@
   ],
   "scripts": {
     "dev": "vite demo",
-    "build": "tsc && vite build && pnpm build:style",
+    "clean": "rm -rf dist",
+    "build": "pnpm clean && tsc && vite build && pnpm build:style",
     "build:style": "tailwindcss -i ./src/style.css -o ./dist/style.css --minify",
     "preview": "vite preview",
-    "pack:dry-run": "npm pack --dry-run",
-    "release:check": "pnpm install --frozen-lockfile && pnpm build && npm pack --dry-run",
-    "prepublishOnly": "pnpm build",
+    "pack:check": "node scripts/check-pack-manifest.mjs",
+    "pack:dry-run": "pnpm pack:check",
+    "release:check": "pnpm install --frozen-lockfile && pnpm build && pnpm pack:dry-run",
+    "prepublishOnly": "pnpm build && pnpm pack:check",
     "publish:patch": "npm version patch && npm publish --access public",
     "publish:minor": "npm version minor && npm publish --access public",
     "publish:major": "npm version major && npm publish --access public"

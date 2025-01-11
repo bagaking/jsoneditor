@@ -15,6 +15,7 @@ export default defineConfig({
       external: [
         'react',
         'react-dom',
+        'react-dom/client',
         '@codemirror/state',
         '@codemirror/view',
         '@codemirror/commands',
@@ -30,6 +31,7 @@ export default defineConfig({
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
+          'react-dom/client': 'ReactDOM',
           '@codemirror/state': 'CodeMirror.state',
           '@codemirror/view': 'CodeMirror.view',
           '@codemirror/commands': 'CodeMirror.commands',
@@ -54,4 +56,4 @@ export default defineConfig({
       '@': resolve(__dirname, 'src')
     }
   }
-}); 
+});

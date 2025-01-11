@@ -48,7 +48,7 @@ yarn add @bagaking/jsoneditor
 ### 兼容性
 
 - React peer dependency: `react` 和 `react-dom` 支持 `^18.3.0 || ^19.0.0`。
-- 样式入口: 如需使用包内样式，请在应用入口导入 `@bagaking/jsoneditor/style.css`。
+- 样式入口: 如需使用组件内置样式，请在应用入口导入 `@bagaking/jsoneditor/style.css`。`dist/style.css` 只覆盖组件内置样式；`decorationConfig` 中传入的消费方 Tailwind class 需要由消费方自己的 Tailwind 构建生成。
 - 包格式: 同时提供 ESM、CommonJS 和 TypeScript 类型声明。
 
 ### 基础使用
@@ -153,6 +153,8 @@ function App() {
 ### 路径装饰
 
 支持为不同的 JSON 路径添加自定义样式和交互：
+
+下例中的 `italic`、`bg-blue-100/30`、`rounded`、`px-1`、`text-green-600`、`font-medium` 是消费方应用的 Tailwind class。请确保这些 class 会被你的 Tailwind content 扫描或 safelist 覆盖；包内 `dist/style.css` 不会为用户自定义 class 生成样式。
 
 ```tsx
 import { JsonEditor } from '@bagaking/jsoneditor';
