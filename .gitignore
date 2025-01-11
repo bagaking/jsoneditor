@@ -132,10 +132,10 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-set_env.sh
-.*rules
 
 *storybook.log
 
+set_env.sh
+.*rules
 node_modules/
 dist/
