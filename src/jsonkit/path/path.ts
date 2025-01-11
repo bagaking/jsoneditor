@@ -53,24 +53,16 @@ export class JsonPath {
      * 从位置获取 JSON 路径
      */
     static fromPosition(view: EditorView, pos: number): string | null {
-        console.log('[JsonPath] Resolving path at position:', pos);
         const node = syntaxTree(view.state).resolveInner(pos);
-        console.log('[JsonPath] Found node:', {
-            name: node?.name,
-            text: node ? view.state.doc.sliceString(node.from, node.to) : null,
-            node
-        });
         if (!node) return null;
 
         // 如果在属性名上，直接返回路径
         if (node.name === "PropertyName" || node.parent?.name === "Property") {
-            console.log('[JsonPath] Found property node', { node });
             return this.fromNode(view, node.parent || node);
         }
 
         // 如果在值上，返回父属性的路径
         const property = this.findParentProperty(node);
-        console.log('[JsonPath] Found parent property:', property?.name);
         return property ? this.fromNode(view, property) : null;
     }
 

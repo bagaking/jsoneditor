@@ -36,4 +36,4 @@ jobs:
         run: pnpm build
 
       - name: Package dry run
-        run: npm pack --dry-run
+        run: pnpm pack:dry-run

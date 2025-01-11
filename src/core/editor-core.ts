@@ -53,11 +53,9 @@ export class EditorCore {
     private extensions: Extension[] = [];
 
     constructor(container: HTMLElement, config: EditorConfig = {}) {
-        console.log('EditorCore constructor:', { container, config });
         this.container = container;
         this.config = this.normalizeConfig(config);
         this.schema = this.config.schemaConfig?.schema || null;
-        console.log('[Schema] Initialized with schema:', this.schema);
 
         // 立即初始化编辑器
         this.init(config.value || '');
@@ -92,7 +90,6 @@ export class EditorCore {
      * 初始化编辑器
      */
     private init(initialValue: string = '') {
-        // console.log('Initializing editor with value:', initialValue);
         try {
             const state = this.createEditorState(initialValue);
             
@@ -106,8 +103,6 @@ export class EditorCore {
                     this.view.update([tr]);
                 }
             });
-
-            console.log('Editor initialized successfully');
         } catch (error) {
             console.error('Failed to initialize editor:', error);
             throw error;
@@ -118,7 +113,6 @@ export class EditorCore {
      * 创建编辑器状态
      */
     private createEditorState(content: string) {
-        console.log('Creating editor state with content length:', content.length);
         const { codeSettings, themeConfig } = this.config;
         
         const extensions: Extension[] = [];
@@ -136,12 +130,8 @@ export class EditorCore {
 
         // 装饰扩展
         if (this.config.decorationConfig) {
-            console.log('[Decoration] Adding decoration extension with config:', this.config.decorationConfig);
             const decorationExtension = createDecorationExtension(this.config.decorationConfig);
             extensions.push(decorationCompartment.of(decorationExtension));
-            console.log('[Decoration] Decoration extension added', {extensions});
-        } else {
-            console.log('[Decoration] No decoration config provided');
         }
 
         // 基础样式和滚动配置
@@ -167,8 +157,6 @@ export class EditorCore {
      * 更新编辑器配置
      */
     updateConfig(config: EditorConfig) {
-        // console.log('Updating editor config:', config);
-        
         try {
             // 保存当前状态
             const hadFocus = this.view?.hasFocus;
@@ -177,19 +165,12 @@ export class EditorCore {
             // 检查配置是否真的变化
             const newConfig = this.normalizeConfig({ ...this.config, ...config });
             if (configEquals(this.config, newConfig)) {
-                console.log('[Schema] Config not changed, skipping update');
                 return;
             }
             
             // 更新配置
             this.config = newConfig;
-            const oldSchema = this.schema;
             this.schema = this.config.schemaConfig?.schema || null;
-            console.log('[Schema] Updated schema:', {
-                oldSchema,
-                newSchema: this.schema,
-                hasChanged: oldSchema !== this.schema
-            });
             
             // 重新创建编辑器状态
             if (this.view) {
@@ -256,7 +237,6 @@ export class EditorCore {
      * 设置编辑器内容
      */
     setValue(value: string) {
-        console.log('Setting editor value, length:', value.length);
         if (this.view) {
             const hadFocus = this.view.hasFocus;
             
@@ -279,7 +259,6 @@ export class EditorCore {
      * 销毁编辑器
      */
     destroy() {
-        console.log('Destroying editor');
         if (this.view) {
             this.view.destroy();
             this.view = null;
@@ -299,28 +278,21 @@ export class EditorCore {
      */
     getSchemaPathAtPosition(pos: number): string | null {
         if (!this.view) return null;
-        console.log('[Schema] Getting path at position:', pos);
-        const path = JsonPath.fromPosition(this.view, pos);
-        console.log('[Schema] Found path:', path);
-        return path;
+        return JsonPath.fromPosition(this.view, pos);
     }
 
     /**
      * 获取指定路径的 schema 定义
      */
     getSchemaAtPath(path: string): JsonSchemaProperty | null {
-        console.log('[Schema] Getting schema at path:', { path, schema: this.schema });
         if (!this.schema) return null;
-        const result = JsonPath.getSchemaAtPath(this.schema as JsonSchemaProperty, path);
-        console.log('[Schema] Found schema:', result);
-        return result;
+        return JsonPath.getSchemaAtPath(this.schema as JsonSchemaProperty, path);
     }
 
     /**
      * 根据路径获取值
      */
     getValueAtPath(path: string): string | undefined {
-        console.log('[Schema] Getting value at path:', path);
         try {
             const content = this.getValue();
             const data = JSON.parse(content);
@@ -332,9 +304,7 @@ export class EditorCore {
                 current = current[part];
             }
             
-            const result = typeof current === 'string' ? current : JSON.stringify(current);
-            console.log('[Schema] Found value:', result);
-            return result;
+            return typeof current === 'string' ? current : JSON.stringify(current);
         } catch (e) {
             console.error('[Schema] Failed to get value at path:', e);
             return undefined;
@@ -432,4 +402,4 @@ export class EditorCore {
             })
         });
     }
-} 
+}

@@ -40,7 +40,6 @@ export function createEditorPlugin(config: EditorConfig) {
         view: ViewUpdate['view'];
 
         constructor(view: ViewUpdate['view']) {
-            console.log('Editor plugin initialized');
             this.view = view;
             this.lastValue = view.state.doc.toString();
             
@@ -104,12 +103,10 @@ export function createEditorPlugin(config: EditorConfig) {
                 if (!this.view.hasFocus && !this.isEditorRelatedElement(activeElement)) {
                     if (focusRetentionStrategy === 'strict') {
                         // 严格模式：主动恢复焦点
-                        console.log('Focus lost to non-editor element, strictly restoring...');
                         this.view.focus();
                     } else {  // soft 模式（默认）
                         // 只在焦点完全丢失（到 body）时恢复
                         if (activeElement === document.body) {
-                            console.log('Focus lost to body, softly restoring...');
                             this.view.focus();
                         }
                     }
@@ -124,7 +121,6 @@ export function createEditorPlugin(config: EditorConfig) {
                     const value = update.state.doc.toString();
                     // 只在值真正变化时处理
                     if (value !== this.lastValue) {
-                        console.log('Document changed:', { valueLength: value.length });
                         this.debouncedDocChange(value);
                     }
                 }
@@ -139,7 +135,6 @@ export function createEditorPlugin(config: EditorConfig) {
                 // 处理文档大小变化
                 if (update.docChanged && config.onDocChanged) {
                     const docSize = update.state.field(docSizeStateField);
-                    console.log('Document size changed:', docSize);
                     try {
                         config.onDocChanged(docSize);
                     } catch (error) {
@@ -156,8 +151,6 @@ export function createEditorPlugin(config: EditorConfig) {
                     // 只有当焦点不在编辑器相关的 UI 元素上时，才考虑恢复焦点
                     if (!this.isEditorRelatedElement(activeElement)) {
                         this.requestFocus();
-                    } else {
-                        console.log('Focus moved to editor UI element, keeping...');
                     }
                 }
                 this.hadFocus = hasFocus;
@@ -166,8 +159,6 @@ export function createEditorPlugin(config: EditorConfig) {
             }
         }
 
-        destroy() {
-            console.log('Editor plugin destroyed');
-        }
+        destroy() {}
     });
-} 
+}
