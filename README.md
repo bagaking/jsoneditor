@@ -2,115 +2,76 @@
 
 [![CI](https://github.com/bagaking/jsoneditor/actions/workflows/ci.yml/badge.svg)](https://github.com/bagaking/jsoneditor/actions/workflows/ci.yml)
 
-一个功能强大的 **JSON 编辑器组件**，支持 *JSON Schema 验证*、*路径高亮*、*主题切换*、*自定义操作*等功能。
+面向 React 应用的 JSON 编辑器组件。它把 CodeMirror 6 的编辑能力、AJV JSON Schema 验证、路径装饰、工具栏、状态栏和 TypeScript 类型封装成一个可发布的组件包，适合放进配置台、规则编辑器、调试面板和低代码表单的 JSON 区域。
 
-📚 [查看完整文档](https://bagaking.github.io/jsoneditor) | [English](./README.en.md)
+📚 [完整文档](https://bagaking.github.io/jsoneditor) | [English](./README.en.md)
 
-## 🌟 特性
+## 组件契约
 
-- 🎨 **主题系统**
-  - 内置明暗主题
-  - 可自定义主题变量
-  - 支持组件级样式定制
-  
-- 🔍 **智能编辑**
-  - 路径高亮和提示
-  - 支持路径点击和自定义操作
-  - 格式化和多级压缩
-  
-- ✨ **Schema 支持**
-  - 基于 JSON Schema 的自动智能补全
-  - 基于 JSON Schema 实时验证和错误排查
-  - 支持枚举、日期、颜色等特殊类型的白屏编辑
-    
-- 🎯 **状态栏**
-  - 光标位置显示
-  - 文档大小统计
-  - 错误信息展示
+- **React 契约**: `react` 和 `react-dom` 是 peer dependencies，支持 `^18.3.0 || ^19.0.0`。
+- **编辑器契约**: CodeMirror 6、AJV 和 `ajv-formats` 是包依赖；Vite library build 会保留这些运行时 import，由消费方打包器解析。
+- **样式契约**: 需要内置样式时，在应用入口导入 `@bagaking/jsoneditor/style.css`。发布包中的 `dist/style.css` 只覆盖组件内置样式；通过 `decorationConfig` 传入的消费方 Tailwind class 必须由消费方自己的 Tailwind content 扫描或 safelist 生成。
+- **发布契约**: 包导出 ESM、CommonJS、TypeScript 声明和 `./style.css`。根入口导出 `JsonEditor`、`EditorCore`、公共配置类型，以及内置 action icon helper。
 
-- 💡 **开发友好**
-  - TypeScript 支持
-  - 丰富的 API
-  - 灵活的扩展机制
-
-## 🚀 快速开始
-
-### 安装
+## 安装
 
 ```bash
 pnpm add @bagaking/jsoneditor
-# 或
+# or
 npm install @bagaking/jsoneditor
-# 或
+# or
 yarn add @bagaking/jsoneditor
 ```
 
-### 兼容性
+```tsx
+import '@bagaking/jsoneditor/style.css';
+import { JsonEditor } from '@bagaking/jsoneditor';
+```
 
-- React peer dependency: `react` 和 `react-dom` 支持 `^18.3.0 || ^19.0.0`。
-- 样式入口: 如需使用组件内置样式，请在应用入口导入 `@bagaking/jsoneditor/style.css`。`dist/style.css` 只覆盖组件内置样式；`decorationConfig` 中传入的消费方 Tailwind class 需要由消费方自己的 Tailwind 构建生成。
-- 包格式: 同时提供 ESM、CommonJS 和 TypeScript 类型声明。
+`dist/style.css` 不会为你的业务 Tailwind class 生成 CSS。如果你在路径装饰里写 `bg-blue-100/30`、`rounded`、`text-green-600` 这类 class，请把对应源码或 safelist 放进应用自己的 Tailwind 配置。
 
-### 基础使用
+## 快速接入
+
+`JsonEditor` 使用 `defaultValue` 初始化内容，并通过 `onValueChange` 回传字符串。需要外部读写编辑器状态时，用 `ref` 访问 `EditorCore`。
 
 ```tsx
+import { useState } from 'react';
+import '@bagaking/jsoneditor/style.css';
 import { JsonEditor } from '@bagaking/jsoneditor';
 
-function App() {
+export function ConfigEditor() {
+  const [value, setValue] = useState('{\n  "env": "prod"\n}');
+
   return (
     <JsonEditor
-      defaultValue={'{"hello": "world"}'}
+      defaultValue={value}
       onValueChange={setValue}
-      onError={setError}
-
-      // 编辑器配置
+      onError={(error) => console.error(error)}
       codeSettings={{
         fontSize: 14,
         lineNumbers: true,
-        bracketMatching: true
+        bracketMatching: true,
+        autoCompletion: true
       }}
-
-      // 主题配置
-      themeConfig={{
-        theme: 'light'
+      themeConfig={{ theme: 'light' }}
+      toolbarConfig={{
+        features: {
+          format: true,
+          minify: true,
+          validate: true,
+          copy: true
+        }
       }}
-
     />
   );
 }
 ```
 
-## 🎮 在线演示
-
-- [CodeSandbox](https://codesandbox.io/s/bagaking-jsoneditor-demo)
-- [StackBlitz](https://stackblitz.com/edit/bagaking-jsoneditor-demo)
-
-或者克隆仓库本地运行：
-
-```bash
-git clone https://github.com/bagaking/jsoneditor.git
-cd jsoneditor
-pnpm install
-pnpm dev
-```
-
-## ✅ 发布前验证
-
-维护者在发布前建议运行：
-
-```bash
-pnpm install --frozen-lockfile
-pnpm build
-pnpm pack:dry-run
-```
-
-CI 会执行 frozen install、build 和 `npm pack --dry-run`，用于确认锁文件、产物和 npm 包内容可发布。
-
-## 📖 高级用法
+## API 场景
 
 ### Schema 验证
 
-本组件使用 [JSON Schema](https://json-schema.org/) 进行数据验证和自动补全。支持 [Draft 2020-12](https://json-schema.org/draft/2020-12/json-schema-core.html) 规范。
+传入 JSON Schema 后，组件会在编辑器内使用 AJV 校验 JSON，并通过 `onError`、状态栏和 schema 信息面板暴露当前错误或字段信息。
 
 ```tsx
 import { JsonEditor } from '@bagaking/jsoneditor';
@@ -120,59 +81,61 @@ const schema = {
   properties: {
     name: {
       type: 'string',
-      description: '项目名称',
-      minLength: 1
+      minLength: 1,
+      description: '项目名称'
     },
     version: {
       type: 'string',
       pattern: '^\\d+\\.\\d+\\.\\d+$',
-      description: '版本号 (Semver)'
+      description: 'Semver 版本'
     }
   },
   required: ['name', 'version']
 };
 
-function App() {
+export function PackageJsonEditor() {
   return (
     <JsonEditor
-      defaultValue={JSON.stringify({
-        name: 'my-project',
-        version: '1.0.0'
-      }, null, 2)}
-      schemaConfig={{
-        schema,
-        validateOnType: true
+      defaultValue={JSON.stringify({ name: 'demo', version: '1.0.0' }, null, 2)}
+      schemaConfig={{ schema }}
+      validationConfig={{ validateOnChange: true }}
+      statusBarConfig={{
+        features: {
+          error: true,
+          cursorPosition: true,
+          documentSize: true,
+          validStatus: true
+        }
       }}
     />
   );
 }
 ```
 
-更多用法请参考 [Schema 验证指南](https://bagaking.github.io/jsoneditor/guide/schema-validation)。
+更多细节见 [Schema 验证指南](https://bagaking.github.io/jsoneditor/guide/schema-validation)。
 
 ### 路径装饰
 
-支持为不同的 JSON 路径添加自定义样式和交互：
-
-下例中的 `italic`、`bg-blue-100/30`、`rounded`、`px-1`、`text-green-600`、`font-medium` 是消费方应用的 Tailwind class。请确保这些 class 会被你的 Tailwind content 扫描或 safelist 覆盖；包内 `dist/style.css` 不会为用户自定义 class 生成样式。
+`decorationConfig.paths` 可以按 JSON path 给 key、value 或两者添加样式、图标和点击回调。内置样式名如 `underline`、`bold`、`italic` 由组件处理；业务 Tailwind class 由消费方构建。
 
 ```tsx
-import { JsonEditor } from '@bagaking/jsoneditor';
+import { JsonEditor, rocketActionIcon } from '@bagaking/jsoneditor';
 
-function App() {
+export function DecoratedEditor() {
   return (
     <JsonEditor
-      defaultValue={value}
+      defaultValue={JSON.stringify({ version: '1.0.0', status: 'active' }, null, 2)}
       decorationConfig={{
         paths: {
-          // 版本号使用特殊样式
           '$["version"]': {
-            style: "italic bg-blue-100/30 rounded px-1",
-            onClick: (value) => console.log('Version:', value)
+            target: 'value',
+            style: 'italic bg-blue-100/30 rounded px-1',
+            onClick: (value) => console.log('version', value)
           },
-          // 状态使用不同颜色
           '$["status"]': {
-            style: "text-green-600 font-medium"
+            target: 'both',
+            style: 'text-green-600 font-medium',
+            icon: rocketActionIcon
           }
         }
       }}
@@ -181,44 +144,83 @@ function App() {
 }
 ```
 
-更多用法请参考 [装饰系统文档](https://bagaking.github.io/jsoneditor/api/decoration)。
+更多细节见 [装饰系统文档](https://bagaking.github.io/jsoneditor/api/decoration)。
 
-### 使用 Ref
+### Imperative ref
+
+`EditorCore` 暴露 `getValue`、`setValue`、`format`、`minify`、`validate`、`focus`、`getValueAtPath` 和 `setValueAtPath` 等方法，适合和外部按钮、表单提交或调试工具联动。
 
 ```tsx
-import { JsonEditor, EditorCore } from '@bagaking/jsoneditor';
 import { useRef } from 'react';
+import { JsonEditor, type EditorCore } from '@bagaking/jsoneditor';
 
-function App() {
+export function RefDrivenEditor() {
   const editorRef = useRef<EditorCore>(null);
-
-  const handleFormat = () => {
-    const value = editorRef.current?.getValue();
-    if (value) {
-      editorRef.current?.setValue(
-        JSON.stringify(JSON.parse(value), null, 2)
-      );
-    }
-  };
 
   return (
     <>
-      <button onClick={handleFormat}>格式化</button>
+      <button
+        type="button"
+        onClick={() => editorRef.current?.format()}
+      >
+        Format
+      </button>
       <JsonEditor
         ref={editorRef}
-        defaultValue={value}
-        onValueChange={setValue}
+        defaultValue={'{"hello":"world"}'}
       />
     </>
   );
 }
 ```
 
+### CodeMirror 扩展
 
-## 🤝 贡献指南
+需要接入额外 CodeMirror 行为时，把扩展数组传给 `extensions`。组件会把它们交给底层 `EditorCore`。
 
-欢迎提交 [Issue](https://github.com/bagaking/jsoneditor/issues) 或 [Pull Request](https://github.com/bagaking/jsoneditor/pulls)!
+```tsx
+import type { Extension } from '@codemirror/state';
+import { JsonEditor } from '@bagaking/jsoneditor';
 
-## 📄 许可证
+export function ExtendedEditor({ extensions }: { extensions: Extension[] }) {
+  return (
+    <JsonEditor
+      defaultValue="{}"
+      extensions={extensions}
+    />
+  );
+}
+```
+
+## 本地开发
+
+```bash
+git clone https://github.com/bagaking/jsoneditor.git
+cd jsoneditor
+pnpm install
+pnpm dev
+```
+
+## 发布前验证
+
+维护者发布前运行：
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+pnpm pack:dry-run
+```
+
+`pnpm build` 会先清理 `dist`，再运行 TypeScript 编译、Vite library build 和 Tailwind 样式构建，生成 `dist/index.js`、`dist/index.cjs`、类型声明和 `dist/style.css`。
+
+`pnpm pack:dry-run` 运行 `scripts/check-pack-manifest.mjs`。它会先要求 `dist` 中存在必需产物，再调用 `npm pack --dry-run --json`，检查发布包是否包含必需入口、类型声明、样式、README 和 LICENSE；同时检查 `dist` 中是否出现非预期产物、不可达 CommonJS chunk、被打进包里的 `react-dom/client` 源码，以及 ESM/CJS 产物是否仍把 `react-dom/client` 保持为 external import/require。
+
+这道门禁验证的是包清单和构建产物边界。它不替代单元测试、浏览器交互测试、文档站检查，也不证明消费方应用的 Tailwind class 已经被正确生成。
+
+## 贡献
+
+欢迎提交 [Issue](https://github.com/bagaking/jsoneditor/issues) 或 [Pull Request](https://github.com/bagaking/jsoneditor/pulls)。
+
+## 许可证
 
 [MIT](./LICENSE)
