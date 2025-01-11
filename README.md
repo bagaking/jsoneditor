@@ -1,5 +1,7 @@
 # @bagaking/jsoneditor
 
+[![CI](https://github.com/bagaking/jsoneditor/actions/workflows/ci.yml/badge.svg)](https://github.com/bagaking/jsoneditor/actions/workflows/ci.yml)
+
 一个功能强大的 **JSON 编辑器组件**，支持 *JSON Schema 验证*、*路径高亮*、*主题切换*、*自定义操作*等功能。
 
 📚 [查看完整文档](https://bagaking.github.io/jsoneditor) | [English](./README.en.md)
