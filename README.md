@@ -53,8 +53,6 @@ function App() {
   return (
     <JsonEditor
       defaultValue={'{"hello": "world"}'}
-      themeConfig={{ theme: 'light' }}
-
       onValueChange={setValue}
       onError={setError}
 
@@ -202,4 +200,4 @@ function App() {
 
 ## 📄 许可证
 
-[MIT](./LICENSE) 
+[MIT](./LICENSE)

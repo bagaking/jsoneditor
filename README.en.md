@@ -53,8 +53,6 @@ function App() {
   return (
     <JsonEditor
       defaultValue={'{"hello": "world"}'}
-      themeConfig={{ theme: 'light' }}
-
       onValueChange={setValue}
       onError={setError}
 
@@ -200,4 +198,4 @@ Contributions are welcome! Feel free to submit [Issues](https://github.com/bagak
 
 ## 📄 License
 
-[MIT](./LICENSE) 
+[MIT](./LICENSE)
