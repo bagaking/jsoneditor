@@ -2,6 +2,14 @@
   "name": "@bagaking/jsoneditor",
   "version": "0.1.14",
   "description": "A powerful JSON editor with schema validation",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bagaking/jsoneditor.git"
+  },
+  "homepage": "https://bagaking.github.io/jsoneditor",
+  "bugs": {
+    "url": "https://github.com/bagaking/jsoneditor/issues"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
