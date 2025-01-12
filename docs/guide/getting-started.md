@@ -232,6 +232,8 @@ const schema = {
 
 ## 事件处理
 
+`JsonEditor` 组件公开的事件 props 只有 `onValueChange`、`onError` 和 `onCopy`。`EditorCore` 内部配置里的 `onChange` 不属于 `JsonEditor` prop；光标状态可通过 ref 方法读取。
+
 ### 值变化
 
 {% raw %}
@@ -240,9 +242,6 @@ const schema = {
   defaultValue={`{}`}
   onValueChange={(value) => {
     console.log('Content changed:', value);
-  }}
-  onChange={(event) => {
-    console.log('Editor changed:', event);
   }}
 />
 ```
@@ -265,14 +264,14 @@ const schema = {
 ```
 {% endraw %}
 
-### 光标移动
+### 复制处理
 
 {% raw %}
 ```tsx
 <JsonEditor
   defaultValue={`{}`}
-  onCursorChange={(position) => {
-    console.log('Cursor moved:', position);
+  onCopy={(content) => {
+    console.log('Copied content:', content);
   }}
 />
 ```

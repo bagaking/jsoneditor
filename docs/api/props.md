@@ -38,8 +38,9 @@ JSON Editor 的配置系统分为几个主要部分：
 |------|------|------|
 | onValueChange | (value: string) => void | 当编辑器内容变化时触发 |
 | onError | (error: Error) => void | 当发生错误时触发（如 JSON 解析错误） |
-| onCursorChange | (position: Position) => void | 当光标位置改变时触发 |
-| onSelectionChange | (selection: Selection) => void | 当选区改变时触发 |
+| onCopy | (content: string) => void | 当工具栏复制内容成功时触发 |
+
+`JsonEditor` 组件当前只公开 `onValueChange`、`onError` 和 `onCopy` 三个事件 props。`EditorCore` 内部配置里的 `onChange` 不是组件 prop，光标与选区状态不通过组件事件 props 暴露。
 
 ### 示例
 
@@ -552,14 +553,16 @@ export interface JsonEditorProps {
   
   onValueChange?: (value: string) => void;
   onError?: (error: Error) => void;
-  onCursorChange?: (position: Position) => void;
-  onSelectionChange?: (selection: Selection) => void;
+  onCopy?: (content: string) => void;
   
   codeSettings?: CodeSettings;
   schemaConfig?: SchemaConfig;
   themeConfig?: ThemeConfig;
   decorationConfig?: DecorationConfig;
+  validationConfig?: ValidationConfig;
+  extensions?: Extension[];
   toolbarConfig?: ToolbarConfig;
+  statusBarConfig?: StatusBarConfig;
   expandOption?: ExpandOption;
 }
 
