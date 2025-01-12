@@ -64,11 +64,6 @@ import { useRef } from 'react';
 function App() {
   const editorRef = useRef<EditorCore>(null);
 
-  // 格式化内容
-  const handleFormat = () => {
-    editorRef.current?.format();
-  };
-
   // 更新内容
   const updateContent = () => {
     editorRef.current?.setValue(JSON.stringify({
@@ -77,10 +72,15 @@ function App() {
     }, null, 2));
   };
 
+  // 读取内容
+  const logContent = () => {
+    console.log(editorRef.current?.getValue());
+  };
+
   return (
     <div>
       <div className="mb-4">
-        <button onClick={handleFormat}>格式化</button>
+        <button onClick={logContent}>读取内容</button>
         <button onClick={updateContent}>更新内容</button>
       </div>
       <JsonEditor
@@ -132,6 +132,8 @@ function App() {
 {% endraw %}
 
 ### 工具栏配置
+
+工具栏按钮由 `JsonEditor` 组件处理。`format`、`minify` 和 `validate` 是工具栏功能开关，不是 `EditorCore` ref 方法。
 
 {% raw %}
 ```tsx
@@ -304,15 +306,15 @@ const value = editorRef.current?.getValue();
 // 设置内容
 editorRef.current?.setValue(JSON.stringify({ name: "New Value" }, null, 2));
 
-// 格式化
-editorRef.current?.format();
+// 获取当前光标偏移
+const cursor = editorRef.current?.getCursorPosition();
 
-// 验证
-const isValid = editorRef.current?.validate();
+// 更新指定 JSON path
+editorRef.current?.setValueAtPath('$.name', 'Updated Value');
 
 // 更新配置
 editorRef.current?.updateConfig({
-  readOnly: true,
+  readonly: true,
   themeConfig: { theme: 'dark' }
 });
 ```
@@ -356,4 +358,4 @@ editorRef.current?.updateConfig({
    - 阅读 [设计文档](../design/architecture.md)
    - 阅读 [名词表](../design/glossary.md)
 
-> 💡 **小贴士**: 建议先熟悉基础功能，再逐步探索高级特性。JSON 编辑器提供了丰富的配置选项，但在开始时使用默认配置通常就能满足大部分需求。 
+> 💡 **小贴士**: 建议先熟悉基础功能，再逐步探索高级特性。JSON 编辑器提供了丰富的配置选项，但在开始时使用默认配置通常就能满足大部分需求。

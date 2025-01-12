@@ -9,7 +9,7 @@ nav_order: 1
 
 # 编辑器 API
 
-> "JSON Editor 提供了丰富的 API 来满足各种编辑需求。让我们从基础用法开始，逐步深入了解它的强大功能。"
+`JsonEditor` 提供 React 组件 API。需要命令式读写内容时，通过 ref 获取 `EditorCore`；格式化、压缩和验证属于组件工具栏与验证配置，不是 ref 方法。
 
 ## 基础用法
 
@@ -47,10 +47,6 @@ import { useRef } from 'react';
 function App() {
   const editorRef = useRef<EditorCore>(null);
 
-  const handleFormat = () => {
-    editorRef.current?.format();
-  };
-
   const updateContent = () => {
     editorRef.current?.setValue(JSON.stringify({
       name: "Updated Content",
@@ -58,10 +54,14 @@ function App() {
     }, null, 2));
   };
 
+  const logContent = () => {
+    console.log(editorRef.current?.getValue());
+  };
+
   return (
     <div>
       <div className="mb-4">
-        <button onClick={handleFormat}>格式化</button>
+        <button onClick={logContent}>读取内容</button>
         <button onClick={updateContent}>更新内容</button>
       </div>
       <JsonEditor
@@ -89,7 +89,6 @@ function App() {
 interface EditorProps {
   // 基础属性
   defaultValue?: string;           // 默认值
-  value?: string;                  // 受控值
   readOnly?: boolean;              // 是否只读
   className?: string;              // 容器类名
   style?: React.CSSProperties;     // 容器样式
@@ -102,22 +101,14 @@ interface EditorProps {
   schemaConfig?: SchemaConfig;     // Schema 配置
   schemaInfoConfig?: SchemaInfoConfig; // Schema 面板配置 - 详见 schema-panel.md
   validationConfig?: ValidationConfig; // 验证配置
-  expandOption?: ExpandOption;     // 展开配置
   decorationConfig?: DecorationConfig; // 装饰配置 - 详见 decoration.md
+  expandOption?: ExpandOption;     // 展开配置
+  extensions?: Extension[];        // CodeMirror 扩展
 
   // 事件处理
   onValueChange?: (value: string) => void;  // 值变化回调
-  onChange?: (event: EditorChangeEvent) => void; // 编辑器变化回调
-  onError?: (error: EditorError) => void;   // 错误回调
-  onCursorChange?: (position: CursorPosition) => void; // 光标变化回调
-  onSelectionChange?: (selection: Selection) => void;  // 选区变化回调
-  onFocus?: () => void;           // 获得焦点回调
-  onBlur?: () => void;            // 失去焦点回调
-
-  // 扩展功能
-  plugins?: EditorPlugin[];       // 插件列表
-  shortcuts?: ShortcutConfig;     // 快捷键配置
-  contextMenu?: ContextMenuConfig; // 右键菜单配置
+  onError?: (error: Error) => void;          // 错误回调
+  onCopy?: (content: string) => void;        // 复制回调
 }
 ```
 
@@ -128,16 +119,11 @@ interface EditorProps {
 ```typescript
 interface CodeSettings {
   fontSize?: number;              // 字体大小
-  fontFamily?: string;            // 字体族
   lineNumbers?: boolean;          // 是否显示行号
-  lineHeight?: number;            // 行高
-  tabSize?: number;              // Tab 大小
   bracketMatching?: boolean;     // 是否启用括号匹配
-  autoCloseBrackets?: boolean;   // 是否自动闭合括号
+  autoCompletion?: boolean;      // 是否启用自动完成
   highlightActiveLine?: boolean; // 是否高亮当前行
-  indentUnit?: number;          // 缩进单位
-  scrollbarStyle?: string;      // 滚动条样式
-  extraKeys?: Record<string, Function>; // 额外的快捷键
+  focusRetentionStrategy?: 'soft' | 'strict' | 'manual';
 }
 ```
 
@@ -148,23 +134,7 @@ interface CodeSettings {
 ```typescript
 interface ThemeConfig {
   theme?: 'light' | 'dark';      // 主题类型
-  vars?: ThemeVariables;         // 主题变量
-  components?: {                 // 组件主题
-    toolbar?: ToolbarTheme;      // 工具栏主题
-    statusBar?: StatusBarTheme;  // 状态栏主题
-    schemaInfo?: SchemaInfoTheme; // Schema 面板主题
-  };
-  code?: CodeTheme;             // 代码主题
-}
-
-interface ThemeVariables {
-  primary?: string;             // 主色
-  secondary?: string;           // 次色
-  error?: string;              // 错误色
-  warning?: string;            // 警告色
-  success?: string;            // 成功色
-  info?: string;               // 信息色
-  // ... 其他主题变量
+  themeExtensions?: Extension[]; // 自定义 CodeMirror 主题扩展
 }
 ```
 
@@ -175,26 +145,34 @@ interface ThemeVariables {
 ```typescript
 interface ValidationConfig {
   validateOnChange?: boolean;    // 是否在变化时验证
-  validateOnBlur?: boolean;      // 是否在失焦时验证
-  validateDebounce?: number;     // 验证防抖时间
-  validateMode?: 'strict' | 'loose'; // 验证模式
-  errorHandler?: (errors: ValidationError[]) => void; // 错误处理器
+  autoFormat?: boolean;          // 是否自动格式化
 }
 ```
 
-### EditorError
+### ToolbarConfig
 
-编辑器错误类型。
+工具栏配置控制组件内置按钮。格式化、压缩、验证按钮由 `JsonEditor` 处理，不通过 `EditorCore` ref 调用。
 
 ```typescript
-interface EditorError {
-  name: string;                 // 错误名称
-  message: string;              // 错误信息
-  stack?: string;              // 错误堆栈
-  severity?: 'error' | 'warning' | 'info'; // 错误级别
-  path?: string[];             // 错误路径
-  line?: number;               // 错误行号
-  column?: number;             // 错误列号
+interface ToolbarConfig {
+  position?: 'top' | 'bottom' | 'none';
+  className?: string;
+  style?: React.CSSProperties;
+  features?: {
+    format?: boolean;
+    minify?: boolean;
+    validate?: boolean;
+    copy?: boolean;
+    expand?: boolean;
+  };
+  customButtons?: Array<{
+    key: string;
+    render: (editor: EditorCore) => React.ReactNode;
+  }>;
+  buttonOrder?: string[];
+  buttonGroups?: ButtonGroup[];
+  buttonStyles?: Record<string, ButtonStyle>;
+  dividerStyle?: React.CSSProperties;
 }
 ```
 
@@ -207,64 +185,31 @@ interface EditorCore {
   // 内容操作
   getValue(): string;                    // 获取内容
   setValue(value: string): void;         // 设置内容
-  format(): void;                        // 格式化内容
-  validate(): boolean;                   // 验证内容
-  
-  // 配置操作
-  updateConfig(config: Partial<EditorProps>): void; // 更新配置
-  
-  // 光标操作
-  getCursor(): CursorPosition;           // 获取光标位置
-  setCursor(position: CursorPosition): void; // 设置光标位置
-  
-  // 选区操作
-  getSelection(): Selection;             // 获取选区
-  setSelection(selection: Selection): void; // 设置选区
-  
-  // 历史操作
-  undo(): void;                         // 撤销
-  redo(): void;                         // 重做
-  
-  // 视图操作
-  focus(): void;                        // 获得焦点
-  blur(): void;                         // 失去焦点
-  refresh(): void;                      // 刷新视图
+
+  // 路径和 Schema
+  getCursorPosition(): number | null;    // 获取当前光标偏移
+  getSchemaPathAtPosition(pos: number): string | null;
+  getSchemaAtPath(path: string): JsonSchemaProperty | null;
+  getValueAtPath(path: string): string | undefined;
+  setValueAtPath(path: string, value: string): boolean;
+
+  // 视图和扩展
+  getLineEndPosition(line: number): number;
+  scrollToLine(line: number): void;
+  addExtension(extension: Extension): void;
+  removeExtension(extension: Extension): void;
+
+  // 配置和生命周期
+  updateConfig(config: EditorConfig): void;
+  destroy(): void;
 }
 ```
 
-### 扩展方法
+工具栏按钮可以开启格式化、压缩和验证，但这些动作由 `JsonEditor` 组件处理。自定义按钮的 `render` 回调拿到的是 `EditorCore`，只能调用上面列出的实例方法。
 
-```typescript
-interface EditorCore {
-  // 插件操作
-  registerPlugin(plugin: EditorPlugin): void;  // 注册插件
-  unregisterPlugin(name: string): void;        // 注销插件
-  
-  // 快捷键操作
-  registerShortcut(key: string, fn: Function): void;  // 注册快捷键
-  unregisterShortcut(key: string): void;             // 注销快捷键
-  
-  // 右键菜单操作
-  registerContextMenu(item: ContextMenuItem): void;   // 注册菜单项
-  unregisterContextMenu(key: string): void;          // 注销菜单项
-}
-```
+## 事件边界
 
-## 事件类型
-
-### EditorChangeEvent
-
-编辑器变化事件。
-
-```typescript
-interface EditorChangeEvent {
-  type: 'value' | 'cursor' | 'selection' | 'config'; // 变化类型
-  value?: string;                      // 变化的值
-  cursor?: CursorPosition;             // 变化的光标位置
-  selection?: Selection;               // 变化的选区
-  config?: Partial<EditorProps>;       // 变化的配置
-}
-```
+组件当前公开三个事件入口：`onValueChange` 接收最新字符串，`onError` 接收解析或验证错误，`onCopy` 接收被复制的内容。光标变化和选区变化用于组件内部状态，不是公开 props。
 
 ## 使用示例
 
@@ -292,27 +237,34 @@ interface EditorChangeEvent {
   
   // 验证配置
   validationConfig={{
-    validateOnChange: true,
-    validateDebounce: 300
+    validateOnChange: true
   }}
-  
-  // 快捷键配置
-  shortcuts={{
-    'Ctrl-S': (editor) => {
-      // 保存操作
-    }
+
+  // 工具栏配置
+  toolbarConfig={{
+    features: {
+      format: true,
+      minify: true,
+      validate: true,
+      copy: true
+    },
+    customButtons: [{
+      key: 'update-version',
+      render: (editor) => (
+        <button onClick={() => editor.setValueAtPath('$.version', '2.0.0')}>
+          更新版本
+        </button>
+      )
+    }]
   }}
-  
-  // 右键菜单配置
-  contextMenu={{
-    items: [
-      {
-        key: 'format',
-        label: '格式化',
-        onClick: (editor) => editor.format()
-      }
-    ]
+
+  // 事件处理
+  onValueChange={(value) => {
+    console.log('Content changed:', value);
+  }}
+  onError={(error) => {
+    console.error('Editor error:', error.message);
   }}
 />
 ```
-{% endraw %} 
+{% endraw %}
