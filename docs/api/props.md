@@ -350,7 +350,7 @@ JSON Editor 的配置系统分为几个主要部分：
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | features | ToolbarFeatures | - | 功能开关配置 |
-| customButtons | CustomButton[] | - | 自定义按钮 |
+| customButtons | Array<{ key: string; render: (editor: EditorCore) => React.ReactNode }> | - | 自定义按钮，按钮内容和交互由 `render` 返回的 React 节点实现 |
 | buttonStyles | ButtonStyles | - | 按钮样式配置 |
 
 ### 示例
@@ -376,16 +376,21 @@ JSON Editor 的配置系统分为几个主要部分：
       expand: true
     },
     
-    // 自定义按钮
+    // 自定义按钮，每一项只接收 key 和 render
     customButtons: [
       {
         key: 'save',
-        icon: <SaveIcon />,
-        tooltip: '保存',
-        onClick: (editor) => {
-          const value = editor.getValue();
-          saveToServer(value);
-        }
+        render: (editor) => (
+          <Button
+            aria-label="保存"
+            title="保存"
+            icon={<SaveIcon />}
+            onClick={() => {
+              const value = editor.getValue();
+              saveToServer(value);
+            }}
+          />
+        )
       },
       {
         key: 'preview',
