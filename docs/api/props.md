@@ -542,7 +542,7 @@ JSON Editor 的配置系统分为几个主要部分：
 
 ## 类型定义
 
-完整的类型定义请参考 [types.ts](https://github.com/bagaking/jsoneditor/blob/main/src/types.ts)。
+完整的类型定义请参考 [types.ts](https://github.com/bagaking/jsoneditor/blob/main/src/ui/types.ts)。
 
 ```typescript
 export interface JsonEditorProps {
@@ -561,8 +561,9 @@ export interface JsonEditorProps {
   decorationConfig?: DecorationConfig;
   validationConfig?: ValidationConfig;
   extensions?: Extension[];
-  toolbarConfig?: ToolbarConfig;
+  toolbarConfig?: ToolbarConfig & ComponentStyles;
   statusBarConfig?: StatusBarConfig;
+  schemaInfoConfig?: SchemaInfoConfig;
   expandOption?: ExpandOption;
 }
 
