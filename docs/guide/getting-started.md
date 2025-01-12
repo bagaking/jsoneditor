@@ -145,9 +145,12 @@ function App() {
       background: '#f5f5f5'
     },
     
-    // 按钮配置
-    buttonStyles: {
-      format: { color: '#1890ff' }
+    // 功能开关
+    features: {
+      format: true,
+      minify: true,
+      validate: true,
+      copy: true
     }
   }}
 />
@@ -155,6 +158,8 @@ function App() {
 {% endraw %}
 
 ### 状态栏配置
+
+当前组件会显示错误、验证状态、光标位置和文档大小；`statusBarConfig` 只接收状态栏容器的 `className` 和 `style`。
 
 {% raw %}
 ```tsx
@@ -164,12 +169,6 @@ function App() {
     className: 'custom-status',
     style: { 
       background: '#f9f9f9'
-    },
-    
-    // 功能配置
-    features: {
-      showError: true,
-      showCursor: true
     }
   }}
 />
@@ -204,14 +203,15 @@ const schema = {
     "age": 30
   }`}
   schemaConfig={{
-    schema: schema,
-    validateOnType: true
+    schema: schema
   }}
 />
 ```
 {% endraw %}
 
 ### Schema 面板
+
+当前组件会在光标命中 schema 字段时显示 Schema 信息面板；`schemaInfoConfig` 只接收面板容器的 `className` 和 `style`。
 
 {% raw %}
 ```tsx
@@ -220,11 +220,8 @@ const schema = {
     schema: schema
   }}
   schemaInfoConfig={{
-    layout: {
-      showDescription: true,
-      showPath: true,
-      showType: true
-    }
+    className: 'custom-schema-panel',
+    style: { borderTop: '1px solid #bfdbfe' }
   }}
 />
 ```

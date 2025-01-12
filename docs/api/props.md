@@ -82,26 +82,21 @@ JSON Editor 的配置系统分为几个主要部分：
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | fontSize | number | 14 | 编辑器字体大小 |
-| fontFamily | string | 'monospace' | 编辑器字体 |
 | lineNumbers | boolean | true | 是否显示行号 |
-| lineHeight | number | 1.5 | 行高 |
+| focusRetentionStrategy | 'soft' \| 'strict' \| 'manual' | 'manual' | 编辑器焦点保持策略 |
 
 ### 编辑功能
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | bracketMatching | boolean | true | 是否启用括号匹配 |
-| autoCloseBrackets | boolean | true | 是否自动闭合括号 |
 | autoCompletion | boolean | true | 是否启用自动完成 |
-| tabSize | number | 2 | Tab 缩进空格数 |
 
 ### 视觉效果
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | highlightActiveLine | boolean | true | 是否高亮当前行 |
-| highlightSelectionMatches | boolean | true | 是否高亮选中文本的匹配项 |
-| cursorBlinkRate | number | 1200 | 光标闪烁频率(ms) |
 
 ### 示例
 
@@ -111,20 +106,15 @@ JSON Editor 的配置系统分为几个主要部分：
   codeSettings={{
     // 基础设置
     fontSize: 14,
-    fontFamily: "Fira Code, monospace",
     lineNumbers: true,
-    lineHeight: 1.6,
+    focusRetentionStrategy: "manual",
     
     // 编辑功能
     bracketMatching: true,
-    autoCloseBrackets: true,
     autoCompletion: true,
-    tabSize: 2,
     
     // 视觉效果
-    highlightActiveLine: true,
-    highlightSelectionMatches: true,
-    cursorBlinkRate: 800
+    highlightActiveLine: true
   }}
 />
 ```
@@ -139,16 +129,6 @@ JSON Editor 的配置系统分为几个主要部分：
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | schema | object | - | JSON Schema 定义对象 |
-| validateOnType | boolean | true | 是否在输入时实时验证 |
-| validateDebounce | number | 300 | 验证防抖时间(ms) |
-
-### 高级配置
-
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| customFormats | Record<string, FormatValidator> | - | 自定义格式验证器 |
-| customKeywords | Record<string, KeywordDefinition> | - | 自定义关键字 |
-| errorMessages | Record<string, string> | - | 自定义错误消息 |
 
 ### 示例
 
@@ -185,24 +165,7 @@ JSON Editor 的配置系统分为几个主要部分：
       required: ["name", "email"]
     },
     
-    // 验证配置
-    validateOnType: true,
-    validateDebounce: 500,
-    
-    // 自定义格式
-    customFormats: {
-      "chinese-mobile": {
-        validate: (str) => /^1[3-9]\d{9}$/.test(str),
-        message: "请输入有效的中国大陆手机号"
-      }
-    },
-    
-    // 自定义错误消息
-    errorMessages: {
-      required: "该字段不能为空",
-      minLength: "长度不能小于 {limit} 个字符",
-      format: "格式不正确"
-    }
+    // 当前组件会用该 schema 进行 AJV 验证和字段信息提示
   }}
 />
 ```
@@ -216,15 +179,7 @@ JSON Editor 的配置系统分为几个主要部分：
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| theme | 'light' \| 'dark' \| Extension[] | 'light' | 主题类型或自定义主题 |
-| themeExtensions | Extension[] | - | 主题扩展配置 |
-
-### 变量配置
-
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| vars | ThemeVariables | 主题变量覆盖 |
-| components | ComponentStyles | 组件样式覆盖 |
+| theme | 'light' \| 'dark' | 'light' | 内置主题类型 |
 
 ### 示例
 
@@ -233,27 +188,7 @@ JSON Editor 的配置系统分为几个主要部分：
 <JsonEditor
   themeConfig={{
     // 基础主题
-    theme: 'dark',
-    
-    // 主题变量
-    vars: {
-      primary: '#1890ff',
-      editorBg: '#282c34',
-      editorFg: '#abb2bf',
-      selectionBg: '#3E4451'
-    },
-    
-    // 组件样式
-    components: {
-      toolbar: {
-        background: '#21252b',
-        buttonHoverBg: '#2c313a'
-      },
-      statusBar: {
-        background: '#21252b',
-        textColor: '#9da5b4'
-      }
-    }
+    theme: 'dark'
   }}
 />
 ```
@@ -267,16 +202,17 @@ JSON Editor 的配置系统分为几个主要部分：
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
-| paths | Record<string, PathDecoration> | 路径装饰配置映射 |
+| paths | Record<string, DecorationPathHook> | 路径装饰配置映射 |
 | urlHandler | URLHandler | URL 点击处理配置 |
 
-### PathDecoration
+### DecorationPathHook
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | style | string \| CustomComponent | 装饰样式或自定义组件 |
 | onClick | (value: any) => void | 点击回调函数 |
-| tooltip | string \| React.ReactNode | 悬浮提示内容 |
+| target | 'key' \| 'value' \| 'both' | 装饰目标 |
+| icon | string \| React.ReactNode | 操作按钮图标 |
 
 ### 示例
 
@@ -287,46 +223,22 @@ JSON Editor 的配置系统分为几个主要部分：
     paths: {
       // 版本号装饰
       '$["version"]': {
+        target: "value",
         style: "italic bg-blue-100/30 rounded px-1",
-        onClick: (value) => showVersionHistory(value),
-        tooltip: "点击查看版本历史"
+        onClick: (value) => showVersionHistory(value)
       },
       
       // 状态装饰
       '$["status"]': {
-        style: (value) => ({
-          color: value === 'active' ? '#52c41a' : '#ff4d4f',
-          fontWeight: 'bold'
-        }),
-        tooltip: "项目状态"
-      },
-      
-      // 时间装饰
-      '$["createdAt"]': {
-        style: {
-          type: 'component',
-          render: ({ value }) => (
-            <TimeDisplay 
-              time={value}
-              format="YYYY-MM-DD HH:mm:ss"
-            />
-          )
-        }
+        target: "both",
+        style: "text-green-600 font-medium"
       }
     },
     
     // URL 处理
     urlHandler: {
-      component: ({ url }) => (
-        <a 
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500 hover:underline"
-        >
-          {url}
-        </a>
-      )
+      openInNewTab: true,
+      onClick: (url) => console.log("open url", url)
     }
   }}
 />
@@ -341,7 +253,7 @@ JSON Editor 的配置系统分为几个主要部分：
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| position | 'top' \| 'bottom' \| 'none' | 'top' | 工具栏位置 |
+| position | 'none' | - | 设为 `none` 时隐藏工具栏；其他位置值当前不改变布局 |
 | className | string | - | 自定义类名 |
 | style | React.CSSProperties | - | 自定义样式 |
 
@@ -351,7 +263,6 @@ JSON Editor 的配置系统分为几个主要部分：
 |------|------|--------|------|
 | features | ToolbarFeatures | - | 功能开关配置 |
 | customButtons | Array<{ key: string; render: (editor: EditorCore) => React.ReactNode }> | - | 自定义按钮，按钮内容和交互由 `render` 返回的 React 节点实现 |
-| buttonStyles | ButtonStyles | - | 按钮样式配置 |
 
 ### 示例
 
@@ -406,23 +317,7 @@ JSON Editor 的配置系统分为几个主要部分：
           </Button>
         )
       }
-    ],
-    
-    // 按钮样式
-    buttonStyles: {
-      base: {
-        height: '32px',
-        padding: '0 12px',
-        borderRadius: '4px',
-        transition: 'all 0.3s'
-      },
-      hover: {
-        background: 'rgba(0,0,0,0.04)'
-      },
-      active: {
-        background: 'rgba(0,0,0,0.08)'
-      }
-    }
+    ]
   }}
 />
 ```
@@ -436,8 +331,8 @@ JSON Editor 的配置系统分为几个主要部分：
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| defaultExpanded | boolean | false | 默认是否展开 |
-| collapsedLines | number | - | 收起状态显示的行数 |
+| defaultExpanded | boolean | true | 默认是否展开 |
+| collapsedLines | number | 5 | 收起状态显示的行数 |
 
 ### 动画配置
 
@@ -502,7 +397,6 @@ JSON Editor 的配置系统分为几个主要部分：
    {% endraw %}
 
 2. **性能优化**
-   - 使用 `validateDebounce` 控制验证频率
    - 避免过于频繁的 `onValueChange` 处理
    - 合理使用 `React.memo` 包装自定义组件
 
@@ -534,10 +428,7 @@ JSON Editor 的配置系统分为几个主要部分：
    
    <JsonEditor
      themeConfig={{
-       theme,
-       // 确保主题相关的配置随主题切换而更新
-       vars: theme === 'dark' ? darkVars : lightVars,
-       components: theme === 'dark' ? darkComponents : lightComponents
+       theme
      }}
    />
    ```
