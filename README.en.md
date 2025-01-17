@@ -205,11 +205,12 @@ Maintainers should run:
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm build
-pnpm pack:dry-run
+pnpm verify
 ```
 
-`pnpm build` cleans `dist`, runs TypeScript compilation, runs the Vite library build, and builds Tailwind output for `dist/style.css`. The expected outputs include `dist/index.js`, `dist/index.cjs`, TypeScript declarations, and `dist/style.css`.
+`pnpm verify` runs the repository hygiene check, library build, demo build, and package dry run. CI uses the same entrypoint so local release readiness and GitHub Actions do not drift.
+
+`pnpm check:repo` rejects accidentally tracked build output, OS metadata, local home-directory absolute paths, and obvious credential-like assignments. `pnpm build` cleans `dist`, runs TypeScript compilation, runs the Vite library build, and builds Tailwind output for `dist/style.css`. The expected outputs include `dist/index.js`, `dist/index.cjs`, TypeScript declarations, and `dist/style.css`.
 
 `pnpm pack:dry-run` runs `scripts/check-pack-manifest.mjs`. The script first requires the expected `dist` artifacts, then invokes `npm pack --dry-run --json` and checks that the package contains the required entry files, declarations, style file, README, and LICENSE. It also rejects unexpected `dist` artifacts, unreachable CommonJS chunks, bundled `react-dom/client` source, and ESM/CJS outputs that fail to keep `react-dom/client` as an external import/require.
 

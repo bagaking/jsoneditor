@@ -32,11 +32,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
-
-      - name: Build demo
-        run: pnpm demo:build
-
-      - name: Package dry run
-        run: pnpm pack:dry-run
+      - name: Verify
+        run: pnpm verify

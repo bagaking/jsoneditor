@@ -206,11 +206,12 @@ pnpm dev
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm build
-pnpm pack:dry-run
+pnpm verify
 ```
 
-`pnpm build` 会先清理 `dist`，再运行 TypeScript 编译、Vite library build 和 Tailwind 样式构建，生成 `dist/index.js`、`dist/index.cjs`、类型声明和 `dist/style.css`。
+`pnpm verify` 会运行仓库卫生检查、library build、demo build 和 package dry run。CI 也使用同一个入口，避免本地发布前验证和 GitHub Actions 漂移。
+
+`pnpm check:repo` 会拒绝误跟踪的构建产物、OS 元数据、本机 home 绝对路径和明显的 credential-like 赋值。`pnpm build` 会先清理 `dist`，再运行 TypeScript 编译、Vite library build 和 Tailwind 样式构建，生成 `dist/index.js`、`dist/index.cjs`、类型声明和 `dist/style.css`。
 
 `pnpm pack:dry-run` 运行 `scripts/check-pack-manifest.mjs`。它会先要求 `dist` 中存在必需产物，再调用 `npm pack --dry-run --json`，检查发布包是否包含必需入口、类型声明、样式、README 和 LICENSE；同时检查 `dist` 中是否出现非预期产物、不可达 CommonJS chunk、被打进包里的 `react-dom/client` 源码，以及 ESM/CJS 产物是否仍把 `react-dom/client` 保持为 external import/require。
 
