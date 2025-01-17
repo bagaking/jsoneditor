@@ -1,49 +1,17 @@
 ---
 layout: default
 title: Schema 验证
-description: JSON Editor Schema 验证功能文档，包含验证规则、错误处理和自定义验证器的详细说明
-keywords: JSON Editor, Schema Validation, JSON Schema, Validation Rules, Error Handling, Custom Validators
+description: JSON Editor 当前 Schema 验证配置边界
+keywords: JSON Editor, Schema Validation, JSON Schema, AJV, Error Handling
 parent: API 参考
 nav_order: 6
 ---
 
 # Schema 验证
 
-> "Schema 验证不仅是一种约束，更是一种保护。它帮助我们在编辑过程中及时发现问题，确保数据的正确性和一致性。"
+`JsonEditor` 使用 AJV 和 `ajv-formats` 验证当前 JSON 内容。当前公开入口是 `schemaConfig.schema`、`validationConfig.validateOnChange` 和 `onError`。
 
-## 基础概念
-
-### 什么是 Schema 验证？
-
-Schema 验证是一种确保 JSON 数据符合预定义结构和规则的机制。通过 Schema，我们可以：
-
-- 定义数据的类型和格式
-- 设置必填字段
-- 限制数值范围
-- 指定字符串模式
-- 定义复杂的嵌套结构
-- 添加字段说明
-
-### 为什么需要 Schema 验证？
-
-1. **数据质量保证**
-   - 防止数据类型错误
-   - 确保必填字段存在
-   - 验证数据格式正确
-
-2. **开发体验提升**
-   - 实时错误提示
-   - 智能字段提示
-   - 自动完成建议
-
-3. **文档化支持**
-   - 字段说明文档化
-   - 数据结构可视化
-   - 接口约定明确化
-
-## 配置 Schema
-
-### 基础配置
+## 基础配置
 
 {% raw %}
 ```tsx
@@ -52,12 +20,8 @@ const schema = {
   properties: {
     name: {
       type: 'string',
+      minLength: 1,
       description: '用户名称'
-    },
-    age: {
-      type: 'number',
-      minimum: 0,
-      maximum: 120
     },
     email: {
       type: 'string',
@@ -68,282 +32,72 @@ const schema = {
 };
 
 <JsonEditor
-  schemaConfig={{
-    schema: schema,
-    validateOnType: true
+  schemaConfig={{ schema }}
+  validationConfig={{ validateOnChange: true }}
+  onError={(error) => {
+    console.error('Schema validation error:', error.message);
   }}
 />
 ```
 {% endraw %}
 
-### 验证时机
+## 支持范围
 
-{% raw %}
-```tsx
-<JsonEditor
-  schemaConfig={{
-    schema: schema,
-    validateOnType: true,    // 输入时验证
-    validateOnBlur: true,    // 失焦时验证
-    validateOnChange: true   // 内容变化时验证
-  }}
-/>
-```
-{% endraw %}
-
-### 验证配置
-
-{% raw %}
-```tsx
-<JsonEditor
-  validationConfig={{
-    validateOnChange: true,
-    validateDebounce: 300,   // 验证防抖
-    validateMode: 'strict'   // 严格模式
-  }}
-/>
-```
-{% endraw %}
-
-## Schema 定义
-
-### 基础类型
+Schema 对象会交给 AJV 编译和验证。AJV 支持的标准 JSON Schema 关键字可以直接写在 `schemaConfig.schema` 内，例如：
 
 ```json
 {
   "type": "object",
   "properties": {
-    "string_field": {
+    "version": {
       "type": "string",
-      "minLength": 2,
-      "maxLength": 100
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
     },
-    "number_field": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 100
-    },
-    "boolean_field": {
+    "enabled": {
       "type": "boolean"
-    },
-    "array_field": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "minItems": 1,
-      "maxItems": 5
-    }
-  }
-}
-```
-
-### 复杂类型
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "user": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "contacts": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": ["email", "phone"]
-              },
-              "value": {
-                "type": "string"
-              }
-            },
-            "required": ["type", "value"]
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-### 条件验证
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "type": {
-      "type": "string",
-      "enum": ["personal", "business"]
-    },
-    "taxId": {
-      "type": "string"
     }
   },
-  "required": ["type"],
-  "if": {
-    "properties": {
-      "type": { "const": "business" }
-    }
-  },
-  "then": {
-    "required": ["taxId"]
-  }
+  "required": ["version"]
 }
 ```
+
+`ajv-formats` 已启用，因此常见格式如 `email`、`uri`、`date-time` 可用于 Schema。
 
 ## 错误处理
 
-### 基础错误处理
+验证失败时，组件会更新内部错误状态，并通过 `onError` 传出 `Error`：
 
 {% raw %}
 ```tsx
 <JsonEditor
-  schemaConfig={{
-    schema: schema
-  }}
+  schemaConfig={{ schema }}
+  validationConfig={{ validateOnChange: true }}
   onError={(error) => {
-    if (error.name === 'ValidationError') {
-      console.error('验证错误:', error.message);
-      // 处理验证错误...
-    }
+    notification.error({
+      message: '验证错误',
+      description: error.message
+    });
   }}
 />
 ```
 {% endraw %}
 
-### 自定义错误展示
+当前组件没有公开的 `errorRenderer`、`errorHandler`、`validateMode` 或验证防抖配置。
+
+## Schema 面板
+
+当光标位置能映射到 `schemaConfig.schema` 中的字段时，组件会显示内部 Schema 信息面板。当前 `schemaInfoConfig` 只透传面板容器的 `className` 和 `style`：
 
 {% raw %}
 ```tsx
 <JsonEditor
-  schemaConfig={{
-    schema: schema,
-    errorRenderer: (error) => ({
-      message: `${error.path}: ${error.message}`,
-      type: error.severity
-    })
-  }}
-/>
-```
-{% endraw %}
-
-### 错误聚合
-
-{% raw %}
-```tsx
-<JsonEditor
-  validationConfig={{
-    // 聚合多个错误
-    validateMode: 'collect',
-    // 错误处理器
-    errorHandler: (errors) => {
-      const messages = errors.map(err => 
-        `${err.path}: ${err.message}`
-      );
-      notification.error({
-        message: '验证错误',
-        description: messages.join('\n')
-      });
-    }
-  }}
-/>
-```
-{% endraw %}
-
-## Schema 面板配置
-
-### 基础配置
-
-{% raw %}
-```tsx
-<JsonEditor
+  schemaConfig={{ schema }}
   schemaInfoConfig={{
-    layout: {
-      showDescription: true,  // 显示描述
-      showPath: true,         // 显示路径
-      showType: true,         // 显示类型
-      showRequired: true      // 显示必填标记
-    }
+    className: 'custom-schema-panel',
+    style: { borderTop: '1px solid #bfdbfe' }
   }}
 />
 ```
 {% endraw %}
 
-### 自定义显示
-
-{% raw %}
-```tsx
-<JsonEditor
-  schemaInfoConfig={{
-    layout: {
-      order: ['description', 'type', 'required'],
-      dividerStyle: { margin: '0 8px' }
-    },
-    format: {
-      // 自定义类型显示
-      type: (type, format) => {
-        if (format) return `${type} (${format})`;
-        return type;
-      },
-      // 自定义描述显示
-      description: (desc) => marked(desc)
-    }
-  }}
-/>
-```
-{% endraw %}
-
-## 最佳实践
-
-1. **Schema 设计**
-   - 保持 Schema 结构清晰
-   - 添加有意义的描述
-   - 合理使用必填字段
-   - 适当设置默认值
-
-2. **验证配置**
-   - 根据场景选择验证时机
-   - 合理设置验证防抖
-   - 选择合适的验证模式
-
-3. **错误处理**
-   - 提供友好的错误提示
-   - 合理分类错误类型
-   - 适当聚合错误信息
-
-4. **性能优化**
-   - 避免过于复杂的 Schema
-   - 合理使用验证防抖
-   - 按需加载 Schema
-
-## 常见问题
-
-### 1. 验证不生效
-
-检查以下几点：
-- Schema 格式是否正确
-- 验证配置是否启用
-- 验证时机是否合适
-
-### 2. 性能问题
-
-优化建议：
-- 使用验证防抖
-- 简化 Schema 结构
-- 避免频繁验证
-
-### 3. 错误提示不友好
-
-改进方法：
-- 自定义错误渲染
-- 添加详细的描述
-- 使用多语言支持
-
-> 💡 **小贴士**: Schema 验证是保证数据质量的重要手段，但也要注意平衡验证的严格程度和用户体验。过于严格的验证可能会影响用户的编辑效率，而过于宽松的验证可能会导致数据质量问题。找到合适的平衡点是关键。 
+当前组件没有公开的 Schema 面板布局、格式化器或输入控件配置。

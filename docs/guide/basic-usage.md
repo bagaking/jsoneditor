@@ -175,16 +175,13 @@ editorRef.current?.updateConfig({
 ```tsx
 <JsonEditor
   toolbarConfig={{
-    // 自定义按钮样式
-    buttonStyles: {
-      format: { color: '#1890ff' },
-      validate: { color: '#52c41a' }
-    },
-    // 按钮分组
-    buttonGroups: [
-      ['format', 'validate'],
-      ['copy', 'expand']
-    ]
+    features: {
+      format: true,
+      minify: true,
+      validate: true,
+      copy: true,
+      expand: true
+    }
   }}
 />
 ```
@@ -208,32 +205,7 @@ editorRef.current?.updateConfig({
 ```
 {% endraw %}
 
-### 功能定制
-
-{% raw %}
-```tsx
-<JsonEditor
-  statusBarConfig={{
-    features: {
-      showError: true,      // 显示错误
-      showCursor: true,     // 显示光标位置
-      showSize: true,       // 显示文档大小
-      showValid: true       // 显示验证状态
-    },
-    format: {
-      // 自定义光标位置显示
-      cursor: (line, col) => `第 ${line} 行，第 ${col} 列`,
-      // 自定义文档大小显示
-      size: (lines, bytes) => 
-        `${lines} 行 / ${(bytes/1024).toFixed(1)}KB`,
-      // 自定义验证状态显示
-      valid: (isValid) => 
-        isValid ? '✅ 验证通过' : '❌ 验证失败'
-    }
-  }}
-/>
-```
-{% endraw %}
+状态栏当前显示错误、验证状态、光标位置和文档大小；配置只透传容器 `className` 与 `style`。
 
 ## Schema 面板
 
@@ -242,41 +214,16 @@ editorRef.current?.updateConfig({
 {% raw %}
 ```tsx
 <JsonEditor
+  schemaConfig={{ schema }}
   schemaInfoConfig={{
-    layout: {
-      showDescription: true,  // 显示描述
-      showPath: true,         // 显示路径
-      showType: true,         // 显示类型
-      showRequired: true      // 显示必填标记
-    }
+    className: 'custom-schema-panel',
+    style: { borderTop: '1px solid #bfdbfe' }
   }}
 />
 ```
 {% endraw %}
 
-### 自定义显示
-
-{% raw %}
-```tsx
-<JsonEditor
-  schemaInfoConfig={{
-    layout: {
-      order: ['description', 'type', 'required'],
-      dividerStyle: { margin: '0 8px' }
-    },
-    format: {
-      // 自定义类型显示
-      type: (type, format) => {
-        if (format) return `${type} (${format})`;
-        return type;
-      },
-      // 自定义描述显示
-      description: (desc) => marked(desc)
-    }
-  }}
-/>
-```
-{% endraw %}
+Schema 面板当前会在光标命中 schema 字段时显示字段信息；配置只透传容器 `className` 与 `style`。
 
 ## 展开控制
 
@@ -286,8 +233,13 @@ editorRef.current?.updateConfig({
 ```tsx
 <JsonEditor
   expandOption={{
-    defaultExpand: true,  // 默认展开所有节点
-    maxExpandDepth: 3     // 最大展开深度
+    defaultExpanded: true,
+    collapsedLines: 10,
+    animation: {
+      enabled: true,
+      duration: 300,
+      timing: 'ease-in-out'
+    }
   }}
 />
 ```
@@ -315,8 +267,7 @@ editorRef.current?.updateConfig({
 ```tsx
 <JsonEditor
   schemaConfig={{
-    schema: mySchema,
-    validateOnType: true
+    schema: mySchema
   }}
   validationConfig={{
     validateOnChange: true
@@ -349,8 +300,7 @@ function App() {
     <JsonEditor
       onValueChange={handleChange}
       validationConfig={{
-        validateOnChange: true,
-        validateDebounce: 300
+        validateOnChange: true
       }}
     />
   );
@@ -407,4 +357,4 @@ function App() {
    - 避免不必要的配置更新
    - 合理设置验证时机
 
-> 💡 **小贴士**: 编辑器的基础功能已经能满足大多数使用场景。在添加更多高级特性之前，建议先充分利用好这些基础功能。合理的配置组合往往能实现意想不到的效果。 
+> 💡 **小贴士**: 编辑器的基础功能已经能满足大多数使用场景。在添加更多高级特性之前，建议先充分利用好这些基础功能。合理的配置组合往往能实现意想不到的效果。

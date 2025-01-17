@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 状态栏配置
-description: JSON Editor 状态栏配置文档，包含状态显示、错误提示和自定义格式的详细说明
+description: JSON Editor 当前状态栏配置边界
 keywords: JSON Editor, Status Bar, Configuration, Error Display, Cursor Position, Document Size
 parent: API 参考
 nav_order: 4
@@ -9,124 +9,28 @@ nav_order: 4
 
 # 状态栏配置
 
-> "优秀的反馈机制应该像呼吸一样自然。" 
+状态栏由 `JsonEditor` 内部渲染，显示当前错误或验证状态、光标位置和文档大小。
 
-状态栏是编辑器的信息中心，它以简洁的方式呈现编辑器的各种状态。
+## 当前配置
 
-## 基础配置
+`JsonEditor` 当前只把 `statusBarConfig.className` 和 `statusBarConfig.style` 传给状态栏容器：
 
 ```typescript
 interface StatusBarConfig {
-    // 基础样式
-    className?: string;
-    style?: React.CSSProperties;
-    
-    // 显示项配置
-    features?: {
-        error?: boolean;         // 错误信息
-        cursorPosition?: boolean;// 光标位置
-        documentSize?: boolean;  // 文档大小
-        validStatus?: boolean;   // 验证状态
-    };
+  className?: string;
+  style?: React.CSSProperties;
 }
 ```
 
-💡 **设计理念**: 状态栏遵循"少即是多"的原则，只显示最必要的信息，避免干扰用户的编辑体验。
-
-## 信息定制
-
-### 格式化配置
-
-可以自定义各类信息的展示格式:
-
-```typescript
-format?: {
-    bytes?: (bytes: number) => string;
-    position?: (line: number, col: number) => string;
-    error?: (error: string) => string;
-}
-```
-
-示例:
 {% raw %}
 ```tsx
 <JsonEditor
   statusBarConfig={{
-    format: {
-      // 自定义文件大小显示
-      bytes: (bytes) => {
-        if (bytes < 1024) return `${bytes} B`;
-        return `${(bytes / 1024).toFixed(1)} KB`;
-      },
-      // 简化错误信息
-      error: (error) => error.split(':')[0]
-    }
+    className: 'custom-status',
+    style: { borderTop: '1px solid #e5e7eb' }
   }}
 />
 ```
 {% endraw %}
 
-### 图标配置
-
-可以自定义状态图标:
-
-```typescript
-icons?: {
-    error?: React.ReactNode;
-    valid?: React.ReactNode;
-    editing?: React.ReactNode;
-}
-```
-
-## 布局调整
-
-```typescript
-layout?: {
-    order?: string[];  // 信息项顺序
-    dividerStyle?: React.CSSProperties;  // 分隔符样式
-}
-```
-
-## 使用场景
-
-### 基础模式
-```tsx
-// 默认配置，显示所有信息
-<JsonEditor />
-```
-
-### 精简模式
-{% raw %}
-```tsx
-// 只显示必要信息
-<JsonEditor
-  statusBarConfig={{
-    features: {
-      error: true,
-      validStatus: true
-    }
-  }}
-/>
-```
-{% endraw %}
-
-### 自定义模式
-{% raw %}
-```tsx
-// 定制显示内容和样式
-<JsonEditor
-  statusBarConfig={{
-    features: {
-      error: true,
-      cursorPosition: true
-    },
-    className: "custom-status",
-    format: {
-      position: (line, col) => `${line}:${col}`
-    }
-  }}
-/>
-```
-{% endraw %}
-
-> 🎯 **小贴士**: 状态栏的设计重点是提供清晰的反馈，而不是成为功能的堆砌。选择性地显示真正重要的信息，往往能带来更好的用户体验。 
+当前组件没有公开的状态栏显示项开关、格式化器、图标配置或布局配置。状态栏内容由组件内部状态决定。

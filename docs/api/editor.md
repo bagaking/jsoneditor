@@ -134,7 +134,6 @@ interface CodeSettings {
 ```typescript
 interface ThemeConfig {
   theme?: 'light' | 'dark';      // 主题类型
-  themeExtensions?: Extension[]; // 自定义 CodeMirror 主题扩展
 }
 ```
 
@@ -155,7 +154,7 @@ interface ValidationConfig {
 
 ```typescript
 interface ToolbarConfig {
-  position?: 'top' | 'bottom' | 'none';
+  position?: 'none';
   className?: string;
   style?: React.CSSProperties;
   features?: {
@@ -169,10 +168,6 @@ interface ToolbarConfig {
     key: string;
     render: (editor: EditorCore) => React.ReactNode;
   }>;
-  buttonOrder?: string[];
-  buttonGroups?: ButtonGroup[];
-  buttonStyles?: Record<string, ButtonStyle>;
-  dividerStyle?: React.CSSProperties;
 }
 ```
 
