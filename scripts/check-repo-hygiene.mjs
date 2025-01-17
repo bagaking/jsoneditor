@@ -27,7 +27,7 @@ for (const file of trackedFiles) {
 const textFilePattern = new RegExp(
   String.raw`(?:^|[.])(?:cjs|css|html|js|json|md|mjs|puml|ts|tsx|txt|yaml|yml)$`
 );
-const credentialNamePattern = [
+const credentialNameSegments = [
   'api[_-]?key',
   `pass${'word'}`,
   `sec${'ret'}`,
@@ -35,8 +35,9 @@ const credentialNamePattern = [
   'auth[_-]?tok' + 'en',
   'npm[_-]?tok' + 'en'
 ].join('|');
+const credentialNamePattern = String.raw`(?:^|[A-Z0-9]+[_-])(?:${credentialNameSegments})(?:[_-][A-Z0-9]+)*`;
 const credentialAssignmentPattern = new RegExp(
-  String.raw`\b[A-Z0-9_]*(?:${credentialNamePattern})[A-Z0-9_]*\b\s*[:=]\s*["'][^"']{8,}["']`,
+  String.raw`\b${credentialNamePattern}\b\s*[:=]\s*(?:"[^"']{8,}"|'[^"']{8,}'|[^\s#'"]{8,})`,
   'i'
 );
 const npmAuthTokenPrefixChars = `${slash}@.\\w-`;
