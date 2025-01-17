@@ -69,6 +69,26 @@ try {
   );
 
   writeFileSync(
+    join(tempDir, 'tsconfig.nodenext.json'),
+    JSON.stringify(
+      {
+        compilerOptions: {
+          target: 'ES2020',
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          jsx: 'react-jsx',
+          strict: true,
+          skipLibCheck: true,
+          noEmit: true
+        },
+        include: ['smoke.tsx']
+      },
+      null,
+      2
+    )
+  );
+
+  writeFileSync(
     join(tempDir, 'smoke.mjs'),
     [
       `import { JsonEditor, EditorCore, rocketActionIcon, linkActionIcon } from '${packageName}';`,
@@ -135,6 +155,7 @@ try {
   run('node', ['smoke.mjs']);
   run('node', ['smoke.cjs']);
   run('pnpm', ['exec', 'tsc', '-p', 'tsconfig.json']);
+  run('pnpm', ['exec', 'tsc', '-p', 'tsconfig.nodenext.json']);
 } finally {
   rmSync(tempDir, { recursive: true, force: true });
 }
