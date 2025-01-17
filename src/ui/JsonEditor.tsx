@@ -71,7 +71,7 @@ export const JsonEditor = forwardRef<EditorCore | null, JsonEditorProps>(({
         onValueChange,
         onError,
         onCopy,
-        validateOnChange: validationConfig?.validateOnChange,
+        validateOnChange: validationConfig?.validateOnChange ?? true,
         schema: schemaConfig?.schema,
         theme: themeConfig?.theme,
         decoration: decorationConfig,
@@ -182,7 +182,7 @@ export const JsonEditor = forwardRef<EditorCore | null, JsonEditorProps>(({
             ...stateRef.current,
             onValueChange,
             onError,
-            validateOnChange: validationConfig?.validateOnChange
+            validateOnChange: validationConfig?.validateOnChange ?? true
         };
     }, [onValueChange, onError, validationConfig?.validateOnChange]);
 
@@ -240,9 +240,10 @@ export const JsonEditor = forwardRef<EditorCore | null, JsonEditorProps>(({
         // 触发 onChange 回调
         stateRef.current.onValueChange?.(value);
         
-        // 始终进行验证
-        setIsValid(false);
-        debouncedValidate(value);
+        if (stateRef.current.validateOnChange) {
+            setIsValid(false);
+            debouncedValidate(value);
+        }
     }, [debouncedValidate]);
 
     // 光标位置变化处理
@@ -279,8 +280,9 @@ export const JsonEditor = forwardRef<EditorCore | null, JsonEditorProps>(({
             return;
         }
 
-        // 手动触发验证
-        validateJson(editorRef.current.getValue());
+        if (stateRef.current.validateOnChange) {
+            validateJson(editorRef.current.getValue());
+        }
     }, [schemaInfo, validateJson]);
 
     // 文档大小变化处理

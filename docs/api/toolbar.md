@@ -80,4 +80,4 @@ interface ToolbarConfig {
 ```
 {% endraw %}
 
-当前内置工具栏没有读取 `buttonStyles`、`buttonGroups`、`buttonOrder` 或 `dividerStyle`。
+当前公开的 `ToolbarConfig` 没有按钮排序、按钮分组、按钮样式或分隔符样式配置。需要更复杂的按钮外观或布局时，请通过 `customButtons.render` 返回自定义 React 节点。

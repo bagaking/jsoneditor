@@ -144,11 +144,10 @@ interface ThemeConfig {
 ```typescript
 interface ValidationConfig {
   validateOnChange?: boolean;    // 是否在变化时验证
-  autoFormat?: boolean;          // 当前未接线；保留为兼容字段，不会触发自动格式化
 }
 ```
 
-`autoFormat` 当前不是已实现的公开能力。需要格式化时，请使用工具栏的格式化按钮，或在消费方自行调用格式化逻辑后通过 `EditorCore.setValue()` 写回内容。
+`validateOnChange: false` 会关闭输入变化后的自动解析和 Schema 验证。需要格式化时，请使用工具栏的格式化按钮，或在消费方自行调用格式化逻辑后通过 `EditorCore.setValue()` 写回内容。
 
 ### ToolbarConfig
 

@@ -7,23 +7,6 @@ import { Extension } from '@codemirror/state';
 // 主题类型
 export type Theme = 'light' | 'dark';
 
-// 按钮样式配置
-export interface ButtonStyle {
-    className?: string;
-    style?: React.CSSProperties;
-    icon?: React.ReactNode;
-    text?: string;
-    tooltip?: string;
-}
-
-// 按钮组配置
-export interface ButtonGroup {
-    key: string;
-    buttons: string[];
-    className?: string;
-    style?: React.CSSProperties;
-}
-
 // 工具栏配置
 export interface ToolbarConfig {
     position?: 'top' | 'bottom' | 'none';
@@ -44,103 +27,13 @@ export interface ToolbarConfig {
         key: string;
         render: (editor: EditorCore) => React.ReactNode;
     }>;
-    
-    // 按钮排序
-    buttonOrder?: string[];
-
-    // 按钮分组
-    buttonGroups?: ButtonGroup[];
-
-    // 按钮样式
-    buttonStyles?: Record<string, ButtonStyle>;
-
-    // 分隔符样式
-    dividerStyle?: React.CSSProperties;
 }
 
 // 状态栏配置
-export interface StatusBarConfig extends ComponentStyles {
-    // 显示项配置
-    features?: {
-        error?: boolean;
-        cursorPosition?: boolean;
-        documentSize?: boolean;
-        validStatus?: boolean;
-    };
-
-    // 格式化配置
-    format?: {
-        bytes?: (bytes: number) => string;
-        position?: (line: number, col: number) => string;
-        error?: (error: string) => string;
-    };
-
-    // 图标配置
-    icons?: {
-        error?: React.ReactNode;
-        valid?: React.ReactNode;
-        editing?: React.ReactNode;
-    };
-
-    // 布局配置
-    layout?: {
-        order?: string[];
-        dividerStyle?: React.CSSProperties;
-    };
-}
+export interface StatusBarConfig extends ComponentStyles {}
 
 // Schema 信息面板配置
-export interface SchemaInfoConfig extends ComponentStyles {
-    // 布局配置
-    layout?: {
-        showDescription?: boolean;
-        showPath?: boolean;
-        showType?: boolean;
-        showRequired?: boolean;
-        order?: string[];
-        dividerStyle?: React.CSSProperties;
-    };
-
-    // 输入控件配置
-    inputs?: {
-        // 基础样式
-        baseStyle?: React.CSSProperties;
-        className?: string;
-
-        // 特定类型的控件配置
-        dateTime?: {
-            showTime?: boolean;
-            format?: string;
-            icons?: {
-                date?: React.ReactNode;
-                time?: React.ReactNode;
-            };
-        };
-        color?: {
-            showPicker?: boolean;
-            showInput?: boolean;
-            format?: 'hex' | 'rgb' | 'hsl';
-        };
-        enum?: {
-            renderItem?: (value: any) => React.ReactNode;
-            placeholder?: string;
-        };
-        boolean?: {
-            type?: 'switch' | 'checkbox' | 'button';
-            labels?: {
-                true?: string;
-                false?: string;
-            };
-        };
-    };
-
-    // 格式化配置
-    format?: {
-        path?: (path: string) => string;
-        type?: (type: string, format?: string) => string;
-        description?: (desc: string) => string;
-    };
-}
+export interface SchemaInfoConfig extends ComponentStyles {}
 
 // 展开/收缩配置
 export interface ExpandOption {
@@ -239,4 +132,4 @@ export interface StatusBarProps {
     bytes: number;
   };
   isValid?: boolean;
-} 
+}

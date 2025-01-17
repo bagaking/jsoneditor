@@ -57,14 +57,6 @@ export interface SchemaConfig {
    * JSON Schema 对象
    */
   schema?: object;
-  /**
-   * 是否在输入时验证
-   */
-  validateOnType?: boolean;
-  /**
-   * 验证防抖时间(ms)
-   */
-  validateDebounce?: number;
 }
 
 /**
@@ -75,10 +67,6 @@ export interface ThemeConfig {
    * 主题类型
    */
   theme?: 'light' | 'dark';
-  /**
-   * 自定义主题扩展
-   */
-  themeExtensions?: Extension[];
 }
 
 /**
@@ -89,10 +77,6 @@ export interface ValidationConfig {
    * 是否在更改时验证
    */
   validateOnChange?: boolean;
-  /**
-   * 是否自动格式化
-   */
-  autoFormat?: boolean;
 }
 
 // 自定义组件类型

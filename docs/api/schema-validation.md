@@ -9,7 +9,7 @@ nav_order: 6
 
 # Schema 验证
 
-`JsonEditor` 使用 AJV 和 `ajv-formats` 验证当前 JSON 内容。当前公开入口是 `schemaConfig.schema`、`validationConfig.validateOnChange` 和 `onError`。
+`JsonEditor` 使用 AJV 和 `ajv-formats` 验证当前 JSON 内容。当前公开入口是 `schemaConfig.schema`、`validationConfig.validateOnChange` 和 `onError`。`validateOnChange` 默认为 `true`；设为 `false` 时，输入变化不会自动触发解析或 Schema 验证。
 
 ## 基础配置
 

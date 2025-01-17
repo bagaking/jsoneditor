@@ -11,10 +11,7 @@ export const defaultCodeSettings: CodeSettings = {
 };
 
 // 默认 Schema 配置
-export const defaultSchemaConfig: SchemaConfig = {
-    validateOnType: true,
-    validateDebounce: 300
-};
+export const defaultSchemaConfig: SchemaConfig = {};
 
 // 默认主题配置
 export const defaultThemeConfig: ThemeConfig = {
@@ -23,8 +20,7 @@ export const defaultThemeConfig: ThemeConfig = {
 
 // 默认验证配置
 export const defaultValidationConfig: ValidationConfig = {
-    validateOnChange: true,
-    autoFormat: false
+    validateOnChange: true
 };
 
 /**
@@ -70,19 +66,16 @@ export function configEquals(a: EditorConfig, b: EditorConfig): boolean {
 
     // 比较 schema 配置
     const schemaEqual = 
-        a.schemaConfig?.validateOnType === b.schemaConfig?.validateOnType &&
-        a.schemaConfig?.validateDebounce === b.schemaConfig?.validateDebounce &&
         JSON.stringify(a.schemaConfig?.schema) === JSON.stringify(b.schemaConfig?.schema);
     if (!schemaEqual) return false;
 
     // 比较验证配置
     const validationEqual =
-        a.validationConfig?.validateOnChange === b.validationConfig?.validateOnChange &&
-        a.validationConfig?.autoFormat === b.validationConfig?.autoFormat;
+        a.validationConfig?.validateOnChange === b.validationConfig?.validateOnChange;
     if (!validationEqual) return false;
 
     // 比较装饰配置
     if (JSON.stringify(a.decorationConfig) !== JSON.stringify(b.decorationConfig)) return false;
 
     return true;
-} 
+}

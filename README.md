@@ -11,7 +11,7 @@
 - **React 契约**: `react` 和 `react-dom` 是 peer dependencies，支持 `^18.3.0 || ^19.0.0`。
 - **编辑器契约**: CodeMirror 6、AJV 和 `ajv-formats` 是包依赖；Vite library build 会保留这些运行时 import，由消费方打包器解析。
 - **样式契约**: 需要内置样式时，在应用入口导入 `@bagaking/jsoneditor/style.css`。发布包中的 `dist/style.css` 只覆盖组件内置样式；通过 `decorationConfig` 传入的消费方 Tailwind class 必须由消费方自己的 Tailwind content 扫描或 safelist 生成。
-- **发布契约**: 包导出 ESM、CommonJS、TypeScript 声明和 `./style.css`。根入口导出 `JsonEditor`、`EditorCore`、公共配置类型，以及内置 action icon helper。
+- **发布契约**: 包导出 ESM、CommonJS、TypeScript 声明和 `./style.css`。根入口导出 `JsonEditor`、`EditorCore`、公共配置类型，以及内置 action icon helper。公共配置类型只描述当前已接线能力；额外 CodeMirror 行为通过顶层 `extensions` 传入，而不是通过主题或 Schema 子配置承诺未实现字段。
 
 ## 安装
 
@@ -72,6 +72,7 @@ export function ConfigEditor() {
 ### Schema 验证
 
 传入 JSON Schema 后，组件会在编辑器内使用 AJV 校验 JSON，并通过 `onError`、状态栏和 schema 信息面板暴露当前错误或字段信息。
+`validationConfig.validateOnChange` 默认为 `true`；设为 `false` 时，输入变化不会自动触发解析或 Schema 验证。
 
 ```tsx
 import { JsonEditor } from '@bagaking/jsoneditor';
