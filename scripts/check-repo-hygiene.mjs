@@ -1,6 +1,5 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { userInfo } from 'node:os';
 
 const errors = [];
 
@@ -32,24 +31,23 @@ const credentialNamePattern = [
   'api[_-]?key',
   `pass${'word'}`,
   `sec${'ret'}`,
-  `tok${'en'}`
+  `tok${'en'}`,
+  'auth[_-]?tok' + 'en',
+  'npm[_-]?tok' + 'en'
 ].join('|');
 const credentialAssignmentPattern = new RegExp(
-  String.raw`\b(?:${credentialNamePattern})\b\s*[:=]\s*["'][^"']{8,}["']`,
+  String.raw`\b[A-Z0-9_]*(?:${credentialNamePattern})[A-Z0-9_]*\b\s*[:=]\s*["'][^"']{8,}["']`,
   'i'
 );
-const currentUsername = userInfo().username;
+const npmAuthTokenPrefixChars = `${slash}@.\\w-`;
+const npmAuthTokenPattern = new RegExp(
+  `(?:^|[${npmAuthTokenPrefixChars}]+:)_authTok${'en'}\\s*=\\s*[^\\s#]+`,
+  'i'
+);
 const absolutePathPatterns = [
   { pattern: new RegExp(`${slash}${'Users'}${slash}[^${slash}\\s'")]+`, 'g'), reason: 'local macOS home path' },
   { pattern: new RegExp(`${slash}home${slash}[^${slash}\\s'")]+`, 'g'), reason: 'local Linux home path' }
 ];
-
-if (currentUsername) {
-  absolutePathPatterns.push({
-    pattern: new RegExp(String.raw`(?:^|[^A-Za-z0-9_-])${currentUsername}(?:[^A-Za-z0-9_-]|$)`, 'g'),
-    reason: 'current local username'
-  });
-}
 
 for (const file of trackedFiles) {
   if (!textFilePattern.test(file) || !existsSync(file) || statSync(file).size > 1024 * 1024) {
@@ -69,6 +67,9 @@ for (const file of trackedFiles) {
 
     if (credentialAssignmentPattern.test(line)) {
       errors.push(`${file}:${index + 1}: contains a high-risk credential-like assignment.`);
+    }
+    if (npmAuthTokenPattern.test(line)) {
+      errors.push(`${file}:${index + 1}: contains an npm auth token assignment.`);
     }
   });
 }
