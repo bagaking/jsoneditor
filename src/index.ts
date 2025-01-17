@@ -20,6 +20,8 @@ export type {
     // UI 组件类型
     JsonEditorProps,
     ToolbarConfig,
+    StatusBarConfig,
+    SchemaInfoConfig,
     ToolbarProps,
     ExpandOption,
 } from './ui/types'; 
@@ -28,4 +30,3 @@ export {
     linkActionIcon,
     rocketActionIcon
 } from './utils/svg';
-
