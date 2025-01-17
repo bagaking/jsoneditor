@@ -208,11 +208,13 @@ pnpm install --frozen-lockfile
 pnpm verify
 ```
 
-`pnpm verify` runs the repository hygiene check, library build, demo build, and package dry run. CI uses the same entrypoint so local release readiness and GitHub Actions do not drift.
+`pnpm verify` runs the repository hygiene check, library build, public entrypoint smoke check, demo build, and package dry run. CI uses the same entrypoint so local release readiness and GitHub Actions do not drift.
 
 `pnpm check:repo` rejects accidentally tracked build output, OS metadata, local home-directory absolute paths, and obvious credential-like assignments. `pnpm build` cleans `dist`, runs TypeScript compilation, runs the Vite library build, and builds Tailwind output for `dist/style.css`. The expected outputs include `dist/index.js`, `dist/index.cjs`, TypeScript declarations, and `dist/style.css`.
 
 `pnpm pack:dry-run` runs `scripts/check-pack-manifest.mjs`. The script first requires the expected `dist` artifacts, then invokes `npm pack --dry-run --json` and checks that the package contains the required entry files, declarations, style file, README, and LICENSE. It also rejects unexpected `dist` artifacts, unreachable CommonJS chunks, bundled `react-dom/client` source, and ESM/CJS outputs that fail to keep `react-dom/client` as an external import/require.
+
+`pnpm check:entrypoints` runs `scripts/check-public-entrypoints.mjs`. It installs the current workspace package into a temporary consumer project and verifies ESM import, CommonJS require, the stylesheet subpath, and TypeScript declaration consumption.
 
 This gate validates the package manifest and build artifact boundary. It does not replace unit tests, browser interaction tests, docs-site checks, or proof that a consuming app generated its own Tailwind classes.
 
