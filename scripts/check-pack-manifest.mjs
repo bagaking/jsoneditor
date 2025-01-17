@@ -36,12 +36,12 @@ const cjsReactDomClientExternalPattern = new RegExp('require[(]["\']react-dom/cl
 const errors = [];
 const packageManifest = JSON.parse(readFileSync('package.json', 'utf8'));
 
-const expectedRootExport = {
-  types: './dist/index.d.ts',
-  import: './dist/index.js',
-  require: './dist/index.cjs',
-  default: './dist/index.js'
-};
+const expectedRootExportEntries = [
+  ['types', './dist/index.d.ts'],
+  ['import', './dist/index.js'],
+  ['require', './dist/index.cjs'],
+  ['default', './dist/index.js']
+];
 const expectedManifestEntrypoints = [
   ['main', './dist/index.cjs'],
   ['module', './dist/index.js'],
@@ -56,11 +56,13 @@ for (const [field, expectedPath] of expectedManifestEntrypoints) {
   }
 }
 
-for (const [condition, expectedPath] of Object.entries(expectedRootExport)) {
-  const actualPath = packageManifest.exports?.['.']?.[condition];
-  if (actualPath !== expectedPath) {
-    errors.push(`package.json exports["."].${condition} must be ${expectedPath}.`);
-  }
+const rootExportEntries = Object.entries(packageManifest.exports?.['.'] || {});
+if (JSON.stringify(rootExportEntries) !== JSON.stringify(expectedRootExportEntries)) {
+  errors.push(
+    'package.json exports["."] must exactly preserve this condition order: ' +
+    expectedRootExportEntries.map(([condition, path]) => `${condition}=${path}`).join(', ') +
+    '.'
+  );
 }
 
 if (packageManifest.exports?.['./style.css'] !== './dist/style.css') {
