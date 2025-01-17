@@ -1,4 +1,4 @@
-import { ToolbarConfig, ExpandOption, DecorationConfig } from '@bagaking/jsoneditor';
+import { ToolbarConfig, ExpandOption, DecorationConfig, ValidationConfig } from '@bagaking/jsoneditor';
 import { JsonSchemaProperty } from '@bagaking/jsoneditor';
 import { EyeIcon } from '@heroicons/react/24/outline';
 
@@ -11,10 +11,7 @@ export interface EditorConfigState {
     autoCompletion: boolean;
     highlightActiveLine: boolean;
   };
-  schemaConfig: {
-    validateDebounce: number;
-    validateOnType: boolean;
-  };
+  validationConfig: ValidationConfig;
   themeConfig: {
     theme: 'light' | 'dark';
   };
@@ -31,9 +28,8 @@ export const defaultConfig: EditorConfigState = {
     autoCompletion: true,
     highlightActiveLine: true,
   },
-  schemaConfig: {
-    validateDebounce: 300,
-    validateOnType: true,
+  validationConfig: {
+    validateOnChange: true,
   },
   themeConfig: {
     theme: 'light',
@@ -611,4 +607,4 @@ export const exampleSchema: JsonSchemaProperty = {
       }
     }
   }
-}; 
+};

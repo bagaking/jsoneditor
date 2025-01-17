@@ -155,7 +155,7 @@ interface ValidationConfig {
 
 ```typescript
 interface ToolbarConfig {
-  position?: 'none';
+  position?: 'top' | 'bottom' | 'none';
   className?: string;
   style?: React.CSSProperties;
   features?: {

@@ -77,19 +77,13 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({ config, onChange }) =>
             </div>
           </div>
 
-          {/* Schema 设置 */}
           <div className="flex-1 min-w-[240px]">
-            <h4 className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200">Schema 设置</h4>
+            <h4 className="mb-2 text-sm font-medium text-gray-800 dark:text-gray-200">验证设置</h4>
             <div className="space-y-3">
-              <NumberInput
-                label="验证防抖时间 (ms)"
-                value={config.schemaConfig.validateDebounce}
-                onChange={value => handleChange('schemaConfig', 'validateDebounce', value)}
-              />
               <Checkbox
-                label="输入时验证"
-                checked={config.schemaConfig.validateOnType}
-                onChange={checked => handleChange('schemaConfig', 'validateOnType', checked)}
+                label="变更时验证"
+                checked={config.validationConfig.validateOnChange ?? true}
+                onChange={checked => handleChange('validationConfig', 'validateOnChange', checked)}
               />
             </div>
           </div>
@@ -162,4 +156,4 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({ config, onChange }) =>
       </div>
     </div>
   );
-}; 
+};

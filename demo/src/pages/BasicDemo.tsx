@@ -57,9 +57,8 @@ export const BasicDemo = () => {
         readOnly={isReadOnly}
         schemaConfig={{
           schema: exampleSchema,
-          validateOnType: config.schemaConfig.validateOnType,
-          validateDebounce: config.schemaConfig.validateDebounce,
         }}
+        validationConfig={config.validationConfig}
         codeSettings={config.codeSettings}
         toolbarConfig={{
           ...config.toolbarConfig,
@@ -79,4 +78,4 @@ export const BasicDemo = () => {
       />
     </div>
   );
-}; 
+};

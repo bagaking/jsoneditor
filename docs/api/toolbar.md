@@ -17,7 +17,7 @@ nav_order: 3
 
 ```typescript
 interface ToolbarConfig {
-  position?: 'none';
+  position?: 'top' | 'bottom' | 'none';
   className?: string;
   style?: React.CSSProperties;
   features?: {

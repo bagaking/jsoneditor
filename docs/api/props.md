@@ -253,7 +253,7 @@ JSON Editor 的配置系统分为几个主要部分：
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| position | 'none' | - | 设为 `none` 时隐藏工具栏；其他位置值当前不改变布局 |
+| position | 'top' \| 'bottom' \| 'none' | 'top' | 设为 `none` 时隐藏工具栏；其他位置值当前不改变布局 |
 | className | string | - | 自定义类名 |
 | style | React.CSSProperties | - | 自定义样式 |
 
