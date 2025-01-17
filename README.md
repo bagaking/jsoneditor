@@ -104,7 +104,7 @@ export function PackageJsonEditor() {
 }
 ```
 
-更多细节见 [Schema 验证指南](https://bagaking.github.io/jsoneditor/guide/schema-validation)。
+更多细节见 [Schema 验证指南](./docs/api/schema-validation.md)。
 
 ### 路径装饰
 

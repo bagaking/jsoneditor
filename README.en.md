@@ -104,7 +104,7 @@ export function PackageJsonEditor() {
 }
 ```
 
-See the [Schema Validation Guide](https://bagaking.github.io/jsoneditor/guide/schema-validation) for more detail.
+See the [Schema Validation Guide](./docs/api/schema-validation.md) for more detail.
 
 ### Path Decoration
 
