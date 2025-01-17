@@ -65,7 +65,7 @@ function App() {
 - [快速开始](./guide/getting-started.md) - 5 分钟上手 JSON Editor
 - [基础用法](./guide/basic-usage.md) - 常用功能和配置说明
 - [Schema 验证](./api/schema-validation.md) - JSON Schema 验证指南
-- [自定义配置](./guide/customization.md) - 主题和组件定制
+- [自定义配置](./api/customization.md) - 主题和组件定制
 
 ### API 参考
 - [编辑器](./api/editor.md) - 核心编辑器组件
@@ -76,7 +76,6 @@ function App() {
 
 ### 设计文档
 - [架构设计](./design/architecture.md) - 系统架构说明
-- [设计原则](./design/principles.md) - 设计理念和原则
 
 ## 🎮 在线演示
 
